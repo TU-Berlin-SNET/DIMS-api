@@ -11,6 +11,9 @@ https://docs.djangoproject.com/en/2.0/ref/settings/
 """
 
 import os
+import json
+import asyncio
+from indy import pool
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -121,3 +124,10 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/2.0/howto/static-files/
 
 STATIC_URL = '/static/'
+
+# Indy Pool related configuration
+POOL_NAME = 'sandbox'
+POOL_TXN_PATH = str(os.path.realpath(os.path.join(BASE_DIR, 'pool_transactions_genesis.local')))
+# POOL_TXN_PATH = str(os.path.realpath(os.path.join(BASE_DIR, 'pool_transactions_genesis.testbed')))
+POOL_CONFIG = json.dumps({"genesis_txn": str(POOL_TXN_PATH)})
+
