@@ -3,15 +3,6 @@ from django.contrib.auth.models import User
 from api.serializers import *
 from api.models import *
 
-# class WalletViewSet(viewsets.ModelViewSet):
-#     """
-#     API endpoint that allows wallets to be viewed or edited.
-#     """
-#     #queryset = Wallet.objects.all()
-#     #serializer_class = WalletSerializer
-#
-
-
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
