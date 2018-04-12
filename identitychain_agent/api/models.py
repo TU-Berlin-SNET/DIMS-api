@@ -1,21 +1,11 @@
 import asyncio
-import json
 from django.db import models
 from django.conf import settings
+from asgiref.sync import async_to_sync
 from indy import wallet as IndyWallet
 from indy import pool, error
 
-
-evloop = asyncio.get_event_loop()
-
-try:
-    evloop.run_until_complete(
-        pool.create_pool_ledger_config(settings.POOL_NAME, settings.POOL_CONFIG))
-except error.IndyError as err:
-    print('IndyError: ' + str(err.error_code))
-
-pool_handle = evloop.run_until_complete(
-    pool.open_pool_ledger(settings.POOL_NAME, None))
+pool_handle = async_to_sync(pool.open_pool_ledger)(settings.POOL_NAME, None)
 
 class Wallet(models.Model):
     created = models.DateTimeField(auto_now_add=True)

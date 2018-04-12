@@ -12,8 +12,8 @@ https://docs.djangoproject.com/en/2.0/ref/settings/
 
 import os
 import json
-import asyncio
-from indy import pool
+from indy import pool, error
+from asgiref.sync import async_to_sync
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -136,4 +136,9 @@ POOL_TXN_PATH = str(os.path.realpath(os.path.join(BASE_DIR, 'pool_transactions_g
 
 # convenience formatting of POOL_TXN_PATH for usage with indy python wrapper library
 POOL_CONFIG = json.dumps({"genesis_txn": str(POOL_TXN_PATH)})
+
+try:
+    async_to_sync(pool.create_pool_ledger_config)(POOL_NAME, POOL_CONFIG)
+except error.IndyError as err:
+    print('IndyError' + str(err.error_code))
 
