@@ -126,8 +126,14 @@ USE_TZ = True
 STATIC_URL = '/static/'
 
 # Indy Pool related configuration
+
+# Name to use for the pool
 POOL_NAME = 'sandbox'
-POOL_TXN_PATH = str(os.path.realpath(os.path.join(BASE_DIR, 'pool_transactions_genesis.local')))
-# POOL_TXN_PATH = str(os.path.realpath(os.path.join(BASE_DIR, 'pool_transactions_genesis.testbed')))
+
+# Path to the genesis transactions
+# POOL_TXN_PATH = str(os.path.realpath(os.path.join(BASE_DIR, 'pool_transactions_genesis.local')))
+POOL_TXN_PATH = str(os.path.realpath(os.path.join(BASE_DIR, 'pool_transactions_genesis.remote')))
+
+# convenience formatting of POOL_TXN_PATH for usage with indy python wrapper library
 POOL_CONFIG = json.dumps({"genesis_txn": str(POOL_TXN_PATH)})
 
