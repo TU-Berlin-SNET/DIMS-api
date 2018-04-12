@@ -1,7 +1,10 @@
 from rest_framework import viewsets
 from django.contrib.auth.models import User
+from django.conf import settings
+from asgiref.sync import async_to_sync
 from api.serializers import *
 from api.models import *
+from indy import error, wallet as IndyWallet
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
@@ -11,6 +14,27 @@ class UserViewSet(viewsets.ModelViewSet):
 class WalletViewSet(viewsets.ModelViewSet):
     queryset = Wallet.objects.all()
     serializer_class = WalletSerializer
+
+    def perform_create(self, serializer):
+        wallet = serializer.save()
+        try:
+            async_to_sync(IndyWallet.create_wallet)(
+                wallet.pool_name,
+                str(wallet.name),
+                wallet.xtype if wallet.xtype else None,
+                wallet.config if wallet.config else None,
+                wallet.credentials if wallet.credentials else None
+            )
+        except error.IndyError as err:
+            # We encountered some Error with Indy so remove Wallet from
+            # django as well
+            # TODO better logging
+            wallet.delete()
+            print("IndyError: " + err)
+            raise err
+        return wallet
+
+
     # def list(self, request):
     #     pass
     #
