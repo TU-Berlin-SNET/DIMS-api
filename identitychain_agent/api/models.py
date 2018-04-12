@@ -1,20 +1,14 @@
-import asyncio
+import uuid
 from django.db import models
 from django.conf import settings
-from asgiref.sync import async_to_sync
-from indy import wallet as IndyWallet
-from indy import pool, error
-
-pool_handle = async_to_sync(pool.open_pool_ledger)(settings.POOL_NAME, None)
 
 class Wallet(models.Model):
     created = models.DateTimeField(auto_now_add=True)
-    id = models.UUIDField(primary_key=True, )
-    pool_name = models.TextField()
-    name = models.TextField()
+    pool_name = models.TextField(blank=True, default=settings.POOL_NAME)
+    name = models.TextField(primary_key=True, blank=True, default=uuid.uuid4)
     xtype = models.TextField(blank=True)
     config = models.TextField(blank=True)
-    credentials = models.TextField(blank=True, default="")
+    credentials = models.TextField(blank=True)
 
     class Meta:
         ordering = ['created']
