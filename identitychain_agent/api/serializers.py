@@ -3,12 +3,14 @@ from django.contrib.auth.models import User
 from api.models import *
 
 
-class UserSerializer(serializers.HyperlinkedModelSerializer):
+class UserSerializer(serializers.ModelSerializer):
+    wallets = serializers.PrimaryKeyRelatedField(many=True, queryset=Wallet.objects.all())
     class Meta:
         model = User
-        fields = ('url', 'username', 'email', 'is_staff')
+        fields = ('id', 'url', 'username', 'email', 'wallets', 'is_staff')
 
 class WalletSerializer(serializers.ModelSerializer):
+    owner = serializers.ReadOnlyField(source='owner.username')
     class Meta:
         model = Wallet
         fields = '__all__'

@@ -4,6 +4,7 @@ from django.conf import settings
 
 class Wallet(models.Model):
     created = models.DateTimeField(auto_now_add=True)
+    owner = models.ForeignKey('auth.user', related_name='wallets', on_delete=models.CASCADE)
     pool_name = models.TextField(blank=True, default=settings.POOL_NAME)
     name = models.TextField(primary_key=True, blank=True, default=uuid.uuid4)
     xtype = models.TextField(blank=True)

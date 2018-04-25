@@ -1,10 +1,11 @@
-from rest_framework import viewsets
+from rest_framework import viewsets, permissions
 from django.contrib.auth.models import User
-from django.conf import settings
 from asgiref.sync import async_to_sync
 from api.serializers import *
 from api.models import *
-from indy import error, wallet as IndyWallet
+from api.permissions import *
+from indy import error, signus, ledger, wallet as IndyWallet
+
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
@@ -12,28 +13,43 @@ class UserViewSet(viewsets.ModelViewSet):
 
 
 class WalletViewSet(viewsets.ModelViewSet):
+    """
+    retrieve:
+    Return given Wallet.
+
+    create:
+    Create a new Wallet (optionally with given name and settings)
+
+    destroy:
+    Delete given Wallet
+    """
     queryset = Wallet.objects.all()
     serializer_class = WalletSerializer
+    permission_classes = (permissions.IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly)
 
     def perform_create(self, serializer):
-        wallet = serializer.save()
+        wallet = serializer.save(owner=self.request.user)
         try:
             async_to_sync(IndyWallet.create_wallet)(
                 wallet.pool_name,
                 str(wallet.name),
+                # FIXME: maybe move to "virtual"(?) attribute on model
                 wallet.xtype if wallet.xtype else None,
                 wallet.config if wallet.config else None,
                 wallet.credentials if wallet.credentials else None
             )
+            # TODO create issuer DID?
+            # FIXME how to distinguish between wallet which may write
+            # on ledger and wallet which may not?
+            return wallet
         except error.IndyError as err:
+            # TODO more granular error handling
             # We encountered some Error with Indy so remove Wallet from
             # django as well
             # TODO better logging
+            print("IndyError: " + str(err))
             wallet.delete()
-            print("IndyError: " + err)
             raise err
-        return wallet
-
 
     # def list(self, request):
     #     pass
