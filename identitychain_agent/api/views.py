@@ -92,12 +92,12 @@ class ConnectionOfferViewSet(viewsets.ModelViewSet):
         if issueDID.did == '':
             did_json = json.dumps({'seed': wallet.seed}) if wallet.seed else None
             (did, key) = async_to_sync(signus.create_and_store_my_did)(wallet_handle, did_json)
-            endpoint = 'http://localhost:8000/api/endpoint'
-            async_to_sync(signus.set_endpoint_for_did)(wallet_handle, did, endpoint, key)
             issueDID.did = did
             issueDID.save()
 
         (from_to_did, from_to_key) = async_to_sync(signus.create_and_store_my_did)(wallet_handle, "{}")
+        endpoint = 'http://localhost:8000/api/endpoint'
+        async_to_sync(signus.set_endpoint_for_did)(wallet_handle, from_to_did, endpoint, from_to_key)
         nym_request = async_to_sync(ledger.build_nym_request)(issueDID.did, from_to_did, from_to_key, None, None)
         async_to_sync(ledger.sign_and_submit_request)(pool_handle, wallet_handle, issueDID.did, nym_request)
         serializer.save(did=from_to_did)
