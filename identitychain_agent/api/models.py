@@ -2,6 +2,11 @@ import uuid
 from django.db import models
 from django.conf import settings
 
+
+def hex_uuid4():
+    return uuid.uuid4().hex
+
+
 class Wallet(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     owner = models.ForeignKey('auth.user', related_name='wallets', on_delete=models.CASCADE)
@@ -16,9 +21,21 @@ class Wallet(models.Model):
         ordering = ['created']
 
 
+class IssueDID(models.Model):
+    wallet = models.ForeignKey(Wallet, related_name='issueDID', on_delete=models.CASCADE)
+    did = models.TextField(blank=False)
+
+
+class ConnectionOffer(models.Model):
+    created = models.DateTimeField(auto_now_add=True)
+    wallet = models.ForeignKey(Wallet, on_delete=models.CASCADE)
+    # DID associated with issuer of connection offer
+    did = models.TextField(blank=True)
+    nonce = models.TextField(primary_key=True, default=hex_uuid4, editable=False)
+
+
 class Schema(models.Model):
     created = models.DateTimeField(auto_now_add=True)
-
     schema_object = models.TextField()
 
     class Meta:
@@ -27,7 +44,6 @@ class Schema(models.Model):
 
 class ClaimDef(models.Model):
     created = models.DateTimeField(auto_now_add=True)
-
     schema_req_id = models.TextField()
 
     class Meta:
@@ -39,7 +55,7 @@ class Claim(models.Model):
     claim_object = models.TextField()
 
     class Meta:
-         ordering = ['created']
+        ordering = ['created']
 
 
 class ClaimOffer(models.Model):
@@ -47,6 +63,7 @@ class ClaimOffer(models.Model):
     n_id = models.IntegerField()
     schema = models.IntegerField()
     seq_no = models.IntegerField()
+
     class Meta:
         ordering = ['created']
 
@@ -61,11 +78,7 @@ class IndyConnection(models.Model):
 
 class Proof(models.Model):
     created = models.DateTimeField(auto_now_add=True)
-    proof_obj= models.TextField()
+    proof_obj = models.TextField()
 
     class Meta:
         ordering = ['created']
-
-
-
-

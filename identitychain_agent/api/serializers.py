@@ -11,9 +11,27 @@ class UserSerializer(serializers.ModelSerializer):
 
 class WalletSerializer(serializers.ModelSerializer):
     owner = serializers.ReadOnlyField(source='owner.username')
+    issueDID = serializers.ReadOnlyField(source='issueDID.did')
     class Meta:
         model = Wallet
         fields = '__all__'
+
+class ConnectionOfferSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ConnectionOffer
+        fields = ('wallet', 'did', 'nonce')
+
+
+class EndpointSerializer(serializers.Serializer):
+    type = serializers.ChoiceField(choices=['anon', 'auth'], default='anon')
+    message = serializers.CharField(required=True)
+
+    def update(self, instance, validated_data):
+        raise NotImplementedError("Do not change a message after receiving")
+
+    def create(self, validated_data):
+        return validated_data
+
 
 class SchemaSerializer(serializers.ModelSerializer):
     class Meta:
@@ -36,7 +54,6 @@ class ClaimOfferSerializer(serializers.ModelSerializer):
     class Meta:
         model = ClaimOffer
         fields = '__all__'
-
 
 
 class IndyConnectionSerializer(serializers.ModelSerializer):
