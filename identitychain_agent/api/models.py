@@ -9,6 +9,7 @@ class Wallet(models.Model):
     name = models.TextField(primary_key=True, blank=True, default=uuid.uuid4)
     xtype = models.TextField(blank=True)
     config = models.TextField(blank=True)
+    seed = models.TextField(blank=True)
     credentials = models.TextField(blank=True)
 
     class Meta:
