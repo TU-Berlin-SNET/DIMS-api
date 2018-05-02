@@ -90,3 +90,12 @@ class Proof(models.Model):
 
     class Meta:
         ordering = ['created']
+
+
+class Revocation(models.Model):
+    created = models.DateTimeField(auto_now_add=True)
+    revocation_time = models.DateTimeField(blank=True)
+    revocation_interval = models.DurationField(blank=True)
+
+    class Meta:
+        ordering = ['created']

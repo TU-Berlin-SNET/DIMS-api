@@ -17,7 +17,7 @@ router.register(r'claim',ClaimViewSet)
 router.register(r'claimoffer',ClaimOfferViewSet)
 router.register(r'proof', ProofViewSet)
 router.register(r'endpoint', EndpointViewSet, base_name='endpoint')
-
+router.register(r'revoke', RevocationViewSet)
 schema_view = get_schema_view(title='IdentityChain API', renderer_classes=[OpenAPIRenderer, SwaggerUIRenderer])
 
 
