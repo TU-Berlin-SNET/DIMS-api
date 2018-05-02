@@ -5,16 +5,20 @@ from api.models import *
 
 class UserSerializer(serializers.ModelSerializer):
     wallets = serializers.PrimaryKeyRelatedField(many=True, queryset=Wallet.objects.all())
+
     class Meta:
         model = User
         fields = ('id', 'url', 'username', 'email', 'wallets', 'is_staff')
 
+
 class WalletSerializer(serializers.ModelSerializer):
     owner = serializers.ReadOnlyField(source='owner.username')
     issueDID = serializers.ReadOnlyField(source='issueDID.did')
+
     class Meta:
         model = Wallet
         fields = '__all__'
+
 
 class ConnectionOfferSerializer(serializers.ModelSerializer):
     class Meta:
@@ -22,8 +26,21 @@ class ConnectionOfferSerializer(serializers.ModelSerializer):
         fields = ('wallet', 'did', 'nonce')
 
 
+class ConnectionSerializer(serializers.Serializer):
+    wallet = serializers.PrimaryKeyRelatedField(many=False, queryset=Wallet.objects.all())
+    connection_offer = ConnectionOfferSerializer(required=True)
+
+    def update(self, instance, validated_data):
+        raise NotImplementedError()
+
+    def create(self, validated_data):
+        return validated_data
+
+
 class EndpointSerializer(serializers.Serializer):
     type = serializers.ChoiceField(choices=['anon', 'auth'], default='anon')
+    target = serializers.CharField(required=True)
+    ref = serializers.CharField(required=True)
     message = serializers.CharField(required=True)
 
     def update(self, instance, validated_data):

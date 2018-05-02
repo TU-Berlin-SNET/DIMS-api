@@ -93,15 +93,43 @@ class ConnectionOfferViewSet(viewsets.ModelViewSet):
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
 
-class ConnectionViewSet(viewsets.ViewSet):
+class ConnectionViewSet(viewsets.GenericViewSet):
+    serializer_class = ConnectionSerializer
 
     def create(self, request, *args, **kwargs):
-        wallet_name = request.data['wallet']
-        conn_did = request.data['connection_offer']['did']
-        conn_nonce = request.data['connection_offer']['nonce']
-        print(wallet_name)
-        print(conn_did)
-        print(conn_nonce)
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        wallet = serializer.validated_data['wallet']
+        connection_offer = serializer.validated_data['connection_offer']
+        from_to_did = connection_offer['did']
+        # FIXME: nonce somehow disappears in serializer..???
+        # nonce = connection_offer['nonce']
+        nonce = request.data['connection_offer']['nonce']
+        print(from_to_did)
+        print(nonce)
+
+        wallet_handle = wallet.open()
+        (to_from_did, to_from_key) = async_to_sync(signus.create_and_store_my_did)(wallet_handle, "{}")
+        from_to_verkey = async_to_sync(signus.key_for_did)(pool_handle, wallet_handle, from_to_did)
+        connection_response = json.dumps({
+            'did': to_from_did,
+            'verkey': to_from_key,
+            'nonce': nonce
+        }).encode('utf-8')
+        anoncrypted_conn_response = async_to_sync(crypto.crypto_box_seal)(from_to_verkey, connection_response)
+        payload = json.dumps({
+            'type': 'anon',
+            'target': 'accept_connection',
+            'ref': nonce,
+            'message': anoncrypted_conn_response
+        })
+        endpoint = async_to_sync(signus.get_endpoint_for_did)(wallet_handle, pool_handle, from_to_did)
+        print(connection_response)
+        print(anoncrypted_conn_response)
+        print(endpoint)
+        requests.post(endpoint, data=payload, headers={'content-type': 'application/json'})
+        wallet.close()
+
         return Response(status=status.HTTP_200_OK)
 
 
@@ -112,9 +140,43 @@ class EndpointViewSet(viewsets.GenericViewSet):
     serializer_class = EndpointSerializer
 
     def create(self, request, *args, **kwargs):
-        #message_type = request.data['type']
-        #message = request.data['message']
-        print(url)
+        print('RECEIVED MESSAGE AT ENDPOINT')
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        crypto_type = serializer.validated_data['type']
+        target = serializer.validated_data['target']
+        ref = serializer.validated_data['ref']
+        message = serializer.validated_data['message']
+        print(crypto_type)
+        print(target)
+        print(ref)
+        print(message)
+        if not ref == 'accept_connection':
+            raise NotImplementedError()
+        connection_offer = ConnectionOffer.objects.get(pk=ref)
+        wallet = connection_offer.wallet
+        from_to_did = connection_offer.did
+        nonce = connection_offer.nonce
+        print(connection_offer)
+        print(wallet)
+        print(from_to_did)
+        print(nonce)
+        wallet_handle = wallet.open()
+        from_to_key = async_to_sync(signus.key_for_local_did)(wallet_handle, from_to_did)
+        conn_response = async_to_sync(crypto.crypto_box_seal_open)(wallet_handle, from_to_key, message)
+        to_from_did = conn_response['did']
+        to_from_key = conn_response['verkey']
+        print(conn_response)
+        print(to_from_did)
+        print(to_from_key)
+        if not nonce == conn_response['nonce']:
+            return Response('nonce mismatch', status=status.HTTP_400_BAD_REQUEST)
+        issueDID = IssueDID.objects.get(wallet=wallet)
+        nym_request = async_to_sync(ledger.build_nym_request)(issueDID.did, to_from_did, to_from_key, None, None)
+        async_to_sync(ledger.sign_and_submit_request)(pool_handle, wallet_handle, issueDID.did, nym_request)
+        async_to_sync(pairwise.create_pairwise)(wallet_handle, to_from_did, from_to_did, None)
+        wallet.close()
+
         return Response(status=status.HTTP_200_OK)
 
 
