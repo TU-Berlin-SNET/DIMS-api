@@ -1,6 +1,8 @@
 import uuid
 from django.db import models
 from django.conf import settings
+from indy import wallet as IndyWallet
+from asgiref.sync import async_to_sync
 
 
 def hex_uuid4():
@@ -16,6 +18,20 @@ class Wallet(models.Model):
     config = models.TextField(blank=True)
     seed = models.TextField(blank=True)
     credentials = models.TextField(blank=True)
+    handle = ''
+
+    def open(self):
+        if not self.handle:
+            self.handle = async_to_sync(IndyWallet.open_wallet)(
+                str(self.name),
+                self.config if self.config else None,
+                self.credentials if self.credentials else None
+            )
+        return self.handle
+
+    def close(self):
+        if self.handle:
+            async_to_sync(IndyWallet.close_wallet)(self.handle)
 
     class Meta:
         ordering = ['created']

@@ -9,9 +9,10 @@ from asgiref.sync import async_to_sync
 from api.serializers import *
 from api.models import *
 from api.permissions import *
-from indy import error, signus, ledger, pool, wallet as IndyWallet
+from indy import error, signus, ledger, pool, anoncreds, pairwise, crypto, wallet as IndyWallet
 
 pool_handle = async_to_sync(pool.open_pool_ledger)(settings.POOL_NAME, None)
+
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
@@ -39,56 +40,43 @@ class WalletViewSet(viewsets.ModelViewSet):
             async_to_sync(IndyWallet.create_wallet)(
                 wallet.pool_name,
                 str(wallet.name),
-                # FIXME: maybe move to "virtual"(?) attribute on model
                 wallet.xtype if wallet.xtype else None,
                 wallet.config if wallet.config else None,
                 wallet.credentials if wallet.credentials else None
             )
-            # TODO create issuer DID?
-            # FIXME how to distinguish between wallet which may write
-            # on ledger and wallet which may not?
             return wallet
         except error.IndyError as err:
-            # TODO more granular error handling
             # We encountered some Error with Indy so remove Wallet from
-            # django as well
-            # TODO better logging
+            # django as well (disabled until we have an endpoint to import)
             print("IndyError: " + str(err))
-            wallet.delete()
-            raise err
+            # wallet.delete()
+            # raise err
+        return wallet
 
-    # def list(self, request):
-    #     pass
-    #
-    # def create(self, request):
-    #     pass
-    #
-    # def retrieve(self, request, pk=None):
-    #     pass
-    #
-    # def update(self, request, pk=None):
-    #     pass
-    #
-    # def partial_update(self, request, pk=None):
-    #     pass
-    #
-    # def destroy(self, request, pk=None):
-    #     pass
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+
+        instance.open();
+        pairwises = async_to_sync(pairwise.list_pairwise)(instance.handle)
+        instance.close()
+
+        serializer = self.get_serializer(instance)
+        data = serializer.data
+        data['pairwise'] = pairwises
+        return Response(data)
 
 
 class ConnectionOfferViewSet(viewsets.ModelViewSet):
     queryset = ConnectionOffer.objects.all()
     serializer_class = ConnectionOfferSerializer
 
-    def perform_create(self, serializer):
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
         wallet = serializer.validated_data['wallet']
-        wallet_handle = async_to_sync(IndyWallet.open_wallet)(
-            wallet.name,
-            wallet.config if wallet.config else None,
-            wallet.credentials if wallet.credentials else None
-        )
+        wallet_handle = wallet.open()
 
-        issueDID, isNew = IssueDID.objects.get_or_create(wallet=wallet)
+        (issueDID, isNew) = IssueDID.objects.get_or_create(wallet=wallet)
         if issueDID.did == '':
             did_json = json.dumps({'seed': wallet.seed}) if wallet.seed else None
             (did, key) = async_to_sync(signus.create_and_store_my_did)(wallet_handle, did_json)
@@ -96,11 +84,13 @@ class ConnectionOfferViewSet(viewsets.ModelViewSet):
             issueDID.save()
 
         (from_to_did, from_to_key) = async_to_sync(signus.create_and_store_my_did)(wallet_handle, "{}")
-        endpoint = 'http://localhost:8000/api/endpoint'
+        endpoint = request.scheme + '://' + request.get_host() + reverse('api-root') + '/endpoint'
         async_to_sync(signus.set_endpoint_for_did)(wallet_handle, from_to_did, endpoint, from_to_key)
         nym_request = async_to_sync(ledger.build_nym_request)(issueDID.did, from_to_did, from_to_key, None, None)
         async_to_sync(ledger.sign_and_submit_request)(pool_handle, wallet_handle, issueDID.did, nym_request)
         serializer.save(did=from_to_did)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
 
 class ConnectionViewSet(viewsets.ViewSet):
