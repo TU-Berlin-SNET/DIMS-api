@@ -56,12 +56,6 @@ class ClaimOfferSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class IndyConnectionSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = IndyConnection
-        fields = '__all__'
-
-
 class ProofSerializer(serializers.ModelSerializer):
     class Meta:
         model = Proof

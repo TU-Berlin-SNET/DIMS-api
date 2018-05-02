@@ -84,14 +84,6 @@ class ClaimOffer(models.Model):
         ordering = ['created']
 
 
-class IndyConnection(models.Model):
-    created = models.DateTimeField(auto_now_add=True)
-    url = models.URLField()
-
-    class Meta:
-        ordering = ['created']
-
-
 class Proof(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     proof_obj = models.TextField()

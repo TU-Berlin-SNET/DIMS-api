@@ -15,7 +15,6 @@ router.register(r'schema', SchemaViewSet)
 router.register(r'claimdef', ClaimDefViewSet)
 router.register(r'claim',ClaimViewSet)
 router.register(r'claimoffer',ClaimOfferViewSet)
-router.register(r'connection', IndyConnectionViewSet)
 router.register(r'proof', ProofViewSet)
 router.register(r'endpoint', EndpointViewSet, base_name='endpoint')
 
