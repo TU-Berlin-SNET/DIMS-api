@@ -1,0 +1,901 @@
+swagger: '2.0'
+host: localhost:8000
+schemes:
+- http
+securityDefinitions:
+  basic:
+    type: basic
+info:
+  description: ''
+  title: IdentityChain API
+  version: ''
+paths:
+  /api/claim/:
+    get:
+      operationId: claim_list
+      parameters: []
+      responses:
+        '200':
+          description: ''
+      tags:
+      - claim
+    post:
+      consumes:
+      - application/json
+      operationId: claim_create
+      parameters:
+      - in: body
+        name: data
+        schema:
+          properties:
+            claim_object:
+              description: ''
+              type: string
+          required:
+          - claim_object
+          type: object
+      responses:
+        '201':
+          description: ''
+      tags:
+      - claim
+  /api/claim/{id}/:
+    delete:
+      operationId: claim_delete
+      parameters:
+      - description: A unique integer value identifying this claim.
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        '204':
+          description: ''
+      tags:
+      - claim
+    get:
+      operationId: claim_read
+      parameters:
+      - description: A unique integer value identifying this claim.
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        '200':
+          description: ''
+      tags:
+      - claim
+    patch:
+      consumes:
+      - application/json
+      operationId: claim_partial_update
+      parameters:
+      - description: A unique integer value identifying this claim.
+        in: path
+        name: id
+        required: true
+        type: integer
+      - in: body
+        name: data
+        schema:
+          properties:
+            claim_object:
+              description: ''
+              type: string
+          type: object
+      responses:
+        '200':
+          description: ''
+      tags:
+      - claim
+    put:
+      consumes:
+      - application/json
+      operationId: claim_update
+      parameters:
+      - description: A unique integer value identifying this claim.
+        in: path
+        name: id
+        required: true
+        type: integer
+      - in: body
+        name: data
+        schema:
+          properties:
+            claim_object:
+              description: ''
+              type: string
+          required:
+          - claim_object
+          type: object
+      responses:
+        '200':
+          description: ''
+      tags:
+      - claim
+  /api/claimdef/:
+    get:
+      operationId: claimdef_list
+      parameters: []
+      responses:
+        '200':
+          description: ''
+      tags:
+      - claimdef
+    post:
+      consumes:
+      - application/json
+      operationId: claimdef_create
+      parameters:
+      - in: body
+        name: data
+        schema:
+          properties:
+            schema_req_id:
+              description: ''
+              type: string
+          required:
+          - schema_req_id
+          type: object
+      responses:
+        '201':
+          description: ''
+      tags:
+      - claimdef
+  /api/claimdef/{id}/:
+    delete:
+      operationId: claimdef_delete
+      parameters:
+      - description: A unique integer value identifying this claim def.
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        '204':
+          description: ''
+      tags:
+      - claimdef
+    get:
+      operationId: claimdef_read
+      parameters:
+      - description: A unique integer value identifying this claim def.
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        '200':
+          description: ''
+      tags:
+      - claimdef
+    patch:
+      consumes:
+      - application/json
+      operationId: claimdef_partial_update
+      parameters:
+      - description: A unique integer value identifying this claim def.
+        in: path
+        name: id
+        required: true
+        type: integer
+      - in: body
+        name: data
+        schema:
+          properties:
+            schema_req_id:
+              description: ''
+              type: string
+          type: object
+      responses:
+        '200':
+          description: ''
+      tags:
+      - claimdef
+    put:
+      consumes:
+      - application/json
+      operationId: claimdef_update
+      parameters:
+      - description: A unique integer value identifying this claim def.
+        in: path
+        name: id
+        required: true
+        type: integer
+      - in: body
+        name: data
+        schema:
+          properties:
+            schema_req_id:
+              description: ''
+              type: string
+          required:
+          - schema_req_id
+          type: object
+      responses:
+        '200':
+          description: ''
+      tags:
+      - claimdef
+  /api/claimoffer/:
+    get:
+      operationId: claimoffer_list
+      parameters: []
+      responses:
+        '200':
+          description: ''
+      tags:
+      - claimoffer
+    post:
+      consumes:
+      - application/json
+      operationId: claimoffer_create
+      parameters:
+      - in: body
+        name: data
+        schema:
+          properties:
+            n_id:
+              description: ''
+              type: integer
+            schema:
+              description: ''
+              type: integer
+            seq_no:
+              description: ''
+              type: integer
+          required:
+          - n_id
+          - schema
+          - seq_no
+          type: object
+      responses:
+        '201':
+          description: ''
+      tags:
+      - claimoffer
+  /api/claimoffer/{id}/:
+    delete:
+      operationId: claimoffer_delete
+      parameters:
+      - description: A unique integer value identifying this claim offer.
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        '204':
+          description: ''
+      tags:
+      - claimoffer
+    get:
+      operationId: claimoffer_read
+      parameters:
+      - description: A unique integer value identifying this claim offer.
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        '200':
+          description: ''
+      tags:
+      - claimoffer
+    patch:
+      consumes:
+      - application/json
+      operationId: claimoffer_partial_update
+      parameters:
+      - description: A unique integer value identifying this claim offer.
+        in: path
+        name: id
+        required: true
+        type: integer
+      - in: body
+        name: data
+        schema:
+          properties:
+            n_id:
+              description: ''
+              type: integer
+            schema:
+              description: ''
+              type: integer
+            seq_no:
+              description: ''
+              type: integer
+          type: object
+      responses:
+        '200':
+          description: ''
+      tags:
+      - claimoffer
+    put:
+      consumes:
+      - application/json
+      operationId: claimoffer_update
+      parameters:
+      - description: A unique integer value identifying this claim offer.
+        in: path
+        name: id
+        required: true
+        type: integer
+      - in: body
+        name: data
+        schema:
+          properties:
+            n_id:
+              description: ''
+              type: integer
+            schema:
+              description: ''
+              type: integer
+            seq_no:
+              description: ''
+              type: integer
+          required:
+          - n_id
+          - schema
+          - seq_no
+          type: object
+      responses:
+        '200':
+          description: ''
+      tags:
+      - claimoffer
+  /api/connection/:
+    x-swagger-router-controller: connection
+    post:
+      consumes:
+      - application/json
+      operationId: connection_create
+      parameters:
+      - in: body
+        name: data
+        schema:
+          properties:
+            connection_offer:
+              description: ''
+              type: object
+            endpoint:
+              description: ''
+              type: string
+            wallet:
+              description: ''
+              type: string
+          required:
+          - wallet
+          - connection_offer
+          type: object
+      responses:
+        '201':
+          description: ''
+      tags:
+      - connection
+  /api/connectionoffer/:
+    x-swagger-router-controller: connectionOffer
+    get:
+      operationId: connectionoffer_list
+      parameters: []
+      responses:
+        '200':
+          description: ''
+      tags:
+      - connectionoffer
+    post:
+      consumes:
+      - application/json
+      operationId: connectionoffer_create
+      parameters:
+      - in: body
+        name: data
+        schema:
+          properties:
+            endpoint:
+              description: ''
+              type: string
+            wallet:
+              description: ''
+              type: string
+          required:
+          - wallet
+          type: object
+      responses:
+        '201':
+          description: ''
+      tags:
+      - connectionoffer
+  /api/connectionoffer/{nonce}/:
+    x-swagger-router-controller: connectionOffer
+    delete:
+      operationId: connectionoffer_delete
+      parameters:
+      - description: A unique value identifying this connection offer.
+        in: path
+        name: nonce
+        required: true
+        type: string
+      responses:
+        '204':
+          description: ''
+      tags:
+      - connectionoffer
+    get:
+      operationId: connectionoffer_read
+      parameters:
+      - description: A unique value identifying this connection offer.
+        in: path
+        name: nonce
+        required: true
+        type: string
+      responses:
+        '200':
+          description: ''
+      tags:
+      - connectionoffer
+  /api/endpoint/:
+    post:
+      consumes:
+      - application/json
+      description: Deliver message to this endpoint
+      operationId: endpoint_create
+      parameters:
+      - in: body
+        name: data
+        schema:
+          properties:
+            message:
+              description: ''
+              type: string
+            ref:
+              description: ''
+              type: string
+            signature:
+              description: ''
+              type: string
+            target:
+              description: ''
+              type: string
+            type:
+              description: ''
+              type: string
+          required:
+          - target
+          - ref
+          - signature
+          - message
+          type: object
+      responses:
+        '201':
+          description: ''
+      summary: Deliver message to this endpoint
+      tags:
+      - endpoint
+  /api/proof/:
+    get:
+      operationId: proof_list
+      parameters: []
+      responses:
+        '200':
+          description: ''
+      tags:
+      - proof
+    post:
+      consumes:
+      - application/json
+      operationId: proof_create
+      parameters:
+      - in: body
+        name: data
+        schema:
+          properties:
+            proof_obj:
+              description: ''
+              type: string
+          required:
+          - proof_obj
+          type: object
+      responses:
+        '201':
+          description: ''
+      tags:
+      - proof
+  /api/proof/{id}/:
+    delete:
+      operationId: proof_delete
+      parameters:
+      - description: A unique integer value identifying this proof.
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        '204':
+          description: ''
+      tags:
+      - proof
+    get:
+      operationId: proof_read
+      parameters:
+      - description: A unique integer value identifying this proof.
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        '200':
+          description: ''
+      tags:
+      - proof
+    patch:
+      consumes:
+      - application/json
+      operationId: proof_partial_update
+      parameters:
+      - description: A unique integer value identifying this proof.
+        in: path
+        name: id
+        required: true
+        type: integer
+      - in: body
+        name: data
+        schema:
+          properties:
+            proof_obj:
+              description: ''
+              type: string
+          type: object
+      responses:
+        '200':
+          description: ''
+      tags:
+      - proof
+    put:
+      consumes:
+      - application/json
+      operationId: proof_update
+      parameters:
+      - description: A unique integer value identifying this proof.
+        in: path
+        name: id
+        required: true
+        type: integer
+      - in: body
+        name: data
+        schema:
+          properties:
+            proof_obj:
+              description: ''
+              type: string
+          required:
+          - proof_obj
+          type: object
+      responses:
+        '200':
+          description: ''
+      tags:
+      - proof
+  /api/schema/:
+    get:
+      operationId: schema_list
+      parameters: []
+      responses:
+        '200':
+          description: ''
+      tags:
+      - schema
+    post:
+      consumes:
+      - application/json
+      operationId: schema_create
+      parameters:
+      - in: body
+        name: data
+        schema:
+          properties:
+            schema_object:
+              description: ''
+              type: string
+          required:
+          - schema_object
+          type: object
+      responses:
+        '201':
+          description: ''
+      tags:
+      - schema
+  /api/schema/{id}/:
+    delete:
+      operationId: schema_delete
+      parameters:
+      - description: A unique integer value identifying this schema.
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        '204':
+          description: ''
+      tags:
+      - schema
+    get:
+      operationId: schema_read
+      parameters:
+      - description: A unique integer value identifying this schema.
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        '200':
+          description: ''
+      tags:
+      - schema
+    patch:
+      consumes:
+      - application/json
+      operationId: schema_partial_update
+      parameters:
+      - description: A unique integer value identifying this schema.
+        in: path
+        name: id
+        required: true
+        type: integer
+      - in: body
+        name: data
+        schema:
+          properties:
+            schema_object:
+              description: ''
+              type: string
+          type: object
+      responses:
+        '200':
+          description: ''
+      tags:
+      - schema
+    put:
+      consumes:
+      - application/json
+      operationId: schema_update
+      parameters:
+      - description: A unique integer value identifying this schema.
+        in: path
+        name: id
+        required: true
+        type: integer
+      - in: body
+        name: data
+        schema:
+          properties:
+            schema_object:
+              description: ''
+              type: string
+          required:
+          - schema_object
+          type: object
+      responses:
+        '200':
+          description: ''
+      tags:
+      - schema
+  /api/users/:
+    get:
+      operationId: users_list
+      parameters: []
+      responses:
+        '200':
+          description: ''
+      tags:
+      - users
+    post:
+      consumes:
+      - application/json
+      operationId: users_create
+      parameters:
+      - in: body
+        name: data
+        schema:
+          properties:
+            email:
+              description: ''
+              type: string
+            is_staff:
+              description: Designates whether the user can log into this admin site.
+              type: boolean
+            username:
+              description: Required. 150 characters or fewer. Letters, digits and
+                @/./+/-/_ only.
+              type: string
+            wallets:
+              description: ''
+              items:
+                type: string
+              type: array
+          required:
+          - username
+          - wallets
+          type: object
+      responses:
+        '201':
+          description: ''
+      tags:
+      - users
+  /api/users/{id}/:
+    delete:
+      operationId: users_delete
+      parameters:
+      - description: A unique integer value identifying this user.
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        '204':
+          description: ''
+      tags:
+      - users
+    get:
+      operationId: users_read
+      parameters:
+      - description: A unique integer value identifying this user.
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        '200':
+          description: ''
+      tags:
+      - users
+    patch:
+      consumes:
+      - application/json
+      operationId: users_partial_update
+      parameters:
+      - description: A unique integer value identifying this user.
+        in: path
+        name: id
+        required: true
+        type: integer
+      - in: body
+        name: data
+        schema:
+          properties:
+            email:
+              description: ''
+              type: string
+            is_staff:
+              description: Designates whether the user can log into this admin site.
+              type: boolean
+            username:
+              description: Required. 150 characters or fewer. Letters, digits and
+                @/./+/-/_ only.
+              type: string
+            wallets:
+              description: ''
+              items:
+                type: string
+              type: array
+          type: object
+      responses:
+        '200':
+          description: ''
+      tags:
+      - users
+    put:
+      consumes:
+      - application/json
+      operationId: users_update
+      parameters:
+      - description: A unique integer value identifying this user.
+        in: path
+        name: id
+        required: true
+        type: integer
+      - in: body
+        name: data
+        schema:
+          properties:
+            email:
+              description: ''
+              type: string
+            is_staff:
+              description: Designates whether the user can log into this admin site.
+              type: boolean
+            username:
+              description: Required. 150 characters or fewer. Letters, digits and
+                @/./+/-/_ only.
+              type: string
+            wallets:
+              description: ''
+              items:
+                type: string
+              type: array
+          required:
+          - username
+          - wallets
+          type: object
+      responses:
+        '200':
+          description: ''
+      tags:
+      - users
+  /api/wallets/:
+    x-swagger-router-controller: wallet
+    get:
+      operationId: listWallets
+      parameters: []
+      responses:
+        '200':
+          description: ''
+      tags:
+      - wallet
+    post:
+      consumes:
+      - application/json
+      description: Create a new Wallet (optionally with given name and settings)
+      operationId: createWallet
+      parameters:
+      - in: body
+        name: data
+        schema:
+          properties:
+            config:
+              description: ''
+              type: string
+            credentials:
+              description: ''
+              type: string
+            name:
+              description: ''
+              type: string
+            poolName:
+              description: ''
+              type: string
+            seed:
+              description: ''
+              type: string
+            xtype:
+              description: ''
+              type: string
+          type: object
+      responses:
+        '201':
+          description: ''
+      summary: Create a new Wallet (optionally with given name and settings)
+      tags:
+      - wallet
+  /api/wallets/{name}/:
+    x-swagger-router-controller: wallet
+    get:
+      description: Return given Wallet.
+      operationId: retrieveWallet
+      parameters:
+      - description: A unique value identifying this wallet.
+        in: path
+        name: name
+        required: true
+        type: string
+      responses:
+        '200':
+          description: ''
+      summary: Return given Wallet.
+      tags:
+      - wallet
+    delete:
+      description: Delete given Wallet
+      operationId: deleteWallet
+      parameters:
+      - description: A unique value identifying this wallet.
+        in: path
+        name: name
+        required: true
+        type: string
+      responses:
+        '204':
+          description: ''
+      summary: Delete given Wallet
+      tags:
+      - wallet
