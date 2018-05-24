@@ -30,10 +30,8 @@ const server = app.listen(process.env.APP_PORT, process.env.APP_HOST, () => {
   log.info('Access APIDocs at /api/docs');
 
   indy.createPoolLedgerConfig(process.env.POOL_NAME, {
-    'genesis_txn': __dirname + process.env.GENESIS_TXN,
-  }, (err) => {
-    if (err) log.warn(err);
-  });
+    genesis_txn: `${__dirname}/${process.env.GENESIS_TXN}`,
+  }, (err) => log.warn(err));
 });
 
 // for testing purposes
