@@ -53,6 +53,28 @@ const schema = new Mongoose.Schema({
   },
 });
 
+schema.virtual('handle')
+  .get(function() {
+    return this.__handle || -1;
+  })
+  .set(function(value) {
+    this.__handle = value;
+  });
+
+schema.method('open', async function() {
+  this.handle = await indy.openWallet(this._id, this.config, this.credentials);
+  return this.handle;
+});
+
+schema.method('close', async function() {
+  if (this.handle !== -1) await indy.closeWallet(this.handle);
+});
+
+schema.method('createDid', async function() {
+  const didJSON = (this.seed) ? {seed: this.seed} : {};
+  return indy.createAndStoreMyDid(this.handle, didJSON);
+});
+
 schema.pre('remove', async function() {
   // TODO cascade delete?
   await indy.deleteWallet(this.name, this.credentials);

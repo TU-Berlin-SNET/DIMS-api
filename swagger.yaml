@@ -373,7 +373,7 @@ paths:
           description: ''
       tags:
       - connection
-  /api/connectionoffer/:
+  /api/connectionoffers/:
     x-swagger-router-controller: connectionOffer
     get:
       operationId: connectionoffer_list
@@ -406,7 +406,7 @@ paths:
           description: ''
       tags:
       - connectionoffer
-  /api/connectionoffer/{nonce}/:
+  /api/connectionoffers/{nonce}/:
     x-swagger-router-controller: connectionOffer
     delete:
       operationId: connectionoffer_delete
