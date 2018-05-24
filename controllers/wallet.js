@@ -54,6 +54,8 @@ module.exports = {
   }),
 
   delete: wrap(async (req, res, next) => {
+    // FIXME Wallet.remove will not trigger remove middleware hook
+    // use Wallet.findById followed by remove
     await Wallet.remove({_id: req.params.id});
     return res.status(204).end();
   }),

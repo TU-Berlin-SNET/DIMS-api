@@ -11,13 +11,18 @@ const swaggerUi = require('swagger-ui-express');
 const swaggerDoc = YAML.load('./swagger.yaml');
 
 const log = require('./log').log;
+const middleware = require('./middleware');
 const routes = require('./routes');
 
 const app = express();
 
+app.use(middleware.before);
+
 app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerDoc));
 
 app.use('/api/', routes);
+
+app.use(middleware.after);
 
 const server = app.listen(process.env.APP_PORT, process.env.APP_HOST, () => {
   log.info('IDChain API now up at %s:%s',
