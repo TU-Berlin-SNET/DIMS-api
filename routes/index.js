@@ -2,14 +2,12 @@
  * IDChain Agent REST API Routes
  */
 
-const bodyParser = require('body-parser');
 const router = require('express').Router();
 
 const auth = require('../middleware/auth');
 const user = require('../controllers/user');
 const wallet = require('../controllers/wallet');
-
-router.use(bodyParser.json());
+const connection = require('../controllers/connection');
 
 router.route('/users')
   // TODO rate-limiting?
@@ -29,5 +27,8 @@ router.route('/wallets')
 router.route('/wallets/:id')
   .get(wallet.retrieve)
   .delete(wallet.delete);
+
+router.route('/connectionoffers')
+  .post(connection.create);
 
 module.exports = router;
