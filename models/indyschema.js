@@ -35,12 +35,14 @@ const schema = new Mongoose.Schema({
     type: String,
     required: true,
     default: null,
+  },
+  walletname:{
+    type: String,
+    required: true
   }
 });
 
 schema.pre('save', async () =>{
-  const issuerDid = Wallet.find()
-  const schema = await indy.issuerCreateSchema(issuerDid, name,version, attrNamesJson, next);
 
 });
 

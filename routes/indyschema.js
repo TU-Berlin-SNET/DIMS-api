@@ -4,7 +4,7 @@ const schema = require('../controllers/indyschema')
 
 router.route('/schema')
   .get(schema.read)
-  .post();
+  .post(schema.create);
 
 router.route('/schema/:id')
   .get();
