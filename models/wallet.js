@@ -1,12 +1,11 @@
 /**
- * IDCHain Agent REST API
+ * IDChain Agent REST API
  * Wallet Model
  */
 
 const indy = require('indy-sdk');
 const uuidv4 = require('uuid/v4');
 const Mongoose = require('../db');
-const log = require('../log').log;
 const ObjectId = Mongoose.Schema.Types.ObjectId;
 
 const schema = new Mongoose.Schema({
@@ -28,7 +27,6 @@ const schema = new Mongoose.Schema({
   poolName: {
     type: String,
     required: false,
-
   },
   xtype: {
     type: String,
@@ -45,24 +43,19 @@ const schema = new Mongoose.Schema({
     required: false,
     default: null,
   },
-});
-
-schema.pre('save', async function() {
-  await indy.createWallet(
-    this.poolName,
-    this._id,
-    this.xtype,
-    this.config,
-    this.credentials);
+  seed: {
+    type: String,
+    required: false,
+  },
+  issueDid: {
+    type: String,
+    required: false,
+  },
 });
 
 schema.pre('remove', async function() {
   // TODO cascade delete?
-  try {
-    await indy.deleteWallet(this.name, this.credentials);
-  } catch (err) {
-    log.warn(err);
-  }
+  await indy.deleteWallet(this.name, this.credentials);
 });
 
 module.exports = Mongoose.model('Wallet', schema);

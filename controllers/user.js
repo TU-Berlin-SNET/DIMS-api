@@ -5,6 +5,8 @@ const wrap = require('../asyncwrap');
 module.exports = {
 
   create: wrap(async (req, res, next) => {
+    const userExists = await User.count({username: req.body.username}).exec() > 0;
+    if (userExists) return next({status: 400, message: 'username already taken'});
     let u = new User({username: req.body.username, password: req.body.password});
     u = await u.save();
     return res.status(201).set('location', '/users/'+u._id).end();

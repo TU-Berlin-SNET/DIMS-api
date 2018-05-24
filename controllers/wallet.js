@@ -2,14 +2,14 @@
 const indy = require('indy-sdk');
 
 const wrap = require('../asyncwrap');
+const log = require('../log').log;
 const Wallet = require('../models/wallet');
 
 module.exports = {
 
   list: wrap(async (req, res, next) => {
-    Wallet.find({owner: req.user}).then((w) => {
-      return res.status(200).send(w);
-    }).catch(next);
+    const w = await Wallet.find({owner: req.user}).exec();
+    return res.status(200).send(w);
   }),
 
   create: wrap(async (req, res, next) => {
@@ -19,9 +19,20 @@ module.exports = {
     if (data.xtype) doc.xtype = data.xtype;
     if (data.config) doc.config = data.config;
     if (data.credentials) doc.credentials = data.credentials;
-    doc.poolName = data.poolName || 'sandbox';
+    if (data.seed) doc.seed = data.seed;
+    doc.poolName = data.poolName || process.env.POOL_NAME;
     doc.owner = req.user;
+
     let w = new Wallet(doc);
+    await indy.createWallet(w.poolName, w._id, w.xtype, w.config, w.credentials);
+    const handle = await indy.openWallet(w._id, w.config, w.credentials);
+    try {
+      const didJSON = (w.seed) ? {seed: w.seed} : {};
+      const [did] = await indy.createAndStoreMyDid(handle, didJSON);
+      w.issueDid = did;
+    } finally {
+      if (handle !== -1) await indy.closeWallet(handle);
+    }
     w = await w.save();
     return res.status(201).send(w);
   }),
@@ -43,6 +54,8 @@ module.exports = {
   }),
 
   delete: wrap(async (req, res, next) => {
+    // FIXME Wallet.remove will not trigger remove middleware hook
+    // use Wallet.findById followed by remove
     await Wallet.remove({_id: req.params.id});
     return res.status(204).end();
   }),
