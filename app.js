@@ -24,7 +24,7 @@ const server = app.listen(process.env.APP_PORT, process.env.APP_HOST, () => {
     server.address().address, server.address().port);
   log.info('Access APIDocs at /api/docs');
 
-  indy.createPoolLedgerConfig('sandbox', {
+  indy.createPoolLedgerConfig(process.env.POOL_NAME, {
     'genesis_txn': __dirname + process.env.GENESIS_TXN,
   }, (err) => {
     if (err) log.warn(err);
