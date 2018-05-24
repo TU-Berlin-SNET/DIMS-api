@@ -23,10 +23,12 @@ const schema = new Mongoose.Schema({
 });
 
 schema.pre('save', async function() {
-  this.password = await bcrypt.hash(this.password, SALTROUNDS);
+  if (this.isModified('password')) {
+    this.password = await bcrypt.hash(this.password, SALTROUNDS);
+  }
 });
 
-schema.pre('remove', async () => {
+schema.pre('remove', async function() {
   await Wallet.remove({owner: this._id});
 });
 
