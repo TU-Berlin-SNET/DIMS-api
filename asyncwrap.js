@@ -3,4 +3,7 @@
  * @param {*} fn
  */
 
-module.exports = (fn) => (req, res, next) => fn(req, res, next).catch(next);
+module.exports = {
+  wrap: (fn) => (req, res, next) => fn(req, res, next).catch(next),
+  wrapEx: (fn) => (req, res, next, value) => fn(req, res, next, value).catch(next),
+};

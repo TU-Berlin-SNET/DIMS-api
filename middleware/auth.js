@@ -11,7 +11,7 @@ const log = require('../log').log;
 const User = require('../models/user');
 
 passport.use(new BasicStrategy(async (username, password, done) => {
-  log.info('authenticating..');
+  log.info('auth middleware');
   try {
     const u = await User.findOne({username: username}).exec();
     if (!u) return done(null, false);

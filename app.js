@@ -5,12 +5,12 @@
 
 require('dotenv').config();
 const express = require('express');
-const indy = require('indy-sdk');
 const YAML = require('yamljs');
 const swaggerUi = require('swagger-ui-express');
 const swaggerDoc = YAML.load('./swagger.yaml');
 
 const log = require('./log').log;
+const pool = require('./pool');
 const middleware = require('./middleware');
 const routes = require('./routes');
 
@@ -24,14 +24,18 @@ app.use('/api/', routes);
 
 app.use(middleware.after);
 
-const server = app.listen(process.env.APP_PORT, process.env.APP_HOST, () => {
+const server = app.listen(process.env.APP_PORT, process.env.APP_HOST, async () => {
   log.info('IDChain API now up at %s:%s',
     server.address().address, server.address().port);
   log.info('Access APIDocs at /api/docs');
 
-  indy.createPoolLedgerConfig(process.env.POOL_NAME, {
-    genesis_txn: `${__dirname}/${process.env.GENESIS_TXN}`,
-  }, (err) => log.warn(err));
+  try {
+    await pool.createConfig();
+    await pool.openLedger();
+  } catch (err) {
+    log.err(err);
+    process.exit(1);
+  }
 });
 
 // for testing purposes

@@ -2,7 +2,7 @@
 const logMiddleware = require('../log').middleware;
 const bodyParser = require('body-parser');
 const notFound = require('./404');
-const errorMiddleware = require('./error');
+const {resultMiddleware, errorMiddleware} = require('./result');
 
 module.exports = {
   before: [
@@ -12,6 +12,7 @@ module.exports = {
 
   after: [
     notFound,
+    resultMiddleware,
     errorMiddleware,
   ],
 };

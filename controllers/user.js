@@ -1,31 +1,41 @@
 
+const APIResult = require('../api-result');
 const User = require('../models/user');
-const wrap = require('../asyncwrap');
+const Wallet = require('../models/wallet');
+const wrap = require('../asyncwrap').wrap;
+const log = require('../log').log;
 
 module.exports = {
 
   create: wrap(async (req, res, next) => {
+    log.debug('userController: create called');
     const userExists = await User.count({username: req.body.username}).exec() > 0;
-    if (userExists) return next({status: 400, message: 'username already taken'});
+    if (userExists) {
+      return next(new APIResult(400, {message: 'username already taken'}));
+    }
     let u = new User({username: req.body.username, password: req.body.password});
     u = await u.save();
-    return res.status(201).set('location', '/users/'+u._id).end();
+    res.set('location', '/users/'+u._id);
+    next(new APIResult(201));
   }),
 
   retrieve: wrap(async (req, res, next) => {
-    // TODO return user's wallets, too
-    if (req.user.id === req.params.id) {
-      return res.status(200).set('content-type', 'application/json').send(req.user);
-    }
-    next();
+    log.debug('userController: retrieve called');
+    if (req.params.user !== 'me' && req.user.id !== req.params.id) return next();
+    const wallets = await Wallet.find({owner: req.user}).exec();
+    const data = req.user.toObject();
+    data.wallets = wallets;
+    next(new APIResult(200, data));
   }),
 
   update: wrap(async (req, res, next) => {
-    next({message: 'Not yet implemented', status: 501});
+    log.debug('userController: update called');
+    next(new APIResult(501, {message: 'Not yet implemented'}));
   }),
 
   delete: wrap(async (req, res, next) => {
-    next({message: 'Not yet implemented', status: 501});
+    log.debug('userController: delete called');
+    next(new APIResult(501, {message: 'Not yet implemented'}));
   }),
 
 };

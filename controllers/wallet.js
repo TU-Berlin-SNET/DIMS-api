@@ -1,18 +1,21 @@
 
 const indy = require('indy-sdk');
 
-const wrap = require('../asyncwrap');
+const wrap = require('../asyncwrap').wrap;
 const log = require('../log').log;
+const APIResult = require('../api-result');
 const Wallet = require('../models/wallet');
 
 module.exports = {
 
   list: wrap(async (req, res, next) => {
+    log.debug('walletController list');
     const w = await Wallet.find({owner: req.user}).exec();
-    return res.status(200).send(w);
+    next(new APIResult(200, w));
   }),
 
   create: wrap(async (req, res, next) => {
+    log.debug('walletController create');
     const data = req.body;
     let doc = {};
     if (data.name) doc._id = data.name;
@@ -34,30 +37,22 @@ module.exports = {
       if (handle !== -1) await indy.closeWallet(handle);
     }
     w = await w.save();
-    return res.status(201).send(w);
+    next(new APIResult(201, w));
   }),
 
   retrieve: wrap(async (req, res, next) => {
-    let w = await Wallet.findById(req.params.id).exec();
-    let handle = -1;
-    try {
-      handle = await indy.openWallet(w._id, w.config, w.credentials);
-      w = w.toObject();
-      w.dids = await indy.listMyDidsWithMeta(handle);
-      w.pairwise = await indy.listPairwise(handle);
-      return res.status(200).set('content-type', 'application/json').send(w);
-    } finally {
-      if (handle !== -1) {
-        await indy.closeWallet(handle);
-      }
-    }
+    log.debug('walletController retrieve');
+    let w = req.wallet.toObject();
+    w.dids = await indy.listMyDidsWithMeta(req.wallet.handle);
+    w.pairwise = await indy.listPairwise(req.wallet.handle);
+    next(new APIResult(200, w));
   }),
 
   delete: wrap(async (req, res, next) => {
-    // FIXME Wallet.remove will not trigger remove middleware hook
-    // use Wallet.findById followed by remove
-    await Wallet.remove({_id: req.params.id});
-    return res.status(204).end();
+    log.debug('walletController delete');
+    await req.wallet.remove();
+    delete req.wallet;
+    next(new APIResult(204));
   }),
 
 };

@@ -5,7 +5,9 @@
 
 const indy = require('indy-sdk');
 const uuidv4 = require('uuid/v4');
+const log = require('../log').log;
 const Mongoose = require('../db');
+const ConnectionOffer = require('./connectionoffer');
 const ObjectId = Mongoose.Schema.Types.ObjectId;
 
 const schema = new Mongoose.Schema({
@@ -62,22 +64,30 @@ schema.virtual('handle')
   });
 
 schema.method('open', async function() {
-  this.handle = await indy.openWallet(this._id, this.config, this.credentials);
+  log.debug('wallet model open');
+  if (this.handle === -1) {
+    this.handle = await indy.openWallet(this._id, this.config, this.credentials);
+  }
   return this.handle;
 });
 
 schema.method('close', async function() {
+  log.debug('wallet model close');
   if (this.handle !== -1) await indy.closeWallet(this.handle);
 });
 
 schema.method('createDid', async function() {
+  log.debug('wallet model createDid');
+  // TEST ME this seems to create the same did every time,
+  // maybe use seed only once (for issuerDid)
   const didJSON = (this.seed) ? {seed: this.seed} : {};
   return indy.createAndStoreMyDid(this.handle, didJSON);
 });
 
 schema.pre('remove', async function() {
-  // TODO cascade delete?
-  await indy.deleteWallet(this.name, this.credentials);
+  log.debug('wallet model pre-remove');
+  await ConnectionOffer.remove({issuerWallet: this}).exec();
+  await indy.deleteWallet(this._id, this.credentials);
 });
 
 module.exports = Mongoose.model('Wallet', schema);

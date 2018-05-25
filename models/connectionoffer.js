@@ -12,6 +12,7 @@ const ObjectId = Mongoose.Schema.Types.ObjectId;
  * @return {String} uuidv4 in hex format
  */
 function uuidv4hex() {
+  // FIXME nonce is some long number instead of a short-ish string
   return Buffer.from(uuidv4(), 'utf-8').toString('hex');
 }
 

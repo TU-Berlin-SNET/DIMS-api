@@ -5,49 +5,36 @@
 
 const indy = require('indy-sdk');
 
-const wrap = require('../asyncwrap');
+const wrap = require('../asyncwrap').wrap;
 const log = require('../log').log;
-const Wallet = require('../models/wallet');
+const pool = require('../pool');
+const APIResult = require('../api-result');
 const ConnectionOffer = require('../models/connectionoffer');
 
 module.exports = {
 
   create: wrap(async (req, res, next) => {
-    const w = await Wallet.findOne({
-      _id: req.body.wallet,
-      owner: req.user,
-    }).exec();
-    if (!w) return next({status: 400, message: 'Wallet does not exist'});
-    log.info(w);
-    let poolHandle = -1;
-    try {
-      await w.open();
-      log.info('Wallet Handle: ' + w.handle);
-      const [fromToDid, fromToKey] = await w.createDid();
-      log.info('fromToDid: %s, fromToKey: %s', fromToDid, fromToKey);
-      await indy.setEndpointForDid(w.handle, fromToDid,
-        process.env.APP_ENDPOINT, fromToKey);
-      const nymRequest = await indy.buildNymRequest(
-        w.issueDid, fromToDid, fromToKey);
-      log.info('nymRequest: %s', nymRequest);
-      poolHandle = await indy.openPoolLedger(process.env.POOL_NAME);
-      const nymResult = await indy.signAndSubmitRequest(
-        poolHandle, w.handle, w.issueDid, nymRequest);
-      log.info('nymResult: %s', nymResult);
-      let connectionOffer = new ConnectionOffer({
-        issuerWallet: w,
-        issuerDid: fromToDid,
-      });
-      log.info('connectionoffer: %s', connectionOffer);
-      connectionOffer = await connectionOffer.save();
-      return res.status(200).json({
-          did: connectionOffer.issuerDid,
-          nonce: connectionOffer.nonce,
-        });
-    } finally {
-      await w.close();
-      if (poolHandle !== -1) indy.closePoolLedger(poolHandle);
-    }
+    log.debug('connection controller create');
+    const [fromToDid, fromToKey] = await req.wallet.createDid();
+    log.info('fromToDid: %s, fromToKey: %s', fromToDid, fromToKey);
+    await indy.setEndpointForDid(req.wallet.handle, fromToDid,
+      process.env.APP_ENDPOINT, fromToKey);
+    const nymRequest = await indy.buildNymRequest(
+      req.wallet.issueDid, fromToDid, fromToKey);
+    log.info('nymRequest: %s', nymRequest);
+    const nymResult = await indy.signAndSubmitRequest(
+      pool.handle, req.wallet.handle, req.wallet.issueDid, nymRequest);
+    log.info('nymResult: %s', nymResult);
+    let connectionOffer = new ConnectionOffer({
+      issuerWallet: req.wallet,
+      issuerDid: fromToDid,
+    });
+    log.info('connectionoffer: %s', connectionOffer);
+    connectionOffer = await connectionOffer.save();
+    next(new APIResult(200, {
+      did: connectionOffer.issuerDid,
+      nonce: connectionOffer.nonce,
+    }));
   }),
 
 };
