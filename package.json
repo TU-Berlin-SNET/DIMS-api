@@ -9,7 +9,7 @@
   "main": "app.js",
   "scripts": {
     "start": "node app.js",
-    "dev": "nodemon app.js | pino",
+    "dev": "DEBUG=* nodemon -r pino-debug app.js | pino",
     "test": "NODE_ENV=testing mocha --exit test/index.js"
   },
   "dependencies": {
@@ -32,6 +32,7 @@
     "eslint-config-google": "^0.9.1",
     "mocha": "^5.2.0",
     "nodemon": "^1.17.4",
+    "pino-debug": "^1.1.1",
     "supertest": "^3.1.0"
   }
 }
