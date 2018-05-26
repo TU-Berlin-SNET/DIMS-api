@@ -35,6 +35,7 @@ class PoolLedger {
    * Open Ledger connection
    */
   async openLedger() {
+    log.info('providing pool handle for pool_name %s', process.env.POOL_NAME);
     this.handle = await indy.openPoolLedger(process.env.POOL_NAME);
   }
 }

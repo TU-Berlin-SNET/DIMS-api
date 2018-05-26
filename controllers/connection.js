@@ -20,10 +20,10 @@ module.exports = {
     await indy.setEndpointForDid(req.wallet.handle, fromToDid,
       process.env.APP_ENDPOINT, fromToKey);
     const nymRequest = await indy.buildNymRequest(
-      req.wallet.issueDid, fromToDid, fromToKey);
+      req.wallet.issuerDid, fromToDid, fromToKey);
     log.info('nymRequest: %s', nymRequest);
     const nymResult = await indy.signAndSubmitRequest(
-      pool.handle, req.wallet.handle, req.wallet.issueDid, nymRequest);
+      pool.handle, req.wallet.handle, req.wallet.issuerDid, nymRequest);
     log.info('nymResult: %s', nymResult);
     let connectionOffer = new ConnectionOffer({
       issuerWallet: req.wallet,

@@ -9,6 +9,7 @@ const walletProvider = require('../middleware/walletProvider');
 const user = require('../controllers/user');
 const wallet = require('../controllers/wallet');
 const connection = require('../controllers/connection');
+const schema = require('../controllers/indyschema');
 
 router.route('/users')
   // TODO rate-limiting?
@@ -33,6 +34,12 @@ router.route('/wallets/:wallet')
 
 router.route('/connectionoffers')
   .post(connection.create);
+
+router.route('/schema')
+  .post(schema.create);
+
+router.route('schema/:schema')
+  .get(schema.retrieve);
 
 router.use(walletProvider.after);
 

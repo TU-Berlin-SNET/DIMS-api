@@ -49,7 +49,7 @@ const schema = new Mongoose.Schema({
     type: String,
     required: false,
   },
-  issueDid: {
+  issuerDid: {
     type: String,
     required: false,
   },
