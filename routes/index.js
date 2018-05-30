@@ -41,10 +41,11 @@ router.route('/connectionoffers')
 router.route('/connections')
   .post(connection.accept);
 
-router.route('/schema')
+router.route('/schemas')
+  .get(schema.list)
   .post(schema.create);
 
-router.route('schema/:schema')
+router.route('/schemas/:schema/:wallet')
   .get(schema.retrieve);
 
 router.use(walletProvider.after);

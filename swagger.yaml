@@ -576,7 +576,7 @@ paths:
           description: ''
       tags:
       - proof
-  /api/schema/:
+  /api/schemas/:
     get:
       operationId: schema_list
       parameters: []
@@ -584,7 +584,7 @@ paths:
         '200':
           description: ''
       tags:
-      - schema
+      - schemas
     post:
       consumes:
       - application/json
@@ -594,92 +594,65 @@ paths:
         name: data
         schema:
           properties:
-            schema_object:
-              description: ''
+            name:
+              description: A unique name of the schema
+              type: string
+            version:
+              description: version for schema
+              type: string
+            attrNames:
+              description: list of attribute names put into the schema
+              type: array
+              items:
+               type: string
+            wallet:
+              description: A unique value identifying this wallet
               type: string
           required:
-          - schema_object
+          - name, version, attrNames, wallet
           type: object
       responses:
         '201':
           description: ''
       tags:
-      - schema
-  /api/schema/{id}/:
+      - schemas
+  /api/schemas/{id}/{wallet}:
     delete:
       operationId: schema_delete
       parameters:
-      - description: A unique integer value identifying this schema.
+      - description: A unique string value identifying this schema.
         in: path
         name: id
         required: true
-        type: integer
+        type: string
+      - description: A unique value identifying this wallet.
+        in: path
+        name: wallet
+        required: true
+        type: string
       responses:
         '204':
           description: ''
       tags:
-      - schema
+        - schemas
     get:
       operationId: schema_read
       parameters:
-      - description: A unique integer value identifying this schema.
+      - description: A unique string value identifying this schema.
         in: path
         name: id
         required: true
-        type: integer
+        type: string
+      - description: A unique value identifying this wallet.
+        in: path
+        name: wallet
+        required: true
+        type: string
       responses:
         '200':
           description: ''
       tags:
-      - schema
-    patch:
-      consumes:
-      - application/json
-      operationId: schema_partial_update
-      parameters:
-      - description: A unique integer value identifying this schema.
-        in: path
-        name: id
-        required: true
-        type: integer
-      - in: body
-        name: data
-        schema:
-          properties:
-            schema_object:
-              description: ''
-              type: string
-          type: object
-      responses:
-        '200':
-          description: ''
-      tags:
-      - schema
-    put:
-      consumes:
-      - application/json
-      operationId: schema_update
-      parameters:
-      - description: A unique integer value identifying this schema.
-        in: path
-        name: id
-        required: true
-        type: integer
-      - in: body
-        name: data
-        schema:
-          properties:
-            schema_object:
-              description: ''
-              type: string
-          required:
-          - schema_object
-          type: object
-      responses:
-        '200':
-          description: ''
-      tags:
-      - schema
+        - schemas
   /api/users/:
     get:
       operationId: users_list
