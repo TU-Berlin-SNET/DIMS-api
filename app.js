@@ -31,9 +31,14 @@ const server = app.listen(process.env.APP_PORT, process.env.APP_HOST, async () =
 
   try {
     await pool.createConfig();
+  } catch (err) {
+    log.warn(err);
+  }
+
+  try {
     await pool.openLedger();
   } catch (err) {
-    log.err(err);
+    log.error(err);
     process.exit(1);
   }
 });
