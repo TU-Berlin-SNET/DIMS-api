@@ -22,7 +22,6 @@ module.exports = {
     if (data.xtype) doc.xtype = data.xtype;
     if (data.config) doc.config = data.config;
     if (data.credentials) doc.credentials = data.credentials;
-    if (data.seed) doc.seed = data.seed;
     doc.poolName = data.poolName || process.env.POOL_NAME;
     doc.owner = req.user;
 
