@@ -6,6 +6,8 @@ const indy = require('indy-sdk');
 //const wP = require('../middleware/walletProvider');
 const wrap = require('../asyncwrap').wrap;
 const pool = require('../pool');
+const log = require('../log').log;
+
 const APIResult = require('../api-result');
 
 
@@ -27,6 +29,11 @@ module.exports = {
   }),
 
   retrieve: wrap(async (req, res, next) => {
+  const [fromToDid, fromToKey] = await req.wallet.createDid();
+
+    let request = await indy.buildGetSchemaRequest(fromToDid,req.params.id);
+    let response = await indy.submitRequest(pool.handle,request);
+    let parseResponse = await indy.parseGetSchemaResponse(response);
 
     /*
     async def get_schema(pool_handle, _did, schema_id):
@@ -34,7 +41,14 @@ module.exports = {
     get_schema_response = await ledger.submit_request(pool_handle, get_schema_request)
     return await ledger.parse_get_schema_response(get_schema_response)
     */
-    next();
+    next(new APIResult(200,parseResponse));
+  }),
+
+  list: wrap(async (req,res,next) =>{
+    log.debug('schemaController list');
+    //const s = await Schema.find({owner: req.user}).exec();
+    const s = await Schema.find({}).exec();
+    next(new APIResult(200, s));
   })
 
 

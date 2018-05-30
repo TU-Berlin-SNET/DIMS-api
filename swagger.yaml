@@ -576,7 +576,7 @@ paths:
           description: ''
       tags:
       - proof
-  /api/schema/:
+  /api/schemas/:
     get:
       operationId: schema_list
       parameters: []
@@ -604,44 +604,44 @@ paths:
         '201':
           description: ''
       tags:
-      - schema
-  /api/schema/{id}/:
+      - schemas
+  /api/schemas/{id}/:
     delete:
       operationId: schema_delete
       parameters:
-      - description: A unique integer value identifying this schema.
+      - description: A unique string value identifying this schema.
         in: path
         name: id
         required: true
-        type: integer
+        type: string
       responses:
         '204':
           description: ''
       tags:
-      - schema
+      - schemas
     get:
       operationId: schema_read
       parameters:
-      - description: A unique integer value identifying this schema.
+      - description: A unique string value identifying this schema.
         in: path
         name: id
         required: true
-        type: integer
+        type: string
       responses:
         '200':
           description: ''
       tags:
-      - schema
+      - schemas
     patch:
       consumes:
       - application/json
       operationId: schema_partial_update
       parameters:
-      - description: A unique integer value identifying this schema.
+      - description: A unique string value identifying this schema.
         in: path
         name: id
         required: true
-        type: integer
+        type: string
       - in: body
         name: data
         schema:
@@ -654,17 +654,17 @@ paths:
         '200':
           description: ''
       tags:
-      - schema
+      - schemas
     put:
       consumes:
       - application/json
       operationId: schema_update
       parameters:
-      - description: A unique integer value identifying this schema.
+      - description: A unique string value identifying this schema.
         in: path
         name: id
         required: true
-        type: integer
+        type: string
       - in: body
         name: data
         schema:
@@ -679,7 +679,7 @@ paths:
         '200':
           description: ''
       tags:
-      - schema
+      - schemas
   /api/users/:
     get:
       operationId: users_list

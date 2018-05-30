@@ -35,10 +35,11 @@ router.route('/wallets/:wallet')
 router.route('/connectionoffers')
   .post(connection.create);
 
-router.route('/schema')
+router.route('/schemas')
+  .get(schema.list)
   .post(schema.create);
 
-router.route('schema/:schema')
+router.route('/schemas/:schema')
   .get(schema.retrieve);
 
 router.use(walletProvider.after);
