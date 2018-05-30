@@ -584,7 +584,7 @@ paths:
         '200':
           description: ''
       tags:
-      - schema
+      - schemas
     post:
       consumes:
       - application/json
@@ -594,18 +594,29 @@ paths:
         name: data
         schema:
           properties:
-            schema_object:
-              description: ''
+            name:
+              description: A unique name of the schema
+              type: string
+            version:
+              description: version for schema
+              type: string
+            attrNames:
+              description: list of attribute names put into the schema
+              type: array
+              items:
+               type: string
+            wallet:
+              description: A unique value identifying this wallet
               type: string
           required:
-          - schema_object
+          - name, version, attrNames, wallet
           type: object
       responses:
         '201':
           description: ''
       tags:
       - schemas
-  /api/schemas/{id}/:
+  /api/schemas/{id}/{wallet}:
     delete:
       operationId: schema_delete
       parameters:
@@ -614,11 +625,16 @@ paths:
         name: id
         required: true
         type: string
+      - description: A unique value identifying this wallet.
+        in: path
+        name: wallet
+        required: true
+        type: string
       responses:
         '204':
           description: ''
       tags:
-      - schemas
+        - schemas
     get:
       operationId: schema_read
       parameters:
@@ -627,59 +643,16 @@ paths:
         name: id
         required: true
         type: string
-      responses:
-        '200':
-          description: ''
-      tags:
-      - schemas
-    patch:
-      consumes:
-      - application/json
-      operationId: schema_partial_update
-      parameters:
-      - description: A unique string value identifying this schema.
+      - description: A unique value identifying this wallet.
         in: path
-        name: id
+        name: wallet
         required: true
         type: string
-      - in: body
-        name: data
-        schema:
-          properties:
-            schema_object:
-              description: ''
-              type: string
-          type: object
       responses:
         '200':
           description: ''
       tags:
-      - schemas
-    put:
-      consumes:
-      - application/json
-      operationId: schema_update
-      parameters:
-      - description: A unique string value identifying this schema.
-        in: path
-        name: id
-        required: true
-        type: string
-      - in: body
-        name: data
-        schema:
-          properties:
-            schema_object:
-              description: ''
-              type: string
-          required:
-          - schema_object
-          type: object
-      responses:
-        '200':
-          description: ''
-      tags:
-      - schemas
+        - schemas
   /api/users/:
     get:
       operationId: users_list

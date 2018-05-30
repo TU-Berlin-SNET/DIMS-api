@@ -39,7 +39,7 @@ router.route('/schemas')
   .get(schema.list)
   .post(schema.create);
 
-router.route('/schemas/:schema')
+router.route('/schemas/:schema/:wallet')
   .get(schema.retrieve);
 
 router.use(walletProvider.after);
