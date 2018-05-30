@@ -344,7 +344,7 @@ paths:
           description: ''
       tags:
       - claimoffer
-  /api/connection/:
+  /api/connections/:
     x-swagger-router-controller: connection
     post:
       consumes:
