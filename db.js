@@ -3,6 +3,7 @@
  */
 
 const Mongoose = require('mongoose');
+const log = require('./log').log;
 Mongoose.Promise = global.Promise;
 
 let connString = 'mongodb://';
@@ -12,7 +13,8 @@ if (process.env.DB_USER) {
 connString += `${process.env.DB_HOST}:${process.env.DB_PORT}/idchain`;
 Mongoose.connect(connString, function(error) {
   if (error) {
-    throw error;
+    log.error(error);
+    process.exit(1);
   }
 });
 

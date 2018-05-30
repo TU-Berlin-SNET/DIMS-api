@@ -3,6 +3,7 @@
  * Pool Ledger Representation
  */
 
+const util = require('util');
 const indy = require('indy-sdk');
 const log = require('./log').log;
 
@@ -24,11 +25,9 @@ class PoolLedger {
    * Create Pool Ledger Config
    */
   async createConfig() {
-    try {
-      await indy.createPoolLedgerConfig(this.name, this.config);
-    } catch (err) {
-      log.warn(err);
-    }
+    log.info('Creating pool ledger config %s with %s',
+      this.name, util.inspect(this.config));
+    await indy.createPoolLedgerConfig(this.name, this.config);
   }
 
   /**
@@ -37,6 +36,7 @@ class PoolLedger {
   async openLedger() {
     log.info('providing pool handle for pool_name %s', process.env.POOL_NAME);
     this.handle = await indy.openPoolLedger(process.env.POOL_NAME);
+    log.info('connection to pool ledger established');
   }
 }
 
