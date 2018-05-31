@@ -10,6 +10,7 @@ const user = require('../controllers/user');
 const wallet = require('../controllers/wallet');
 const connection = require('../controllers/connection');
 const schema = require('../controllers/indyschema');
+const creddef= require('../controllers/credentialdef');
 
 router.route('/users')
   // TODO rate-limiting?
@@ -41,6 +42,12 @@ router.route('/schemas')
 
 router.route('/schemas/:schema/:wallet')
   .get(schema.retrieve);
+
+router.route('/credentialdefs/')
+  .post(creddef.create);
+
+router.route('/credentialdefs/:credreq/:wallet')
+  .get(creddef.retrieve);
 
 router.use(walletProvider.after);
 

@@ -10,40 +10,40 @@ info:
   title: IdentityChain API
   version: ''
 paths:
-  /api/claim/:
+  /api/credential/:
     get:
-      operationId: claim_list
+      operationId: credential_list
       parameters: []
       responses:
         '200':
           description: ''
       tags:
-      - claim
+      - credential
     post:
       consumes:
       - application/json
-      operationId: claim_create
+      operationId: credential_create
       parameters:
       - in: body
         name: data
         schema:
           properties:
-            claim_object:
+            credential_object:
               description: ''
               type: string
           required:
-          - claim_object
+          - credential_object
           type: object
       responses:
         '201':
           description: ''
       tags:
-      - claim
-  /api/claim/{id}/:
+      - credential
+  /api/credential/{id}/:
     delete:
-      operationId: claim_delete
+      operationId: credential_delete
       parameters:
-      - description: A unique integer value identifying this claim.
+      - description: A unique integer value identifying this credential.
         in: path
         name: id
         required: true
@@ -52,11 +52,11 @@ paths:
         '204':
           description: ''
       tags:
-      - claim
+      - credential
     get:
-      operationId: claim_read
+      operationId: credential_read
       parameters:
-      - description: A unique integer value identifying this claim.
+      - description: A unique integer value identifying this credential.
         in: path
         name: id
         required: true
@@ -65,13 +65,13 @@ paths:
         '200':
           description: ''
       tags:
-      - claim
+      - credential
     patch:
       consumes:
       - application/json
-      operationId: claim_partial_update
+      operationId: credential_partial_update
       parameters:
-      - description: A unique integer value identifying this claim.
+      - description: A unique integer value identifying this credential.
         in: path
         name: id
         required: true
@@ -80,7 +80,7 @@ paths:
         name: data
         schema:
           properties:
-            claim_object:
+            credential_object:
               description: ''
               type: string
           type: object
@@ -88,13 +88,13 @@ paths:
         '200':
           description: ''
       tags:
-      - claim
+      - credential
     put:
       consumes:
       - application/json
-      operationId: claim_update
+      operationId: credential_update
       parameters:
-      - description: A unique integer value identifying this claim.
+      - description: A unique integer value identifying this credential.
         in: path
         name: id
         required: true
@@ -103,134 +103,102 @@ paths:
         name: data
         schema:
           properties:
-            claim_object:
+            credential_object:
               description: ''
               type: string
           required:
-          - claim_object
+          - credential_object
           type: object
       responses:
         '200':
           description: ''
       tags:
-      - claim
-  /api/claimdef/:
+      - credential
+  /api/credentialdefs/:
     get:
-      operationId: claimdef_list
+      operationId: credentialdefs_list
       parameters: []
       responses:
         '200':
           description: ''
       tags:
-      - claimdef
+      - credentialdefs
     post:
       consumes:
       - application/json
-      operationId: claimdef_create
+      operationId: credentialdefs_create
       parameters:
       - in: body
         name: data
         schema:
           properties:
-            schema_req_id:
-              description: ''
+            schema:
+              description: A unique name of the schema
               type: string
+            wallet:
+              description: version for schema
+              type: string
+            supportRevocation:
+              description: States if revocation should be supported for this credential definiton
+              type: boolean
           required:
-          - schema_req_id
+          - schema, wallet
           type: object
       responses:
         '201':
           description: ''
       tags:
-      - claimdef
-  /api/claimdef/{id}/:
+      - credentialdefs
+  /api/credentialdefs/{creddef}/{wallet}:
     delete:
-      operationId: claimdef_delete
+      operationId: credentialdefs_delete
       parameters:
-      - description: A unique integer value identifying this claim def.
+      - description: A unique string value identifying this credential definition.
         in: path
-        name: id
+        name: creddef
         required: true
-        type: integer
+        type: string
+      - description: A unique string value identifying the wallet to be used.
+        in: path
+        name: wallet
+        required: true
+        type: string
       responses:
         '204':
           description: ''
       tags:
-      - claimdef
+      - credentialdefs
     get:
-      operationId: claimdef_read
+      operationId: credentialdefs_read
       parameters:
-      - description: A unique integer value identifying this claim def.
+      - description: A unique string value identifying this credential definition.
         in: path
-        name: id
+        name: creddef
         required: true
-        type: integer
+        type: string
+      - description: A unique string value identifying the wallet to be used.
+        in: path
+        name: wallet
+        required: true
+        type: string
       responses:
         '200':
           description: ''
       tags:
-      - claimdef
-    patch:
-      consumes:
-      - application/json
-      operationId: claimdef_partial_update
-      parameters:
-      - description: A unique integer value identifying this claim def.
-        in: path
-        name: id
-        required: true
-        type: integer
-      - in: body
-        name: data
-        schema:
-          properties:
-            schema_req_id:
-              description: ''
-              type: string
-          type: object
-      responses:
-        '200':
-          description: ''
-      tags:
-      - claimdef
-    put:
-      consumes:
-      - application/json
-      operationId: claimdef_update
-      parameters:
-      - description: A unique integer value identifying this claim def.
-        in: path
-        name: id
-        required: true
-        type: integer
-      - in: body
-        name: data
-        schema:
-          properties:
-            schema_req_id:
-              description: ''
-              type: string
-          required:
-          - schema_req_id
-          type: object
-      responses:
-        '200':
-          description: ''
-      tags:
-      - claimdef
-  /api/claimoffer/:
+      - credentialdefs
+  /api/credentialoffer/:
     get:
-      operationId: claimoffer_list
+      operationId: credentialoffer_list
       parameters: []
       responses:
         '200':
           description: ''
       tags:
-      - claimoffer
+      - credentialoffer
     post:
       consumes:
       - application/json
-      operationId: claimoffer_create
+      operationId: credentialoffer_create
       parameters:
       - in: body
         name: data
@@ -254,12 +222,12 @@ paths:
         '201':
           description: ''
       tags:
-      - claimoffer
-  /api/claimoffer/{id}/:
+      - credentialoffer
+  /api/credentialoffer/{id}/:
     delete:
-      operationId: claimoffer_delete
+      operationId: credentialoffer_delete
       parameters:
-      - description: A unique integer value identifying this claim offer.
+      - description: A unique integer value identifying this credential offer.
         in: path
         name: id
         required: true
@@ -268,11 +236,11 @@ paths:
         '204':
           description: ''
       tags:
-      - claimoffer
+      - credentialoffer
     get:
-      operationId: claimoffer_read
+      operationId: credentialoffer_read
       parameters:
-      - description: A unique integer value identifying this claim offer.
+      - description: A unique integer value identifying this credential offer.
         in: path
         name: id
         required: true
@@ -281,13 +249,13 @@ paths:
         '200':
           description: ''
       tags:
-      - claimoffer
+      - credentialoffer
     patch:
       consumes:
       - application/json
-      operationId: claimoffer_partial_update
+      operationId: credentialoffer_partial_update
       parameters:
-      - description: A unique integer value identifying this claim offer.
+      - description: A unique integer value identifying this credential offer.
         in: path
         name: id
         required: true
@@ -310,13 +278,13 @@ paths:
         '200':
           description: ''
       tags:
-      - claimoffer
+      - credentialoffer
     put:
       consumes:
       - application/json
-      operationId: claimoffer_update
+      operationId: credentialoffer_update
       parameters:
-      - description: A unique integer value identifying this claim offer.
+      - description: A unique integer value identifying this credential offer.
         in: path
         name: id
         required: true
@@ -343,7 +311,7 @@ paths:
         '200':
           description: ''
       tags:
-      - claimoffer
+      - credentialoffer
   /api/connection/:
     x-swagger-router-controller: connection
     post:
@@ -616,13 +584,13 @@ paths:
           description: ''
       tags:
       - schemas
-  /api/schemas/{id}/{wallet}:
+  /api/schemas/{schemaid}/{wallet}:
     delete:
       operationId: schema_delete
       parameters:
       - description: A unique string value identifying this schema.
         in: path
-        name: id
+        name: schemaid
         required: true
         type: string
       - description: A unique value identifying this wallet.
@@ -640,7 +608,7 @@ paths:
       parameters:
       - description: A unique string value identifying this schema.
         in: path
-        name: id
+        name: schemaid
         required: true
         type: string
       - description: A unique value identifying this wallet.

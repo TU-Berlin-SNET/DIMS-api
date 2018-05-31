@@ -3,12 +3,10 @@
  * Schema Model
  */
 
-const indy = require('indy-sdk');
-const uuidv4 = require('uuid/v4');
 const Mongoose = require('../db');
-const log = require('../log').log;
-const ObjectId = Mongoose.Schema.Types.ObjectId;
-const Wallet = require('../models/wallet');
+const indy = require('indy-sdk');
+const wrap = require('../asyncwrap').wrap;
+const pool = require('../pool');
 var Mixed = Mongoose.Schema.Types.Mixed;
 
 const schema = new Mongoose.Schema({
@@ -40,6 +38,15 @@ const schema = new Mongoose.Schema({
 });
 
 schema.pre('save', async () =>{
+
+});
+
+schema.methods.getSchemaFromLedger = wrap(async (req)=>{
+
+  const submitterDid = req.wallet.issuerDid ? req.wallet.issuerDid : req.wallet.createDid();
+  let request = await indy.buildGetSchemaRequest(submitterDid,req.params.schema);
+  let response = await indy.submitRequest(pool.handle,request);
+  await indy.parseGetSchemaResponse(response);
 
 });
 
