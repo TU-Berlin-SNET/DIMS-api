@@ -34,6 +34,12 @@ const schema = new Mongoose.Schema({
     required: true,
     default: uuidv4hex,
   },
+  role: {
+    type: String,
+    required: true,
+    default: 'NONE',
+    enum: ['NONE', 'TRUSTEE', 'STEWARD', 'TRUST_ANCHOR'],
+  },
 });
 
 module.exports = Mongoose.model('ConnectionOffer', schema);
