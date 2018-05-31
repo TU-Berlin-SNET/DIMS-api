@@ -13,6 +13,8 @@ const APIResult = require('../api-result');
 const Wallet = require('../models/wallet');
 const ConnectionOffer = require('../models/connectionoffer');
 
+const ENDPOINT = `${process.env.APP_HOST}:${process.env.APP_PORT}`;
+
 module.exports = {
 
   create: wrap(async (req, res, next) => {
@@ -27,7 +29,7 @@ module.exports = {
     // const endpoint = {endpoint: {ha: process.env.APP_ENDPOINT, verkey: fromToKey}};
     // FIXME indy expects the endpoint to be a host but we expect messages to the endpoint
     // to arrive at /api/endpoint, how to work around that?
-    const endpoint = {endpoint: {ha: '127.0.0.1:8000'}};
+    const endpoint = {endpoint: {ha: ENDPOINT}};
     const attribRequest = await indy.buildAttribRequest(
       fromToDid, fromToDid, null, endpoint, null);
     log.debug(attribRequest);
@@ -54,8 +56,8 @@ module.exports = {
     const [toFromDid, toFromKey] = await req.wallet.createDid();
     log.debug('%s\n%s', toFromDid, toFromKey);
     await indy.setEndpointForDid(req.wallet.handle, toFromDid,
-      process.env.APP_ENDPOINT, toFromKey);
-    log.debug('endpoint for did is set');
+      ENDPOINT, toFromKey);
+    log.debug('endpoint for did is set (locally)');
     const fromToKey = await indy.keyForDid(pool.handle, req.wallet.handle,
       connOffer.did);
     log.debug(fromToKey);
@@ -84,11 +86,25 @@ module.exports = {
       .post(`http://${recipient}/api/endpoint`)
       .type('application/json')
       .send(payload);
+    log.debug('endpoint request successful');
     await indy.storeTheirDid(req.wallet.handle, {
       did: connOffer.did,
       verkey: fromToKey,
     });
-    // TODO set endpoint for did ON LEDGER with attrib request
+    log.debug('stored their did');
+    await indy.setEndpointForDid(req.wallet.handle, connOffer.did,
+      recipient, fromToKey);
+    log.debug('set endpoint for their did successful locally');
+    const endpoint = {endpoint: {ha: ENDPOINT}};
+    log.debug('setting own endpoint on ledger with attribRequest');
+    const attribRequest = await indy.buildAttribRequest(
+      toFromDid, toFromDid, null, endpoint, null);
+    log.debug('attribRequest');
+    log.debug(attribRequest);
+    const attribResult = await indy.signAndSubmitRequest(
+      pool.handle, req.wallet.handle, toFromDid, attribRequest);
+    log.debug('attribResult');
+    log.debug(attribResult);
     next(new APIResult(200, {message: 'Success'}));
   }),
 
