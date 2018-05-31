@@ -25,4 +25,4 @@ const schema = new Mongoose.Schema({
 
 
 
-module.exports = Mongoose.model('CredentialDef', schema);
+module.exports = Mongoose.model('CredentialOffer', schema);

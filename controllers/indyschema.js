@@ -8,12 +8,12 @@ module.exports = {
 
   create: wrap(async (req, res, next) => {
     let [schemaId,indySchema,response] = await module.exports.createAndStoreSchemaToLedger(req);
-    if(response['op']=='REJECT'){
+    if(response['op']=='REJECT' || 'REQNACK'){
       next(new APIResult(400,response['reason']));
     }else {
       indySchema.set({data:response['result'], schemaId: schemaId});
-      indySchema = await indySchema.save();
-      next(new APIResult(201,indySchema));
+      await indySchema.save();
+      next(new APIResult(201,schemaId));
     }
   }),
 
