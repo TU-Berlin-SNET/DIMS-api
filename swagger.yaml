@@ -1,14 +1,29 @@
 swagger: '2.0'
+info:
+  description: 'IdentityChain Agent REST API'
+  title: IdentityChain API
+  version: '0.0.1'
 host: localhost:8000
 schemes:
 - http
+consumes:
+  - application/json
+parameters:
+  userParam:
+    name: user
+    in: path
+    description: A unique id (or 'me') value identifying this user.
+    type: string
+    required: true
+  walletParam:
+    name: wallet
+    in: path
+    description: A unique id value identifying this wallet.
+    type: string
+    required: true
 securityDefinitions:
   basic:
     type: basic
-info:
-  description: ''
-  title: IdentityChain API
-  version: ''
 paths:
   /api/credential/:
     get:
@@ -312,59 +327,41 @@ paths:
           description: ''
       tags:
       - credentialoffer
-  /api/connection/:
-    x-swagger-router-controller: connection
+  /api/connections/:
     post:
-      consumes:
-      - application/json
-      operationId: connection_create
+      summary: Accept a connection offer
+      description: Accept a connection offer
       parameters:
       - in: body
         name: data
         schema:
           properties:
-            connection_offer:
-              description: ''
-              type: object
-            endpoint:
-              description: ''
-              type: string
             wallet:
-              description: ''
+              description: 'Wallet to use for accepting the connection offer'
               type: string
+            connectionOffer:
+              description: 'The connection offer object'
+              type: object
           required:
           - wallet
           - connection_offer
           type: object
       responses:
-        '201':
-          description: ''
+        '200':
+          description: 'Success'
       tags:
       - connection
   /api/connectionoffers/:
-    x-swagger-router-controller: connectionOffer
-    get:
-      operationId: connectionoffer_list
-      parameters: []
-      responses:
-        '200':
-          description: ''
-      tags:
-      - connectionoffer
     post:
-      consumes:
-      - application/json
-      operationId: connectionoffer_create
+      summary: Create a new connection offer
+      description: Create a new connection offer
       parameters:
       - in: body
         name: data
         schema:
           properties:
-            endpoint:
-              description: ''
-              type: string
             wallet:
-              description: ''
+              description: 'Wallet to use for creating the connection offer'
               type: string
           required:
           - wallet
@@ -374,70 +371,45 @@ paths:
           description: ''
       tags:
       - connectionoffer
-  /api/connectionoffers/{nonce}/:
-    x-swagger-router-controller: connectionOffer
-    delete:
-      operationId: connectionoffer_delete
-      parameters:
-      - description: A unique value identifying this connection offer.
-        in: path
-        name: nonce
-        required: true
-        type: string
-      responses:
-        '204':
-          description: ''
-      tags:
-      - connectionoffer
-    get:
-      operationId: connectionoffer_read
-      parameters:
-      - description: A unique value identifying this connection offer.
-        in: path
-        name: nonce
-        required: true
-        type: string
-      responses:
-        '200':
-          description: ''
-      tags:
-      - connectionoffer
   /api/endpoint/:
     post:
-      consumes:
-      - application/json
-      description: Deliver message to this endpoint
-      operationId: endpoint_create
+      description: Agent endpoint
+      summary: Agent endpoint
       parameters:
       - in: body
         name: data
         schema:
           properties:
-            message:
-              description: ''
+            type:
+              description: 'Message encryption type'
               type: string
+              default: anon
+              enum:
+              - anon
+              - auth
+            target:
+              description: 'Reason for the message'
+              type: string
+              enum:
+              - accept_connection
             ref:
-              description: ''
+              description: 'A reference value, e.g. nonce'
+              type: string
+            message:
+              description: 'Encrypted message string'
               type: string
             signature:
-              description: ''
-              type: string
-            target:
-              description: ''
-              type: string
-            type:
-              description: ''
+              description: 'Message Signature'
               type: string
           required:
           - target
           - ref
-          - signature
           - message
+          - signature
           type: object
       responses:
-        '201':
+        '200':
           description: ''
-      summary: Deliver message to this endpoint
       tags:
       - endpoint
   /api/proof/:
@@ -622,151 +594,79 @@ paths:
       tags:
         - schemas
   /api/users/:
-    get:
-      operationId: users_list
-      parameters: []
-      responses:
-        '200':
-          description: ''
-      tags:
-      - users
     post:
-      consumes:
-      - application/json
-      operationId: users_create
+      summary: Register a new user
+      description: Register a new user
       parameters:
       - in: body
         name: data
         schema:
           properties:
-            email:
-              description: ''
-              type: string
-            is_staff:
-              description: Designates whether the user can log into this admin site.
-              type: boolean
             username:
-              description: Required. 150 characters or fewer. Letters, digits and
-                @/./+/-/_ only.
+              description: 'Required.'
               type: string
-            wallets:
-              description: ''
-              items:
-                type: string
-              type: array
+            password:
+              description: 'Required.'
+              type: string
           required:
           - username
-          - wallets
+          - password
           type: object
       responses:
         '201':
-          description: ''
+          description: User successfully created
+          headers:
+            Location:
+              description: Path to created user, e.g. /users/userId
+              type: string
       tags:
       - users
-  /api/users/{id}/:
-    delete:
-      operationId: users_delete
+  /api/users/{user}/:
+    get:
+      summary: Retrieve a user
+      description: Retrieve a user
       parameters:
-      - description: A unique integer value identifying this user.
-        in: path
-        name: id
-        required: true
-        type: string
+        - $ref: '#/parameters/userParam'
+      responses:
+        '200':
+          description: 'Success'
+      tags:
+      - users
+    post:
+      summary: Update a User
+      description: Update a User (at least one of the properties must be provided)
+      parameters:
+      - $ref: '#/parameters/userParam'
+      - in: body
+        name: data
+        schema:
+          properties:
+            username:
+              description: ''
+              type: string
+            password:
+              description: ''
+              type: string
+          type: object
+      responses:
+        '501':
+          description: 'Not yet implemented'
+      tags:
+      - users
+    delete:
+      summary: Delete a User
+      description: Delete a User
+      parameters:
+      - $ref: '#/parameters/userParam'
       responses:
         '204':
-          description: ''
-      tags:
-      - users
-    get:
-      operationId: users_read
-      parameters:
-      - description: A unique integer value identifying this user.
-        in: path
-        name: id
-        required: true
-        type: string
-      responses:
-        '200':
-          description: ''
-      tags:
-      - users
-    patch:
-      consumes:
-      - application/json
-      operationId: users_partial_update
-      parameters:
-      - description: A unique integer value identifying this user.
-        in: path
-        name: id
-        required: true
-        type: integer
-      - in: body
-        name: data
-        schema:
-          properties:
-            email:
-              description: ''
-              type: string
-            is_staff:
-              description: Designates whether the user can log into this admin site.
-              type: boolean
-            username:
-              description: Required. 150 characters or fewer. Letters, digits and
-                @/./+/-/_ only.
-              type: string
-            wallets:
-              description: ''
-              items:
-                type: string
-              type: array
-          type: object
-      responses:
-        '200':
-          description: ''
-      tags:
-      - users
-    put:
-      consumes:
-      - application/json
-      operationId: users_update
-      parameters:
-      - description: A unique integer value identifying this user.
-        in: path
-        name: id
-        required: true
-        type: integer
-      - in: body
-        name: data
-        schema:
-          properties:
-            email:
-              description: ''
-              type: string
-            is_staff:
-              description: Designates whether the user can log into this admin site.
-              type: boolean
-            username:
-              description: Required. 150 characters or fewer. Letters, digits and
-                @/./+/-/_ only.
-              type: string
-            wallets:
-              description: ''
-              items:
-                type: string
-              type: array
-          required:
-          - username
-          - wallets
-          type: object
-      responses:
-        '200':
           description: ''
       tags:
       - users
   /api/wallets/:
-    x-swagger-router-controller: wallet
     get:
-      operationId: listWallets
+      summary: List all wallets of user
+      description: List all wallets of user
       parameters: []
       responses:
         '200':
@@ -774,69 +674,55 @@ paths:
       tags:
       - wallet
     post:
-      consumes:
-      - application/json
+      summary: Create a new Wallet (optionally with given name and settings)
       description: Create a new Wallet (optionally with given name and settings)
-      operationId: createWallet
       parameters:
       - in: body
         name: data
         schema:
           properties:
+            name:
+              description: 'Wallet name, must be globally unique. Automatically generated if none is provided.'
+              type: string
             config:
-              description: ''
+              description: 'Wallet Config JSON. Supported keys vary by wallet type. A default config will be used if none is provided.'
               type: string
             credentials:
-              description: ''
-              type: string
-            name:
-              description: ''
+              description: 'Wallet Credentials JSON. Supported keys vary by wallet type. A default config will be used if none is provided.'
               type: string
             poolName:
-              description: ''
+              description: 'Name of the Pool to associate with this wallet. A default config will be used if none is provided.'
               type: string
             seed:
-              description: ''
+              description: 'Seed to use for initial issuerDid creation.'
               type: string
             xtype:
-              description: ''
+              description: 'Type of the wallet. A default config will be used if none is provided.'
               type: string
           type: object
       responses:
         '201':
           description: ''
-      summary: Create a new Wallet (optionally with given name and settings)
       tags:
       - wallet
-  /api/wallets/{name}/:
-    x-swagger-router-controller: wallet
+  /api/wallets/{wallet}/:
     get:
-      description: Return given Wallet.
-      operationId: retrieveWallet
+      summary: Retrieve a Wallet.
+      description: Retrieve a Wallet.
       parameters:
-      - description: A unique value identifying this wallet.
-        in: path
-        name: name
-        required: true
-        type: string
+      - $ref: '#/parameters/walletParam'
       responses:
         '200':
           description: ''
-      summary: Return given Wallet.
       tags:
       - wallet
     delete:
-      description: Delete given Wallet
-      operationId: deleteWallet
+      summary: Delete a Wallet
+      description: Delete a Wallet
       parameters:
-      - description: A unique value identifying this wallet.
-        in: path
-        name: name
-        required: true
-        type: string
+      - $ref: '#parameters/walletParam'
       responses:
         '204':
           description: ''
-      summary: Delete given Wallet
       tags:
       - wallet

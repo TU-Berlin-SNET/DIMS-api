@@ -21,7 +21,9 @@ module.exports = {
 
   retrieve: wrap(async (req, res, next) => {
     log.debug('userController: retrieve called');
-    if (req.params.user !== 'me' && req.user.id !== req.params.id) return next();
+    if (req.params.user !== 'me' && req.params.user !== req.user.id) {
+      return next(new APIResult(404, {message: 'User not found'}));
+    }
     const wallets = await Wallet.find({owner: req.user}).exec();
     const data = req.user.toObject();
     data.wallets = wallets;

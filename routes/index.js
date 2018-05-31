@@ -16,6 +16,9 @@ router.route('/users')
   // TODO rate-limiting?
   .post(user.create);
 
+router.route('/endpoint')
+  .post(connection.endpoint);
+
 router.use(auth);
 router.use(walletProvider.before);
 router.param('wallet', walletProvider.param);
@@ -35,6 +38,9 @@ router.route('/wallets/:wallet')
 
 router.route('/connectionoffers')
   .post(connection.create);
+
+router.route('/connections')
+  .post(connection.accept);
 
 router.route('/schemas')
   .get(schema.list)

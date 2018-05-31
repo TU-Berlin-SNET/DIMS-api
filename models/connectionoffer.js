@@ -5,7 +5,6 @@
 
 const uuidv4 = require('uuid/v4');
 const Mongoose = require('../db');
-const ObjectId = Mongoose.Schema.Types.ObjectId;
 
 /**
  * Generates a uuid v4 and converts it to hexadecimal representation
@@ -22,7 +21,7 @@ const schema = new Mongoose.Schema({
     default: Date.now,
   },
   issuerWallet: {
-    type: ObjectId,
+    type: String,
     required: true,
     ref: 'Wallet',
   },
