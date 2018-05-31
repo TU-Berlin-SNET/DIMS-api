@@ -29,7 +29,7 @@ module.exports = {
     // const endpoint = {endpoint: {ha: process.env.APP_ENDPOINT, verkey: fromToKey}};
     // FIXME indy expects the endpoint to be a host but we expect messages to the endpoint
     // to arrive at /api/endpoint, how to work around that?
-    const endpoint = {endpoint: {ha: ENDPOINT}};
+    const endpoint = {endpoint: {ha: req.body.endpoint || ENDPOINT}};
     const attribRequest = await indy.buildAttribRequest(
       fromToDid, fromToDid, null, endpoint, null);
     log.debug(attribRequest);
@@ -37,15 +37,15 @@ module.exports = {
       pool.handle, req.wallet.handle, fromToDid, attribRequest);
     log.debug('attribResult');
     log.debug(attribResult);
-    let connectionOffer = new ConnectionOffer({
-      issuerWallet: req.wallet,
-      issuerDid: fromToDid,
-    });
+    let doc = {issuerWallet: req.wallet, issuerDid: fromToDid};
+    if (req.body.role) doc.role = req.body.role;
+    let connectionOffer = new ConnectionOffer(doc);
     log.debug(connectionOffer);
     connectionOffer = await connectionOffer.save();
     next(new APIResult(201, {
       did: connectionOffer.issuerDid,
       nonce: connectionOffer.nonce,
+      role: connectionOffer.role,
     }));
   }),
 
@@ -56,11 +56,15 @@ module.exports = {
     const [toFromDid, toFromKey] = await req.wallet.createDid();
     log.debug('%s\n%s', toFromDid, toFromKey);
     await indy.setEndpointForDid(req.wallet.handle, toFromDid,
-      ENDPOINT, toFromKey);
+      req.body.endpoint || ENDPOINT, toFromKey);
     log.debug('endpoint for did is set (locally)');
     const fromToKey = await indy.keyForDid(pool.handle, req.wallet.handle,
       connOffer.did);
     log.debug(fromToKey);
+    if (connOffer.role !== 'NONE') {
+      req.wallet.issuerDid = toFromDid;
+      await req.wallet.save();
+    }
     const connResponse = Buffer.from(JSON.stringify({
       did: toFromDid,
       verkey: toFromKey,
@@ -95,7 +99,7 @@ module.exports = {
     await indy.setEndpointForDid(req.wallet.handle, connOffer.did,
       recipient, fromToKey);
     log.debug('set endpoint for their did successful locally');
-    const endpoint = {endpoint: {ha: ENDPOINT}};
+    const endpoint = {endpoint: {ha: req.body.endpoint || ENDPOINT}};
     log.debug('setting own endpoint on ledger with attribRequest');
     const attribRequest = await indy.buildAttribRequest(
       toFromDid, toFromDid, null, endpoint, null);
@@ -142,8 +146,9 @@ module.exports = {
     if (!signMatch) {
       return next(new APIResult(400, {message: 'Signature mismatch'}));
     }
+    const role = (connOffer.role === 'NONE') ? null : connOffer.role;
     const nymRequest = await indy.buildNymRequest(
-      req.wallet.issuerDid, connRes.did, connRes.verkey);
+      req.wallet.issuerDid, connRes.did, connRes.verkey, null, role);
     log.debug('nym request created');
     log.debug(nymRequest);
     const nymResult = await indy.signAndSubmitRequest(
