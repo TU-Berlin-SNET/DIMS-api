@@ -69,7 +69,10 @@ schema.method('open', async function() {
 
 schema.method('close', async function() {
   log.debug('wallet model close');
-  if (this.handle !== -1) await indy.closeWallet(this.handle);
+  if (this.handle !== -1) {
+    await indy.closeWallet(this.handle);
+    this.handle = -1;
+  }
 });
 
 schema.method('createDid', async function() {
@@ -79,6 +82,7 @@ schema.method('createDid', async function() {
 
 schema.pre('remove', async function() {
   log.debug('wallet model pre-remove');
+  await this.close();
   await ConnectionOffer.remove({issuerWallet: this}).exec();
   await indy.deleteWallet(this._id, this.credentials);
 });

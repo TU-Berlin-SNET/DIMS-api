@@ -29,7 +29,7 @@ module.exports = {
     await indy.createWallet(w.poolName, w._id, w.xtype, w.config, w.credentials);
     const handle = await indy.openWallet(w._id, w.config, w.credentials);
     try {
-      const didJSON = (w.seed) ? {seed: w.seed} : {};
+      const didJSON = (data.seed) ? {seed: data.seed} : {};
       const [did] = await indy.createAndStoreMyDid(handle, didJSON);
       w.issuerDid = did;
     } finally {
