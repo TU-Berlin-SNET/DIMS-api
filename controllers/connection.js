@@ -18,12 +18,6 @@ module.exports = {
   create: wrap(async (req, res, next) => {
     log.debug('connection controller create');
     const [fromToDid, fromToKey] = await req.wallet.createDid();
-    /* log.debug('fromToDid: %s, fromToKey: %s', fromToDid, fromToKey);
-    await indy.setEndpointForDid(req.wallet.handle, fromToDid,
-      process.env.APP_ENDPOINT, fromToKey);
-    const [recipient, endpointKey] = await indy.getEndpointForDid(
-      req.wallet.handle, pool.handle, fromToDid);
-    log.debug('endpoint %s and key %s', recipient, endpointKey);*/
     const nymRequest = await indy.buildNymRequest(
       req.wallet.issuerDid, fromToDid, fromToKey);
     log.debug(nymRequest);
@@ -31,6 +25,8 @@ module.exports = {
       pool.handle, req.wallet.handle, req.wallet.issuerDid, nymRequest);
     log.debug(nymResult);
     // const endpoint = {endpoint: {ha: process.env.APP_ENDPOINT, verkey: fromToKey}};
+    // FIXME indy expects the endpoint to be a host but we expect messages to the endpoint
+    // to arrive at /api/endpoint, how to work around that?
     const endpoint = {endpoint: {ha: '127.0.0.1:8000'}};
     const attribRequest = await indy.buildAttribRequest(
       fromToDid, fromToDid, null, endpoint, null);
@@ -45,7 +41,7 @@ module.exports = {
     });
     log.debug(connectionOffer);
     connectionOffer = await connectionOffer.save();
-    next(new APIResult(200, {
+    next(new APIResult(201, {
       did: connectionOffer.issuerDid,
       nonce: connectionOffer.nonce,
     }));
@@ -84,11 +80,10 @@ module.exports = {
       message: anoncryptConnRes.toString('base64'),
     };
     log.debug(payload);
-    const result = await agent
+    await agent
       .post(`http://${recipient}/api/endpoint`)
       .type('application/json')
       .send(payload);
-    log.debug(result);
     await indy.storeTheirDid(req.wallet.handle, {
       did: connOffer.did,
       verkey: fromToKey,
