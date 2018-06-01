@@ -101,6 +101,7 @@ module.exports = {
     log.debug('set endpoint for their did successful locally');
     const endpoint = {endpoint: {ha: req.body.endpoint || ENDPOINT}};
     log.debug('setting own endpoint on ledger with attribRequest');
+    // ToDo This does not seem right?? toFrom, toFromDid? Documentation states submitterDid and TargetDid
     const attribRequest = await indy.buildAttribRequest(
       toFromDid, toFromDid, null, endpoint, null);
     log.debug('attribRequest');
