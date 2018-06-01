@@ -32,7 +32,7 @@ async function provideWallet(req, walletId) {
 module.exports = {
   before: wrap(async (req, res, next) => {
     log.debug('walletProvider before');
-    const walletId = req.body.wallet || req.params.wallet;
+    const walletId = req.body.wallet || req.params.wallet || req.header('wallet');
     if (!walletId || !req.user) return next();
     await provideWallet(req, walletId);
     next();

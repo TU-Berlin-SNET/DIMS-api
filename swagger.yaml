@@ -58,11 +58,11 @@ paths:
     delete:
       operationId: credential_delete
       parameters:
-      - description: A unique integer value identifying this credential.
+      - description: A unique string value identifying this credential.
         in: path
         name: id
         required: true
-        type: integer
+        type: string
       responses:
         '204':
           description: ''
@@ -71,77 +71,29 @@ paths:
     get:
       operationId: credential_read
       parameters:
-      - description: A unique integer value identifying this credential.
+      - description: A unique string value identifying this credential.
         in: path
         name: id
         required: true
-        type: integer
+        type: string
       responses:
         '200':
           description: ''
       tags:
       - credential
-    patch:
-      consumes:
-      - application/json
-      operationId: credential_partial_update
-      parameters:
-      - description: A unique integer value identifying this credential.
-        in: path
-        name: id
-        required: true
-        type: integer
-      - in: body
-        name: data
-        schema:
-          properties:
-            credential_object:
-              description: ''
-              type: string
-          type: object
-      responses:
-        '200':
-          description: ''
-      tags:
-      - credential
-    put:
-      consumes:
-      - application/json
-      operationId: credential_update
-      parameters:
-      - description: A unique integer value identifying this credential.
-        in: path
-        name: id
-        required: true
-        type: integer
-      - in: body
-        name: data
-        schema:
-          properties:
-            credential_object:
-              description: ''
-              type: string
-          required:
-          - credential_object
-          type: object
-      responses:
-        '200':
-          description: ''
-      tags:
-      - credential
-  /api/credentialdefs/:
+  /api/credentialdef/:
     get:
-      operationId: credentialdefs_list
+      operationId: credentialdef_list
       parameters: []
       responses:
         '200':
           description: ''
       tags:
-      - credentialdefs
+      - credentialdef
     post:
       consumes:
       - application/json
-      operationId: credentialdefs_create
+      operationId: credentialdef_create
       parameters:
       - in: body
         name: data
@@ -163,10 +115,10 @@ paths:
         '201':
           description: ''
       tags:
-      - credentialdefs
-  /api/credentialdefs/{creddef}/{wallet}:
+      - credentialdef
+  /api/credentialdef/{creddef}/:
     delete:
-      operationId: credentialdefs_delete
+      operationId: credentialdef_delete
       parameters:
       - description: A unique string value identifying this credential definition.
         in: path
@@ -174,7 +126,7 @@ paths:
         required: true
         type: string
       - description: A unique string value identifying the wallet to be used.
-        in: path
+        in: header
         name: wallet
         required: true
         type: string
@@ -182,9 +134,9 @@ paths:
         '204':
           description: ''
       tags:
-      - credentialdefs
+      - credentialdef
     get:
-      operationId: credentialdefs_read
+      operationId: credentialdef_read
       parameters:
       - description: A unique string value identifying this credential definition.
         in: path
@@ -192,7 +144,7 @@ paths:
         required: true
         type: string
       - description: A unique string value identifying the wallet to be used.
-        in: path
+        in: header
         name: wallet
         required: true
         type: string
@@ -200,7 +152,7 @@ paths:
         '200':
           description: ''
       tags:
-      - credentialdefs
+      - credentialdef
   /api/credentialoffer/:
     get:
       operationId: credentialoffer_list
@@ -246,7 +198,7 @@ paths:
         in: path
         name: id
         required: true
-        type: integer
+        type: string
       responses:
         '204':
           description: ''
@@ -259,51 +211,26 @@ paths:
         in: path
         name: id
         required: true
-        type: integer
+        type: string
       responses:
         '200':
           description: ''
       tags:
       - credentialoffer
-    patch:
-      consumes:
-      - application/json
-      operationId: credentialoffer_partial_update
-      parameters:
-      - description: A unique integer value identifying this credential offer.
-        in: path
-        name: id
-        required: true
-        type: integer
-      - in: body
-        name: data
-        schema:
-          properties:
-            n_id:
-              description: ''
-              type: integer
-            schema:
-              description: ''
-              type: integer
-            seq_no:
-              description: ''
-              type: integer
-          type: object
+  /api/credentialrequests/:
+    get:
+      operationId: credentialrequest_list
+      parameters: []
       responses:
         '200':
           description: ''
       tags:
-      - credentialoffer
-    put:
+      - credentialrequest
+    post:
       consumes:
       - application/json
-      operationId: credentialoffer_update
+      operationId: credentialrequest_create
       parameters:
-      - description: A unique integer value identifying this credential offer.
-        in: path
-        name: id
-        required: true
-        type: integer
       - in: body
         name: data
         schema:
@@ -323,11 +250,38 @@ paths:
           - seq_no
           type: object
       responses:
+        '201':
+          description: ''
+      tags:
+      - credentialrequest
+  /api/credentialrequest/{id}/:
+    delete:
+      operationId: credentialrequest_delete
+      parameters:
+      - description: A unique integer value identifying this credential request.
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        '204':
+          description: ''
+      tags:
+      - credentialrequest
+    get:
+      operationId: credentialrequest_read
+      parameters:
+      - description: A unique integer value identifying this credential request.
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
         '200':
           description: ''
       tags:
-      - credentialoffer
-  /api/connections/:
+      - credentialrequest
+  /api/connection/:
     post:
       summary: Accept a connection offer
       description: Accept a connection offer
@@ -354,7 +308,7 @@ paths:
           description: 'Success'
       tags:
       - connection
-  /api/connectionoffers/:
+  /api/connectionoffer/:
     post:
       summary: Create a new connection offer
       description: Create a new connection offer
@@ -482,55 +436,8 @@ paths:
           description: ''
       tags:
       - proof
-    patch:
-      consumes:
-      - application/json
-      operationId: proof_partial_update
-      parameters:
-      - description: A unique integer value identifying this proof.
-        in: path
-        name: id
-        required: true
-        type: integer
-      - in: body
-        name: data
-        schema:
-          properties:
-            proof_obj:
-              description: ''
-              type: string
-          type: object
-      responses:
-        '200':
-          description: ''
-      tags:
-      - proof
-    put:
-      consumes:
-      - application/json
-      operationId: proof_update
-      parameters:
-      - description: A unique integer value identifying this proof.
-        in: path
-        name: id
-        required: true
-        type: integer
-      - in: body
-        name: data
-        schema:
-          properties:
-            proof_obj:
-              description: ''
-              type: string
-          required:
-          - proof_obj
-          type: object
-      responses:
-        '200':
-          description: ''
-      tags:
-      - proof
-  /api/schemas/:
+
+  /api/schema/:
     get:
       operationId: schema_list
       parameters: []
@@ -538,7 +445,7 @@ paths:
         '200':
           description: ''
       tags:
-      - schemas
+      - schema
     post:
       consumes:
       - application/json
@@ -569,8 +476,8 @@ paths:
         '201':
           description: ''
       tags:
-      - schemas
-  /api/schemas/{schemaid}/{wallet}:
+      - schema
+  /api/schema/{schemaid}/:
     delete:
       operationId: schema_delete
       parameters:
@@ -580,7 +487,7 @@ paths:
         required: true
         type: string
       - description: A unique value identifying this wallet.
-        in: path
+        in: header
         name: wallet
         required: true
         type: string
@@ -588,7 +495,7 @@ paths:
         '204':
           description: ''
       tags:
-        - schemas
+        - schema
     get:
       operationId: schema_read
       parameters:
@@ -598,7 +505,7 @@ paths:
         required: true
         type: string
       - description: A unique value identifying this wallet.
-        in: path
+        in: header
         name: wallet
         required: true
         type: string
@@ -606,8 +513,8 @@ paths:
         '200':
           description: ''
       tags:
-        - schemas
-  /api/users/:
+        - schema
+  /api/user/:
     post:
       summary: Register a new user
       description: Register a new user
@@ -634,8 +541,8 @@ paths:
               description: Path to created user, e.g. /users/userId
               type: string
       tags:
-      - users
-  /api/users/{user}/:
+      - user
+  /api/user/{user}/:
     get:
       summary: Retrieve a user
       description: Retrieve a user
@@ -645,7 +552,7 @@ paths:
         '200':
           description: 'Success'
       tags:
-      - users
+      - user
     post:
       summary: Update a User
       description: Update a User (at least one of the properties must be provided)
@@ -666,7 +573,7 @@ paths:
         '501':
           description: 'Not yet implemented'
       tags:
-      - users
+      - user
     delete:
       summary: Delete a User
       description: Delete a User
@@ -676,8 +583,8 @@ paths:
         '204':
           description: ''
       tags:
-      - users
-  /api/wallets/:
+      - user
+  /api/wallet/:
     get:
       summary: List all wallets of user
       description: List all wallets of user
@@ -719,7 +626,7 @@ paths:
           description: ''
       tags:
       - wallet
-  /api/wallets/{wallet}/:
+  /api/wallet/{wallet}/:
     get:
       summary: Retrieve a Wallet.
       description: Retrieve a Wallet.

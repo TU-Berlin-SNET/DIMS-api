@@ -1,4 +1,4 @@
-const Schema = require('../controllers/indyschema');
+const Schema = require('./credentialschema');
 const CredDef = require('../models/credentialdef');
 
 const indy = require('indy-sdk');
@@ -10,7 +10,7 @@ module.exports = {
 
   create: wrap(async (req, res, next) => {
     let [credDefId, response] = await module.exports.createAndSendCredDefToLedger(req);
-    let credDef = new CredDef({wallet:req.body.wallet, credDefId: credDefId})
+    let credDef = new CredDef({wallet:req.wallet.id, credDefId: credDefId, owner:req.user});
     if (response['op'] == 'REPLY') {
       credDef.set({data: response['result']});
       await credDef.save();
@@ -21,9 +21,16 @@ module.exports = {
   }),
 
   retrieve: wrap(async (req, res, next) => {
-    const credDefId = req.params.credDefId ? req.params.credDefId : req.body.credDefId;
+    const credDefId = req.params.creddef ? req.params.creddef : req.body.creddef;
     let [_, credDef] = await module.exports.getCredDefFromLedger(req, credDefId);
     next(new APIResult(200, credDef));
+  }),
+
+  list: wrap(async (req,res,next) => {
+      log.debug('walletController list');
+      const w = await CredDef.find({owner: req.user}).exec();
+      next(new APIResult(200, w));
+
   }),
 
   getCredDefFromLedger: wrap(async (req, credDefId) =>  {

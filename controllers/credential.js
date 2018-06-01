@@ -1,8 +1,8 @@
 const indy = require('indy-sdk');
 const wrap = require('../asyncwrap').wrap;
 const pool = require('../pool');
-const CredDef = require('../controllers/credentialdef');
-const CredOffer = require('../controllers/credentialoffer');
+const CredDef = require('./credentialdef');
+const CredOffer = require('./credentialoffer');
 const APIResult = require('../api-result');
 
 module.exports = {
@@ -50,7 +50,7 @@ module.exports = {
     // ToDo get credOffer from DB
     let credOffer = await CredOffer.getCredentialOffer(req);
     let [credential, credRevocId, revocRegDelta] = await indy.issuerCreateCredential(req.wallet.handle,credOffer,authDecryptedCredReq,req.body.credValues,null,null);
-    let [authCryptedCred] = await indy.cryptoAuthCrypt(req.wallet.handle,issuerHolderKey,holderIssuerKey,credential);
+    let authCryptedCred = await indy.cryptoAuthCrypt(req.wallet.handle,issuerHolderKey,holderIssuerKey,credential);
     return [authCryptedCred,credRevocId,revocRegDelta];
   }),
 

@@ -1,4 +1,4 @@
-const Schema = require('../models/indyschema');
+const Schema = require('../models/credentialschema');
 const indy = require('indy-sdk');
 const wrap = require('../asyncwrap').wrap;
 const pool = require('../pool');
@@ -7,12 +7,12 @@ const APIResult = require('../api-result');
 module.exports = {
 
   create: wrap(async (req, res, next) => {
-    let [schemaId,indySchema,response] = await module.exports.createAndStoreSchemaToLedger(req);
-    if(response['op']=='REJECT' || 'REQNACK'){
+    let [schemaId,credSchema,response] = await module.exports.createAndStoreSchemaToLedger(req);
+    if(response['op']=='REJECT' || response['op']=='REQNACK'){
       next(new APIResult(400,response['reason']));
     }else {
-      indySchema.set({data:response['result'], schemaId: schemaId});
-      await indySchema.save();
+      credSchema.set({data:response['result'], schemaId: schemaId});
+      await credSchema.save();
       next(new APIResult(201,schemaId));
     }
   }),
@@ -35,12 +35,12 @@ module.exports = {
     return await indy.parseGetSchemaResponse(response);
   }),
 
-  createAndStoreSchemaToLedger: wrap(async (req) =>{
-    let  indySchema = new Schema({name: req.body.name, attrNames: req.body.attrNames, version : req.body.version, wallet:req.body.wallet});
-    let [schemaId, schema] = await indy.issuerCreateSchema(req.wallet.issuerDid, indySchema.name,indySchema.version, indySchema.attrNames);
+  createAndStoreSchemaToLedger: wrap(async (req) => {
+    let  credSchema = new Schema({name: req.body.name, attrNames: req.body.attrNames, version : req.body.version, wallet:req.wallet.id, owner:req.user});
+    let [schemaId, schema] = await indy.issuerCreateSchema(req.wallet.issuerDid, credSchema.name,credSchema.version, credSchema.attrNames);
     const request = await indy.buildSchemaRequest(req.wallet.issuerDid, schema);
     let response = await indy.signAndSubmitRequest(pool.handle, req.wallet.handle, req.wallet.issuerDid, request);
-    return [schemaId,indySchema,response];
+    return [schemaId,credSchema,response];
   })
 
 };

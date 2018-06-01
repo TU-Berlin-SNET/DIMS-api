@@ -15,6 +15,7 @@ const schema = new Mongoose.Schema({
     default: Date.now,
   },
   credDefId: String,
+  credReqMetaData: Mixed,
   wallet:{
     type: String
   },
@@ -25,4 +26,4 @@ const schema = new Mongoose.Schema({
 
 
 
-module.exports = Mongoose.model('CredentialDefinition', schema);
+module.exports = Mongoose.model('CredentialRequest', schema);
