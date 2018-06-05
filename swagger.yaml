@@ -217,7 +217,7 @@ paths:
           description: ''
       tags:
       - credentialoffer
-  /api/credentialrequests/:
+  /api/credentialrequest/:
     get:
       operationId: credentialrequest_list
       parameters: []

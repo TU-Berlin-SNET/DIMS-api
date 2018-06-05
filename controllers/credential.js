@@ -43,13 +43,15 @@ module.exports = {
     // ToDo Get Connection Did
     // Step 1 : Get VerKey for connection and use given authCrypted credential request and decrypt it
     let issuerHolderKey = await indy.keyForLocalDid(req.wallet.handle,req.body.issuerHolderDid);
-    let [holderIssuerKey, authDecryptedCredReq] = await indy.cryptoAuthDecrypt(req.wallet.handle,issuerHolderKey, req.body.authCryptedMessage);
+    const decodedMessage = Buffer.from(req.body.authCryptedMessage, 'base64');
+    let [holderIssuerKey, credReq] = await indy.cryptoAuthDecrypt(req.wallet.handle,issuerHolderKey, decodedMessage);
+    const credReqJson = JSON.parse(credReq.toString('utf-8'));
     // Step 2: Create credential
     // (null values are for 1) revocation registry id and 2) blobStorageReaderHandle for reading revocation tails; ToDo support revocation features in the future)
     // credValues : { "firstname": {"raw: "Alice", "encoded": "valueAsInt"}, "lastname": {"raw": "Cooper", "encoded": "valueAsInt"}} ToDo check which encoding is required
-    // ToDo get credOffer from DB
+    // ToDo get credOffer from DB - This step is not working.
     let credOffer = await CredOffer.getCredentialOffer(req);
-    let [credential, credRevocId, revocRegDelta] = await indy.issuerCreateCredential(req.wallet.handle,credOffer,authDecryptedCredReq,req.body.credValues,null,null);
+    let [credential, credRevocId, revocRegDelta] = await indy.issuerCreateCredential(req.wallet.handle,credOffer,credReqJson,auth,req.body.credValues,null,null);
     let authCryptedCred = await indy.cryptoAuthCrypt(req.wallet.handle,issuerHolderKey,holderIssuerKey,credential);
     return [authCryptedCred,credRevocId,revocRegDelta];
   }),

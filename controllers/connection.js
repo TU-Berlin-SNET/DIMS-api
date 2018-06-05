@@ -110,7 +110,7 @@ module.exports = {
       pool.handle, req.wallet.handle, toFromDid, attribRequest);
     log.debug('attribResult');
     log.debug(attribResult);
-    next(new APIResult(200, {message: 'Success'}));
+    next(new APIResult(200, {connectionDid:toFromDid}));
   }),
 
   endpoint: wrap(async (req, res, next) => {
