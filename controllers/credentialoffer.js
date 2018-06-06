@@ -31,13 +31,16 @@ module.exports = {
     log.debug("credDefId", req.body.credDefId);
     const credOffer = await indy.issuerCreateCredentialOffer(req.wallet.handle,req.body.credDefId);
     log.debug(credOffer);
+    const pairwiseInfo = await indy.getPairwise(req.wallet.handle, req.body.holderIssuerDid);
+    log.debug('pairwiseInfo', pairwiseInfo);
+    const issuerHolderDid = pairwiseInfo['my_did'];
     // Step2: ToDo Get verKey between issuer and IDHolder (Get ConnectionDid from wallet)
     log.debug("holderIssuerDid:", req.body.holderIssuerDid);
     const holderIssuerVerKey = await indy.keyForDid(pool.handle,req.wallet.handle,req.body.holderIssuerDid);
     log.debug("holderIssuerKey:", holderIssuerVerKey);
     // Step3: ToDo Authcrypt CredentialOffer for IDHolder (Get Key between Issuer and IDHolder from Onboarding-Connection)
-    log.debug("issuerHolderDid:", req.body.issuerHolderDid);
-    const issuerHolderKey = await indy.keyForLocalDid(req.wallet.handle, req.body.issuerHolderDid);
+    log.debug("issuerHolderDid:", issuerHolderDid);
+    const issuerHolderKey = await indy.keyForLocalDid(req.wallet.handle, issuerHolderDid);
     log.debug("issuerHolderKey:", issuerHolderKey);
     const bufferedCredOffer = Buffer.from(JSON.stringify(credOffer), 'utf-8');
     const cryptedCredOffer = await indy.cryptoAuthCrypt(req.wallet.handle,issuerHolderKey,holderIssuerVerKey,bufferedCredOffer);
@@ -46,14 +49,25 @@ module.exports = {
   }),
 
   // Called by IDHolder after receiving the authCrypted CredentialOffer off the Ledger from the Issuer and Creating a CredentialRequest to be returned to the Issuer
-  acceptCredentialOfferAndCreateCredentialRequest: wrap(async (req) =>  {
-    const holderIssuerKey = await indy.keyForLocalDid(req.wallet.handle, req.body.holderIssuerDid);
-
-    log.debug("holderIssuerDid:", req.body.holderIssuerDid);
-    log.debug("holderIssuerKey:", holderIssuerKey);
+  acceptCredentialOfferAndCreateCredentialRequest: wrap(async (req, res, next) =>  {
     const decodedMessage = Buffer.from(req.body.authCryptedMessage, 'base64');
-    log.debug("decodedMessage", decodedMessage);
-    const [issuerHolderVerKey, credOffer] = await indy.cryptoAuthDecrypt(req.wallet.handle,holderIssuerKey,decodedMessage);
+    const pairwises = await indy.listPairwise(req.wallet.handle);
+    let holderIssuerDid;
+    let holderIssuerKey;
+    let issuerHolderVerKey;
+    let credOffer;
+    for (const pairwise of pairwises) {
+      try {
+        holderIssuerKey = await indy.keyForDid(pool.handle, req.wallet.handle, pairwise['my_did']);
+        [issuerHolderVerKey, credOffer] = await indy.cryptoAuthDecrypt(req.wallet.handle, holderIssuerKey, decodedMessage);
+        holderIssuerDid = pairwise['my_did'];
+      } catch (err) {
+        log.debug(err);
+      }
+    }
+    if (!credOffer) {
+      return next(new APIResult(400, {message: 'decryption failed, no fitting decryption key found'}));
+    }
     const credOfferJson = JSON.parse(credOffer.toString('utf-8'));
     log.debug("Decrypted credOffer", credOfferJson);
 
@@ -68,10 +82,9 @@ module.exports = {
     log.debug("credDefLedger %s , credDef %s", credDefId, credDefJson);
 
     // ToDo Create Credential Request (Get ConnectionDid from wallet)
-    const [credReq, credReqMeta] = await indy.proverCreateCredentialReq(req.wallet.handle,req.body.holderIssuerDid,credOfferJson,credDef,masterSecretId);
+    const [credReq, credReqMeta] = await indy.proverCreateCredentialReq(req.wallet.handle,holderIssuerDid,credOfferJson,credDef,masterSecretId);
 
     // ToDo Get ConnectionDid from wallet
-    //const holderIssuerKey = await indy.keyForLocalDid(req.wallet.handle,connectionDid);
     const bufferCredReq = Buffer.from(JSON.stringify(credReq), 'utf-8');
     const authCryptedCredRequest = await indy.cryptoAuthCrypt(req.wallet.handle, holderIssuerKey, issuerHolderVerKey,bufferCredReq);
     return [authCryptedCredRequest, credReqMeta, credDefId];
