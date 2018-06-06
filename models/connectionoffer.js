@@ -32,6 +32,7 @@ const schema = new Mongoose.Schema({
   nonce: {
     type: String,
     required: true,
+    index: true,
     default: uuidv4hex,
   },
   role: {
