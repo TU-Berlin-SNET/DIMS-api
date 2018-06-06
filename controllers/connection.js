@@ -22,25 +22,25 @@ module.exports = {
     const [fromToDid, fromToKey] = await req.wallet.createDid();
     const nymRequest = await indy.buildNymRequest(
       req.wallet.issuerDid, fromToDid, fromToKey);
-    log.debug(nymRequest);
     const nymResult = await indy.signAndSubmitRequest(
       pool.handle, req.wallet.handle, req.wallet.issuerDid, nymRequest);
-    log.debug(nymResult);
+    if (['REJECT', 'REQNACK'].includes(nymResult['op'])) {
+      next(new APIResult(400, {message: nymResult['response']}));
+    }
     // const endpoint = {endpoint: {ha: process.env.APP_ENDPOINT, verkey: fromToKey}};
     // FIXME indy expects the endpoint to be a host but we expect messages to the endpoint
     // to arrive at /api/endpoint, how to work around that?
     const endpoint = {endpoint: {ha: req.body.endpoint || ENDPOINT}};
     const attribRequest = await indy.buildAttribRequest(
       fromToDid, fromToDid, null, endpoint, null);
-    log.debug(attribRequest);
     const attribResult = await indy.signAndSubmitRequest(
       pool.handle, req.wallet.handle, fromToDid, attribRequest);
-    log.debug('attribResult');
-    log.debug(attribResult);
+    if (['REJECT', 'REQNACK'].includes(attribResult['op'])) {
+      next(new APIResult(400, {message: attribResult['response']}));
+    }
     let doc = {issuerWallet: req.wallet, issuerDid: fromToDid};
     if (req.body.role) doc.role = req.body.role;
     let connectionOffer = new ConnectionOffer(doc);
-    log.debug(connectionOffer);
     connectionOffer = await connectionOffer.save();
     next(new APIResult(201, {
       did: connectionOffer.issuerDid,
@@ -52,15 +52,12 @@ module.exports = {
   accept: wrap(async (req, res, next) => {
     log.debug('connection controller accept');
     const connOffer = req.body.connectionOffer;
-    log.debug(connOffer);
     const [toFromDid, toFromKey] = await req.wallet.createDid();
-    log.debug('%s\n%s', toFromDid, toFromKey);
     await indy.setEndpointForDid(req.wallet.handle, toFromDid,
       req.body.endpoint || ENDPOINT, toFromKey);
-    log.debug('endpoint for did is set (locally)');
     const fromToKey = await indy.keyForDid(pool.handle, req.wallet.handle,
       connOffer.did);
-    log.debug(fromToKey);
+    // TODO figure out a better way to handle issuerDid creation/saving
     if (connOffer.role !== 'NONE') {
       req.wallet.issuerDid = toFromDid;
       await req.wallet.save();
@@ -71,13 +68,9 @@ module.exports = {
       nonce: connOffer.nonce,
     }), 'utf-8');
     const anoncryptConnRes = await indy.cryptoAnonCrypt(fromToKey, connResponse);
-    log.debug('anoncrypted conn res');
     const sign = await indy.cryptoSign(req.wallet.handle, toFromKey, connResponse);
-    log.debug('message signature created');
-    const [recipient, endpointKey] = await indy.getEndpointForDid(
+    const [recipient] = await indy.getEndpointForDid(
       req.wallet.handle, pool.handle, connOffer.did);
-    log.debug(recipient);
-    log.debug(endpointKey);
     const payload = {
       type: 'anon',
       target: 'accept_connection',
@@ -85,32 +78,29 @@ module.exports = {
       signature: sign.toString('base64'),
       message: anoncryptConnRes.toString('base64'),
     };
-    log.debug(payload);
-    await agent
+    const agentResult = await agent
       .post(`http://${recipient}/api/endpoint`)
       .type('application/json')
       .send(payload);
-    log.debug('endpoint request successful');
+    if (agentResult.status !== 200) {
+      return next(new APIResult(agentResult.status, {message: agentResult.body}));
+    }
     await indy.storeTheirDid(req.wallet.handle, {
       did: connOffer.did,
       verkey: fromToKey,
     });
-    log.debug('stored their did');
     await indy.setEndpointForDid(req.wallet.handle, connOffer.did,
       recipient, fromToKey);
-    log.debug('set endpoint for their did successful locally');
     const endpoint = {endpoint: {ha: req.body.endpoint || ENDPOINT}};
-    log.debug('setting own endpoint on ledger with attribRequest');
-    // ToDo This does not seem right?? toFrom, toFromDid? Documentation states submitterDid and TargetDid
     const attribRequest = await indy.buildAttribRequest(
       toFromDid, toFromDid, null, endpoint, null);
-    log.debug('attribRequest');
-    log.debug(attribRequest);
     const attribResult = await indy.signAndSubmitRequest(
       pool.handle, req.wallet.handle, toFromDid, attribRequest);
-    log.debug('attribResult');
-    log.debug(attribResult);
-    next(new APIResult(200, {connectionDid:toFromDid}));
+    if (['REJECT', 'REQNACK'].includes(attribResult['op'])) {
+      next(new APIResult(400, {message: attribResult['response']}));
+    }
+    await indy.createPairwise(req.wallet.handle, connOffer.did, toFromDid);
+    next(new APIResult(200, {connectionDid: toFromDid}));
   }),
 
   endpoint: wrap(async (req, res, next) => {
@@ -161,6 +151,8 @@ module.exports = {
       verkey: connRes.verkey,
     });
     log.debug('stored their did');
+    await indy.createPairwise(req.wallet.handle, connRes.did, connOffer.issuerDid);
+    log.debug('created pairwise');
     await connOffer.remove();
     next(new APIResult(200, {message: 'Success'}));
   }),
