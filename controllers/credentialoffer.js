@@ -31,12 +31,13 @@ module.exports = {
     log.debug("credDefId", req.body.credDefId);
     const credOffer = await indy.issuerCreateCredentialOffer(req.wallet.handle,req.body.credDefId);
     log.debug(credOffer);
-    const pairwiseInfo = await indy.getPairwise(req.wallet.handle, req.body.holderIssuerDid);
+    const holderDid = req.body.holderDid;
+    const pairwiseInfo = await indy.getPairwise(req.wallet.handle, holderDid);
     log.debug('pairwiseInfo', pairwiseInfo);
     const issuerHolderDid = pairwiseInfo['my_did'];
     // Step2: ToDo Get verKey between issuer and IDHolder (Get ConnectionDid from wallet)
-    log.debug("holderIssuerDid:", req.body.holderIssuerDid);
-    const holderIssuerVerKey = await indy.keyForDid(pool.handle,req.wallet.handle,req.body.holderIssuerDid);
+    log.debug("holderIssuerDid:", holderDid);
+    const holderIssuerVerKey = await indy.keyForDid(pool.handle,req.wallet.handle,holderDid);
     log.debug("holderIssuerKey:", holderIssuerVerKey);
     // Step3: ToDo Authcrypt CredentialOffer for IDHolder (Get Key between Issuer and IDHolder from Onboarding-Connection)
     log.debug("issuerHolderDid:", issuerHolderDid);
