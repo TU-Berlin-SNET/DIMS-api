@@ -20,27 +20,17 @@ module.exports = {
   create: wrap(async (req, res, next) => {
     log.debug('connection controller create');
     const [fromToDid, fromToKey] = await req.wallet.createDid();
-    const nymRequest = await indy.buildNymRequest(
-      req.wallet.issuerDid, fromToDid, fromToKey);
-    const nymResult = await indy.signAndSubmitRequest(
-      pool.handle, req.wallet.handle, req.wallet.issuerDid, nymRequest);
-    if (['REJECT', 'REQNACK'].includes(nymResult['op'])) {
-      next(new APIResult(400, {message: nymResult['response']}));
-    }
+    await pool.nymRequest(req.wallet.handle, req.wallet.issuerDid, fromToDid, fromToKey);
+    await pool.attribRequest(req.wallet.handle, fromToDid, fromToDid, null,
+      {endpoint: {ha: req.body.endpoint || ENDPOINT, verkey: fromToKey}}, null);
+    let connectionOffer = new ConnectionOffer({
+      issuerWallet: req.wallet,
+      issuerDid: fromToDid,
+      role: req.body.role || 'NONE',
+    });
     // const endpoint = {endpoint: {ha: process.env.APP_ENDPOINT, verkey: fromToKey}};
     // FIXME indy expects the endpoint to be a host but we expect messages to the endpoint
     // to arrive at /api/endpoint, how to work around that?
-    const endpoint = {endpoint: {ha: req.body.endpoint || ENDPOINT}};
-    const attribRequest = await indy.buildAttribRequest(
-      fromToDid, fromToDid, null, endpoint, null);
-    const attribResult = await indy.signAndSubmitRequest(
-      pool.handle, req.wallet.handle, fromToDid, attribRequest);
-    if (['REJECT', 'REQNACK'].includes(attribResult['op'])) {
-      next(new APIResult(400, {message: attribResult['response']}));
-    }
-    let doc = {issuerWallet: req.wallet, issuerDid: fromToDid};
-    if (req.body.role) doc.role = req.body.role;
-    let connectionOffer = new ConnectionOffer(doc);
     connectionOffer = await connectionOffer.save();
     next(new APIResult(201, {
       did: connectionOffer.issuerDid,
