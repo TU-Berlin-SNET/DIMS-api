@@ -37,17 +37,28 @@ paths:
     post:
       consumes:
       - application/json
-      operationId: credential_create
       parameters:
       - in: body
         name: data
         schema:
           properties:
-            credential_object:
-              description: ''
+            wallet:
+              description: A unique string value identifying a wallet
               type: string
+            encryptedCredentialOfferId:
+              description: The authcrypted credential offer id
+              type: string
+            encryptedCredentialRequest:
+              description: 'The authcrypted Credential Request'
+              type: string
+            values:
+              description: Object containing attributes defined in schema as key-value pairs
+              type: object
           required:
-          - credential_object
+          - wallet
+          - encryptedCredentialOfferId
+          - encryptedCredentialRequest
+          - values
           type: object
       responses:
         '201':
@@ -235,14 +246,17 @@ paths:
         name: data
         schema:
           properties:
-            authCryptedMessage:
-              description: 'auth crypted message from credential offer'
+            encryptedCredentialOfferId:
+              description: auth crypted credential offer id
+            encryptedCredentialOffer:
+              description: 'auth crypted credential offer'
               type: string
             wallet:
               description: 'wallet name of wallet to be used'
               type: string
           required:
-          - authCryptedMessage
+          - encryptedCredentialOfferId
+          - encryptedCredentialOffer
           - wallet
           type: object
       responses:
