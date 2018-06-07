@@ -15,8 +15,9 @@ const schema = new Mongoose.Schema({
     default: Date.now,
   },
   credDefId: String,
-  wallet:{
-    type: String
+  wallet: {
+    type: String,
+    ref: 'Wallet',
   },
   data: Mixed
 });

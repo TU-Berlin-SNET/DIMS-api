@@ -1,16 +1,62 @@
+
+const crypto = require('crypto');
 const indy = require('indy-sdk');
+const log = require('../log').log;
 const wrap = require('../asyncwrap').wrap;
 const pool = require('../pool');
 const CredDef = require('./credentialdef');
 const CredOffer = require('./credentialoffer');
+const CredentialOffer = require('../models/credentialoffer');
 const APIResult = require('../api-result');
 
 module.exports = {
 
   // Called by Issuer
   create: wrap(async (req, res, next) => {
-    let [authCryptedCred, credRevocId, revocRegDelta] = await module.exports.issueCredential(req);
-    next(new APIResult(201,authCryptedCred));
+    log.debug('credential controller create');
+    const cryptCredReq = req.body.encryptedCredentialRequest;
+    const cryptCredOfferId = req.body.encryptedCredentialOfferId;
+    const [issuerHolderDid, issuerHolderKey, holderIssuerKey, credReqJson] = await req.wallet.tryAuthDecrypt(cryptCredReq);
+    const [, credOfferId] = await req.wallet.authDecrypt(issuerHolderKey, cryptCredOfferId);
+    log.debug(credReqJson);
+    log.debug(credOfferId);
+
+    let credOffer = await CredentialOffer.findById(credOfferId).exec();
+    log.debug(credOffer);
+
+    // Step 2: Create credential
+    // (null values are for 1) revocation registry id and 2) blobStorageReaderHandle for reading revocation tails;
+    // TODO support revocation features in the future)
+    // credValues : { "firstname": {"raw: "Alice", "encoded": "valueAsInt"}, "lastname": {"raw": "Cooper", "encoded": "valueAsInt"}}
+    let credValues = {};
+    for (const key of Object.keys(req.body.values)) {
+      const value = req.body.values[key];
+      if (typeof value === 'number') {
+        credValues[key] = {raw: value, encoded: value};
+      } else {
+        // const encodedValue = '' + parseInt(crypto.createHmac('sha256', value).digest('hex'), 16);
+        const encodedValue = Buffer.from(crypto.createHmac('sha256', value).digest('hex'), 'utf-8').toString('hex');
+        credValues[key] = {raw: value, encoded: encodedValue};
+      }
+    }
+    log.debug('credValues ', credValues);
+
+    let [cred, credRevocId, revocRegDelta] = await indy.issuerCreateCredential(
+      req.wallet.handle,
+      credOffer.data,
+      credReqJson,
+      credValues,
+      null, // FIXME provide revocRegId
+      null
+    );
+    log.debug(cred);
+    log.debug(credRevocId);
+    log.debug(revocRegDelta);
+    const cryptCred = await req.wallet.authCrypt(issuerHolderKey, holderIssuerKey, cred);
+
+    next(new APIResult(201, {
+      encryptedCredential: cryptCred,
+    }));
   }),
 
   // Called by IDHolder
