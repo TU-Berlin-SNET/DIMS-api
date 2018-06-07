@@ -59,7 +59,7 @@ module.exports = {
     // ToDo GetCredDef in the name of the holderIssuerDid (not the default issuerDid)
     const credDefIdFromCredOffer = credOfferJson['cred_def_id'];
     log.debug("credDefId from CredOffer", credDefIdFromCredOffer);
-    const [credDefId, credDef] = await CredDef.getCredDefFromLedger(req, credDefIdFromCredOffer);
+    const [credDefId, credDef] = await CredDef.getCredDefFromLedger(req, credDefIdFromCredOffer, holderIssuerDid);
     const credDefJson = JSON.stringify(credDef);
 
     log.debug("credDefLedger %s , credDef %s", credDefId, credDefJson);

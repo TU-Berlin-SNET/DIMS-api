@@ -33,16 +33,17 @@ module.exports = {
 
   }),
 
-  getCredDefFromLedger: wrap(async (req, credDefId) =>  {
-    const submitterDid = req.wallet.issuerDid ? req.wallet.issuerDid : req.wallet.createDid();
-    let request = await indy.buildGetCredDefRequest(submitterDid,credDefId);
-    let response = await indy.submitRequest(pool.handle,request);
-    return await indy.parseGetCredDefResponse(response);
-  }),
-
   getCredDefFromLocal: wrap(async (credDefId) => {
     let credDef =await CredDef.findOne({credDefId:credDefId});
     return credDef.data;
+  }),
+
+  getCredDefFromLedger: wrap(async (req, credDefId, submitterDid) =>  {
+    let subDid = submitterDid;
+    if (!submitterDid) subDid = req.wallet.issuerDid ? req.wallet.issuerDid : req.wallet.createDid();
+    let request = await indy.buildGetCredDefRequest(subDid,credDefId);
+    let response = await indy.submitRequest(pool.handle,request);
+    return await indy.parseGetCredDefResponse(response);
   }),
 
   createAndSendCredDefToLedger: wrap(async (req) => {
