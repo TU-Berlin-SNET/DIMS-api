@@ -15,10 +15,11 @@ module.exports = {
   create: wrap(async (req, res, next) => {
     log.debug('credential controller create');
     const cryptCredReq = req.body.encryptedCredentialRequest;
-    const cryptCredOfferId = req.body.encryptedCredentialOfferId;
+    //const cryptCredOfferId = req.body.encryptedCredentialOfferId;
     const [issuerHolderDid, issuerHolderKey, holderIssuerKey, credReqJson] = await req.wallet.tryAuthDecrypt(cryptCredReq);
-    const [, credOfferId] = await req.wallet.authDecrypt(issuerHolderKey, cryptCredOfferId);
+    //const [, credOfferId] = await req.wallet.authDecrypt(issuerHolderKey, cryptCredOfferId);
     log.debug(credReqJson);
+    const credOfferId = credReqJson['cred_offer_id']
     log.debug(credOfferId);
 
     let credOffer = await CredentialOffer.findById(credOfferId).exec();
@@ -40,6 +41,10 @@ module.exports = {
       }
     }
     log.debug('credValues ', credValues);
+
+    await delete credReqJson['cred_offer_id'];
+    log.debug(credOffer.data);
+    log.debug(credReqJson);
 
     let [cred, credRevocId, revocRegDelta] = await indy.issuerCreateCredential(
       req.wallet.handle,
