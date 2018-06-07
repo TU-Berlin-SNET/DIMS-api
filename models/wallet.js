@@ -108,6 +108,19 @@ schema.method('anonDecryptAndVerify', async function(recipientVk, messageString,
   return connRes;
 });
 
+schema.method('authCrypt', async function(senderVk, recipientVk, messageJson) {
+  const messageBuf = Buffer.from(JSON.stringify(messageJson), 'utf-8');
+  const authCryptedMessage = await indy.cryptoAuthCrypt(this.handle, senderVk, recipientVk, messageBuf);
+  return authCryptedMessage.toString('base64');
+});
+
+schema.method('authDecrypt', async function(recipientVk, messageRaw) {
+  const cryptBuf = Buffer.from(messageRaw, 'base64');
+  const [senderVk, messageBuf] = await indy.cryptoAuthDecrypt(this.handle, recipientVk, cryptBuf);
+  const messageJson = JSON.parse(messageBuf.toString('utf-8'));
+  return [senderVk, messageJson];
+});
+
 schema.method('tryAuthDecrypt', async function(message) {
   const cryptBuf = Buffer.from(message, 'base64');
   const pairwises = await indy.listPairwise(this.handle);
