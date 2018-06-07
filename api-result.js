@@ -1,7 +1,8 @@
 
 /**
  * Class encapsulating a result from the API
- * May be used for both successful responses and error handling
+ * May be used for both successful responses
+ * and error message propagation
  */
 class APIResult {
   /**
@@ -10,10 +11,10 @@ class APIResult {
    * @param {Object} error an error
    */
   constructor(status, data, error) {
-      this.status = status;
-      this.data = data;
-      this.error = error;
-    }
+    this.status = status;
+    this.data = data;
+    this.error = error;
+  }
 }
 
 module.exports = APIResult;
