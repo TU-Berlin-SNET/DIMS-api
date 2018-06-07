@@ -9,6 +9,7 @@ const log = require('../log').log;
 const Mongoose = require('../db');
 const ConnectionOffer = require('./connectionoffer');
 const ObjectId = Mongoose.Schema.Types.ObjectId;
+const APIResult = require('../api-result');
 
 const schema = new Mongoose.Schema({
   // TODO does this make sense or should we revert to ObjectId for _id
@@ -78,6 +79,33 @@ schema.method('close', async function() {
 schema.method('createDid', async function() {
   log.debug('wallet model createDid');
   return indy.createAndStoreMyDid(this.handle, {});
+});
+
+schema.method('cryptoSign', async function(signKey, messageBuf) {
+  const signature = await indy.cryptoSign(this.handle, signKey, messageBuf);
+  return signature.toString('base64');
+});
+
+schema.method('cryptoVerify', async function(signerVk, messageBuf, signBuf) {
+  return await indy.cryptoVerify(signerVk, messageBuf, signBuf);
+});
+
+schema.method('signAndAnonCrypt', async function(signKey, anonCryptKey, messageJson) {
+  const messageBuf = Buffer.from(JSON.stringify(messageJson), 'utf-8');
+  const signature = await this.cryptoSign(signKey, messageBuf);
+  const anonCryptedMessage = await indy.cryptoAnonCrypt(anonCryptKey, messageBuf);
+  return [signature, anonCryptedMessage.toString('base64')];
+});
+
+schema.method('anonDecryptAndVerify', async function(recipientVk, messageString, signature) {
+  const cryptMessageBuf = Buffer.from(messageString, 'base64');
+  const messageBuf = await indy.cryptoAnonDecrypt(this.handle, recipientVk, cryptMessageBuf);
+  const signBuf = Buffer.from(signature, 'base64');
+  const connRes = JSON.parse(messageBuf.toString('utf-8'));
+  if (!connRes.verkey) throw new APIResult(400, {message: 'missing signature'});
+  const signValid = this.cryptoVerify(connRes.verkey, messageBuf, signBuf);
+  if (!signValid) throw new APIResult(400, {message: 'signature mismatch'});
+  return connRes;
 });
 
 schema.pre('remove', async function() {
