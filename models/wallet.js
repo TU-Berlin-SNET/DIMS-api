@@ -108,6 +108,23 @@ schema.method('anonDecryptAndVerify', async function(recipientVk, messageString,
   return connRes;
 });
 
+schema.method('tryAuthDecrypt', async function(message) {
+  const cryptBuf = Buffer.from(message, 'base64');
+  const pairwises = await indy.listPairwise(this.handle);
+  for (const pairwise of pairwises) {
+    try {
+    const recipientDid = pairwise['my_did'];
+    const recipientVk = await indy.keyForLocalDid(this.handle, recipientDid);
+    const [senderVk, messageBuf] = await indy.cryptoAuthDecrypt(this.handle, recipientVk, cryptBuf);
+    const messageJson = JSON.parse(messageBuf.toString('utf-8'));
+    return [recipientDid, recipientVk, senderVk, messageJson];
+    } catch (err) {
+      log.warn(err);
+    }
+  }
+  throw new APIResult(400, {message: 'decryption failed, no fitting decryption key found'});
+});
+
 schema.pre('remove', async function() {
   log.debug('wallet model pre-remove');
   await this.close();

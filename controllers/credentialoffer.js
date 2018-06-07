@@ -51,27 +51,9 @@ module.exports = {
 
   // Called by IDHolder after receiving the authCrypted CredentialOffer off the Ledger from the Issuer and Creating a CredentialRequest to be returned to the Issuer
   acceptCredentialOfferAndCreateCredentialRequest: wrap(async (req, res, next) =>  {
-    const decodedMessage = Buffer.from(req.body.authCryptedMessage, 'base64');
-    const pairwises = await indy.listPairwise(req.wallet.handle);
-    let holderIssuerDid;
-    let holderIssuerKey;
-    let issuerHolderVerKey;
-    let credOffer;
-    for (const pairwise of pairwises) {
-      try {
-        holderIssuerKey = await indy.keyForDid(pool.handle, req.wallet.handle, pairwise['my_did']);
-        [issuerHolderVerKey, credOffer] = await indy.cryptoAuthDecrypt(req.wallet.handle, holderIssuerKey, decodedMessage);
-        holderIssuerDid = pairwise['my_did'];
-      } catch (err) {
-        log.debug(err);
-      }
-    }
-    if (!credOffer) {
-      return next(new APIResult(400, {message: 'decryption failed, no fitting decryption key found'}));
-    }
-    const credOfferJson = JSON.parse(credOffer.toString('utf-8'));
+    const [holderIssuerDid, holderIssuerKey, issuerHolderVerKey, credOfferJson] = await req.wallet
+      .tryAuthDecrypt(req.body.authCryptedMessage);
     log.debug("Decrypted credOffer", credOfferJson);
-
     const masterSecret = req.body.masterSecret ? req.body.masterSecret : null;
     const masterSecretId = await indy.proverCreateMasterSecret(req.wallet.handle,masterSecret);
     // ToDo GetCredDef in the name of the holderIssuerDid (not the default issuerDid)
