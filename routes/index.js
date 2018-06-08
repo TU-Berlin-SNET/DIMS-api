@@ -55,23 +55,28 @@ router.route('/schema/:schema/')
 router.route('/credentialdef/')
   .post(creddef.create);
 
-router.route('/credentialdef/:creddef/')
+router.route('/credentialdef/:credDefId/')
   .get(creddef.retrieve);
 
 router.route('/credentialoffer/')
-  .post(credoffer.create);
+  .post(credoffer.createByOwnDid);
 
 router.route('/credentialrequest/')
   .post(credoffer.accept);
 
-router.route('/credential/')
-  .post(credential.create);
+router.route('/credentialissue/')
+  .post(credential.issue);
 
-router.route('/credential/:credential')
+router.route('/credential/')
+  .post(credential.store)
+  .get(credential.retrieveWithFilter);
+router.route('/credential/:credId')
   .get(credential.retrieve);
 
+
+
 router.route('/proof/')
-  .post(proof.create)
+  .post(proof.create);
 
 router.use(walletProvider.after);
 

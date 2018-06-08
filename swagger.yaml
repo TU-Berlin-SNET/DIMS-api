@@ -26,45 +26,33 @@ securityDefinitions:
     type: basic
 paths:
   /api/credential/:
-    get:
-      operationId: credential_list
-      parameters: []
-      responses:
-        '200':
-          description: ''
-      tags:
-      - credential
-    post:
-      consumes:
-      - application/json
-      parameters:
-      - in: body
-        name: data
-        schema:
-          properties:
-            wallet:
-              description: A unique string value identifying a wallet
-              type: string
-            encryptedCredentialOfferId:
-              description: The authcrypted credential offer id
-              type: string
-            encryptedCredentialRequest:
-              description: 'The authcrypted Credential Request'
-              type: string
-            values:
-              description: Object containing attributes defined in schema as key-value pairs
+        post:
+          consumes:
+          - application/json
+          parameters:
+          - in: body
+            name: data
+            schema:
+              properties:
+                wallet:
+                  description: A unique string value identifying a wallet
+                  type: string
+                encryptedCredential:
+                  description: The authcrypted credential offer id
+                  type: string
+                connectionDid:
+                  description: A did representing the issuer of the credential
+                  type: string
+              required:
+              - wallet
+              - encryptedCredential
+              - connectionDid
               type: object
-          required:
-          - wallet
-          - encryptedCredentialOfferId
-          - encryptedCredentialRequest
-          - values
-          type: object
-      responses:
-        '201':
-          description: ''
-      tags:
-      - credential
+          responses:
+            '201':
+              description: ''
+          tags:
+          - credential
   /api/credential/{id}/:
     delete:
       operationId: credential_delete
@@ -92,6 +80,34 @@ paths:
           description: ''
       tags:
       - credential
+  /api/credentialissue/:
+      post:
+        consumes:
+        - application/json
+        parameters:
+        - in: body
+          name: data
+          schema:
+            properties:
+              wallet:
+                description: A unique string value identifying a wallet
+                type: string
+              encryptedCredentialRequest:
+                description: 'The authcrypted Credential Request'
+                type: string
+              values:
+                description: Object containing attributes defined in schema as key-value pairs (e.g. {"attrName":"attrValue", "attrName1":"attrValue1"})
+                type: object
+            required:
+            - wallet
+            - encryptedCredentialRequest
+            - values
+            type: object
+        responses:
+          '201':
+            description: ''
+        tags:
+        - credentialissue
   /api/credentialdef/:
     get:
       operationId: credentialdef_list
@@ -151,7 +167,7 @@ paths:
       parameters:
       - description: A unique string value identifying this credential definition.
         in: path
-        name: creddef
+        name: credDefId
         required: true
         type: string
       - description: A unique string value identifying the wallet to be used.
@@ -625,7 +641,7 @@ paths:
               description: 'Name of the Pool to associate with this wallet. A default config will be used if none is provided.'
               type: string
             seed:
-              description: 'Seed to use for initial issuerDid creation.'
+              description: 'Seed to use for initial did creation.'
               type: string
             xtype:
               description: 'Type of the wallet. A default config will be used if none is provided.'

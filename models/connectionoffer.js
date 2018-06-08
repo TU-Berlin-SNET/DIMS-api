@@ -25,7 +25,7 @@ const schema = new Mongoose.Schema({
     required: true,
     ref: 'Wallet',
   },
-  issuerDid: {
+  ownDid: {
     type: String,
     required: true,
   },

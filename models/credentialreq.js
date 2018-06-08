@@ -15,6 +15,7 @@ const schema = new Mongoose.Schema({
     default: Date.now,
   },
   credDefId: String,
+  credOfferId: String,
   credReqMetaData: Mixed,
   wallet:{
     type: String

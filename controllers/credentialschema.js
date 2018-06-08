@@ -18,7 +18,9 @@ module.exports = {
   }),
 
   retrieve: wrap(async (req, res, next) => {
-    let parsedResponse = await module.exports.getSchemaFromLedger(req);
+    const submitterDid = req.wallet.ownDid;
+    const schemaId = req.params.schema ? req.params.schema : req.body.schema;
+    let parsedResponse = await Schema.getSchemaFromLedger(submitterDid,schemaId);
     next(new APIResult(200,parsedResponse));
   }),
 
@@ -27,9 +29,7 @@ module.exports = {
     next(new APIResult(200, s));
   }),
 
-  getSchemaFromLedger: wrap(async(req) => {
-    const submitterDid = req.wallet.issuerDid ? req.wallet.issuerDid : req.wallet.createDid();
-    const schemaId = req.params.schema ? req.params.schema : req.body.schema;
+  getSchemaFromLedger: wrap(async(submitterDid,schemaId) => {
     let request = await indy.buildGetSchemaRequest(submitterDid,schemaId);
     let response = await indy.submitRequest(pool.handle,request);
     return await indy.parseGetSchemaResponse(response);
@@ -37,9 +37,9 @@ module.exports = {
 
   createAndStoreSchemaToLedger: wrap(async (req) => {
     let  credSchema = new Schema({name: req.body.name, attrNames: req.body.attrNames, version : req.body.version, wallet:req.wallet.id, owner:req.user});
-    let [schemaId, schema] = await indy.issuerCreateSchema(req.wallet.issuerDid, credSchema.name,credSchema.version, credSchema.attrNames);
-    const request = await indy.buildSchemaRequest(req.wallet.issuerDid, schema);
-    let response = await indy.signAndSubmitRequest(pool.handle, req.wallet.handle, req.wallet.issuerDid, request);
+    let [schemaId, schema] = await indy.issuerCreateSchema(req.wallet.ownDid, credSchema.name,credSchema.version, credSchema.attrNames);
+    const request = await indy.buildSchemaRequest(req.wallet.ownDid, schema);
+    let response = await indy.signAndSubmitRequest(pool.handle, req.wallet.handle, req.wallet.ownDid, request);
     return [schemaId,credSchema,response];
   })
 

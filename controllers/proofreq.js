@@ -32,7 +32,7 @@ module.exports = {
 
 
   getProofRequest: wrap(async (req) => {
-    
+
   }),
 
 };

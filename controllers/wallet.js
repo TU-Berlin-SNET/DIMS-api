@@ -31,7 +31,7 @@ module.exports = {
     try {
       const didJSON = (data.seed) ? {seed: data.seed} : {};
       const [did] = await indy.createAndStoreMyDid(handle, didJSON);
-      w.issuerDid = did;
+      w.ownDid = did;
     } finally {
       if (handle !== -1) await indy.closeWallet(handle);
     }

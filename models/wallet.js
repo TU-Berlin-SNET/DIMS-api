@@ -46,7 +46,7 @@ const schema = new Mongoose.Schema({
     required: false,
     default: null,
   },
-  issuerDid: {
+  ownDid: {
     type: String,
     required: false,
   },
@@ -137,6 +137,13 @@ schema.method('tryAuthDecrypt', async function(message) {
   }
   throw new APIResult(400, {message: 'decryption failed, no fitting decryption key found'});
 });
+
+schema.method('getTheirDid', async function(wallet, myDid){
+  const listPairwise = await indy.listPairwise(wallet);
+  const theirDid = listPairwise.filter(e => e.my_did == myDid).pop().their_did;
+  return theirDid;
+});
+
 
 schema.pre('remove', async function() {
   log.debug('wallet model pre-remove');

@@ -21,8 +21,9 @@ module.exports = {
   }),
 
   retrieve: wrap(async (req, res, next) => {
-    const credDefId = req.params.creddef ? req.params.creddef : req.body.creddef;
-    let [_, credDef] = await module.exports.getCredDefFromLedger(req, credDefId);
+    const credDefId = req.params.credDefId ? req.params.credDefId: req.body.credDefId;
+    const submittedDid = req.wallet.ownDid;
+    let [_, credDef] = await module.exports.getCredDefFromLedger(submittedDid, credDefId);
     next(new APIResult(200, credDef));
   }),
 
@@ -38,20 +39,20 @@ module.exports = {
     return credDef.data;
   }),
 
-  getCredDefFromLedger: wrap(async (req, credDefId, submitterDid) =>  {
-    let subDid = submitterDid;
-    if (!submitterDid) subDid = req.wallet.issuerDid ? req.wallet.issuerDid : req.wallet.createDid();
-    let request = await indy.buildGetCredDefRequest(subDid,credDefId);
+  getCredDefFromLedger: wrap(async (submitterDid, credDefId) =>  {
+    let request = await indy.buildGetCredDefRequest(submitterDid,credDefId);
     let response = await indy.submitRequest(pool.handle,request);
     return await indy.parseGetCredDefResponse(response);
   }),
 
   createAndSendCredDefToLedger: wrap(async (req) => {
-    let [,schema] = await Schema.getSchemaFromLedger(req);
+    const submitterDid = req.wallet.ownDid;
+    const schemaId = req.body.schema;
+    let [,schema] = await Schema.getSchemaFromLedger(submitterDid,schemaId);
     const support_revocation= req.body.supportRevocation ? { support_revocation: req.body.supportRevocation} : {support_revocation: false};
-    let [credDefId, credDef ] = await indy.issuerCreateAndStoreCredentialDef(req.wallet.handle,req.wallet.issuerDid,schema,'TAG1','CL', support_revocation);
-    let credDefRequest = await indy.buildCredDefRequest(req.wallet.issuerDid, credDef);
-    let response = await indy.signAndSubmitRequest(pool.handle,req.wallet.handle,req.wallet.issuerDid,credDefRequest);
+    let [credDefId, credDef ] = await indy.issuerCreateAndStoreCredentialDef(req.wallet.handle,req.wallet.ownDid,schema,'TAG1','CL', support_revocation);
+    let credDefRequest = await indy.buildCredDefRequest(req.wallet.ownDid, credDef);
+    let response = await indy.signAndSubmitRequest(pool.handle,req.wallet.handle,req.wallet.ownDid,credDefRequest);
     return [credDefId, response]
   })
 };

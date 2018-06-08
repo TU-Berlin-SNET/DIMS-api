@@ -10,38 +10,47 @@ const APIResult = require('../api-result');
 module.exports = {
 
   // Called by Issuer
-  create: wrap(async (req, res, next) => {
-    // Step1: Create CredOffer for IDHolder
-    log.debug('credDefId', req.body.credDefId);
-    const holderDid = req.body.holderDid;
-    let credOffer = await indy.issuerCreateCredentialOffer(req.wallet.handle, req.body.credDefId);
-    //log.debug(credOffer);
-
-    // Step2: Get verKey between issuer and IDHolder
-    const pairwiseInfo = await indy.getPairwise(req.wallet.handle, holderDid);
-    log.debug('pairwiseInfo', pairwiseInfo);
-    const issuerHolderDid = pairwiseInfo['my_did'];
-    log.debug('holderIssuerDid:', holderDid);
+  createByOwnDid: wrap(async(req, res, next)=>{
+    const issuerConnDid = req.body.connectionDid;
+    const holderDid = await req.wallet.getTheirDid(req.wallet.handle, issuerConnDid);
     const holderIssuerVerKey = await indy.keyForDid(pool.handle, req.wallet.handle, holderDid);
-    log.debug('holderIssuerKey:', holderIssuerVerKey);
-    log.debug('issuerHolderDid:', issuerHolderDid);
-    const issuerHolderKey = await indy.keyForLocalDid(req.wallet.handle, issuerHolderDid);
-    log.debug('issuerHolderKey:', issuerHolderKey);
-
-    // Step3: Authcrypt CredentialOffer for IDHolder (Get Key between Issuer and IDHolder from Onboarding-Connection)
-    // const cryptedCredOffer = await req.wallet.authCrypt(issuerHolderKey, holderIssuerVerKey, credOffer);
-
-    // Step4: Issuer sends IDHolder authCrypted Message outside of Ledger
+    const issuerHolderKey = await indy.keyForLocalDid(req.wallet.handle, issuerConnDid);
+    let credOffer = await indy.issuerCreateCredentialOffer(req.wallet.handle, req.body.credDefId);
     let credentialOffer = new CredOffer({
       wallet: req.wallet,
       credDefId: req.body.credDefId,
       data: credOffer,
     });
     credentialOffer = await credentialOffer.save();
-    //const cryptedCredOfferId = await req.wallet.authCrypt(issuerHolderKey, holderIssuerVerKey, credentialOffer.id);
     credOffer['cred_offer_id'] = credentialOffer.id;
-    log.debug(credOffer);
     const cryptedCredOffer = await req.wallet.authCrypt(issuerHolderKey, holderIssuerVerKey, credOffer);
+    next(new APIResult(200, {
+      encryptedCredentialOffer: cryptedCredOffer,
+    }));
+  }),
+
+
+  // Called by Issuer
+  create: wrap(async (req, res, next) => {
+    // Step1: Create CredOffer for IDHolder ToDo still not clear where Issuer gets the correct did from holder
+    const holderDid = req.body.holderDid;
+    let credOffer = await indy.issuerCreateCredentialOffer(req.wallet.handle, req.body.credDefId);
+
+    // Step2: Get verKey between issuer and IDHolder
+    const pairwiseInfo = await indy.getPairwise(req.wallet.handle, holderDid);
+    const issuerDid = pairwiseInfo['my_did'];
+    const holderVerKey = await indy.keyForDid(pool.handle, req.wallet.handle, holderDid);
+    const issuerKey = await indy.keyForLocalDid(req.wallet.handle, issuerDid);
+
+    // Step3: Issuer sends IDHolder authCrypted Message outside of Ledger
+    let credentialOffer = new CredOffer({
+      wallet: req.wallet,
+      credDefId: req.body.credDefId,
+      data: credOffer,
+    });
+    credentialOffer = await credentialOffer.save();
+    credOffer['cred_offer_id'] = credentialOffer.id;
+    const cryptedCredOffer = await req.wallet.authCrypt(issuerKey, holderVerKey, credOffer);
       next(new APIResult(200, {
       encryptedCredentialOffer: cryptedCredOffer,
     }));
@@ -49,8 +58,8 @@ module.exports = {
 
   //Called by IDHolder
   accept: wrap(async (req, res, next) => {
-    const [cryptedCredReq, credReqMeta, credDefId] = await module.exports.acceptCredentialOfferAndCreateCredentialRequest(req);
-    let credReq = new CredReq({wallet: req.wallet.id, credDefId: credDefId, credReqMetaData: credReqMeta, data: cryptedCredReq.toString('base64')});
+    const [cryptedCredReq, credReqMeta, credDefId, credOfferId] = await module.exports.acceptCredentialOfferAndCreateCredentialRequest(req);
+    let credReq = new CredReq({wallet: req.wallet.id, credDefId: credDefId, credOfferId: credOfferId,credReqMetaData: credReqMeta, data: cryptedCredReq.toString('base64')});
     credReq = await credReq.save();
     next(new APIResult(200, {
       encryptedCredentialRequest: credReq.data,
@@ -59,33 +68,24 @@ module.exports = {
 
   // Called by IDHolder after receiving the authCrypted CredentialOffer off the Ledger from the Issuer and Creating a CredentialRequest to be returned to the Issuer
   acceptCredentialOfferAndCreateCredentialRequest: wrap(async (req, res, next) => {
-    const [holderIssuerDid, holderIssuerKey, issuerHolderVerKey, credOfferJson] = await req.wallet
+    const [holderDid, holderKey, issuerVerKey, credOfferJson] = await req.wallet
       .tryAuthDecrypt(req.body.encryptedCredentialOffer);
-    log.debug('Decrypted credOffer', credOfferJson);
     const masterSecret = req.body.masterSecret ? req.body.masterSecret : null;
     const masterSecretId = await indy.proverCreateMasterSecret(req.wallet.handle, masterSecret);
 
     // GetCredDef in the name of the holderIssuerDid (not the default issuerDid)
     const credDefIdFromCredOffer = credOfferJson['cred_def_id'];
-    log.debug("credDefId from CredOffer", credDefIdFromCredOffer);
-    const [credDefId, credDef] = await CredDef.getCredDefFromLedger(req, credDefIdFromCredOffer, holderIssuerDid);
+    const [credDefId, credDef] = await CredDef.getCredDefFromLedger(holderDid, credDefIdFromCredOffer);
     const credDefJson = JSON.stringify(credDef);
 
-    log.debug('credDefLedger %s , credDef %s', credDefId, credDefJson);
-
-    // Create Credential Request (Get ConnectionDid from wallet)
-    const [credReq, credReqMeta] = await indy.proverCreateCredentialReq(req.wallet.handle, holderIssuerDid, credOfferJson, credDef, masterSecretId);
-    log.debug(credReq);
-    log.debug(credReqMeta);
-
-    // Get ConnectionDid from wallet
-    credReq['cred_offer_id']= credOfferJson['cred_offer_id'];
-    log.debug(credReq);
+    // Create Credential Request
+    const [credReq, credReqMeta] = await indy.proverCreateCredentialReq(req.wallet.handle, holderDid, credOfferJson, credDef, masterSecretId);
+    const credOfferId = credOfferJson['cred_offer_id'];
+    credReq['cred_offer_id']= credOfferId;
     const bufferCredReq = Buffer.from(JSON.stringify(credReq), 'utf-8');
-    const authCryptedCredRequest = await indy.cryptoAuthCrypt(req.wallet.handle, holderIssuerKey, issuerHolderVerKey, bufferCredReq);
-    return [authCryptedCredRequest, credReqMeta, credDefId];
+    const authCryptedCredRequest = await indy.cryptoAuthCrypt(req.wallet.handle, holderKey, issuerVerKey, bufferCredReq);
+    return [authCryptedCredRequest, credReqMeta, credDefId, credOfferId];
   }),
-
 
 
   getCredentialOffer: wrap(async (req) => {

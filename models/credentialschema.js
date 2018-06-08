@@ -41,14 +41,13 @@ schema.pre('save', async () =>{
 
 });
 
-schema.methods.getSchemaFromLedger = wrap(async (req)=>{
-
-  const submitterDid = req.wallet.issuerDid ? req.wallet.issuerDid : req.wallet.createDid();
-  let request = await indy.buildGetSchemaRequest(submitterDid,req.params.schema);
+schema.methods['getSchemaFromLedger'] = wrap(async (submitterDid, schemaId)=>{
+  let request = await indy.buildGetSchemaRequest(submitterDid,schemaId);
   let response = await indy.submitRequest(pool.handle,request);
-  await indy.parseGetSchemaResponse(response);
+  return await indy.parseGetSchemaResponse(response);
 
 });
+
 
 
 
