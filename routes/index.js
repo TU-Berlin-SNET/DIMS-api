@@ -13,7 +13,7 @@ const schema = require('../controllers/credentialschema');
 const creddef= require('../controllers/credentialdef');
 const credential= require('../controllers/credential');
 const credoffer= require('../controllers/credentialoffer');
-const proof= require('../controllers/proofreq');
+const proof = require('../controllers/proof');
 
 router.route('/user')
   // TODO rate-limiting?
@@ -73,10 +73,13 @@ router.route('/credential/')
 router.route('/credential/:credId')
   .get(credential.retrieve);
 
+router.route('/proofrequest')
+  .post(proof.createProofRequest);
+router.route('/proofrequest/:proofReq')
+  .get(proof.getProofRequest);
 
-
-router.route('/proof/')
-  .post(proof.create);
+router.route('/proof')
+  .post(proof.createProof);
 
 router.use(walletProvider.after);
 

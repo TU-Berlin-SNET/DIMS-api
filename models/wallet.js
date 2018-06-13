@@ -144,6 +144,10 @@ schema.method('getTheirDid', async function(wallet, myDid){
   return theirDid;
 });
 
+schema.method('getMyPairwiseDid', async function(theirDid) {
+  const pairwiseInfo = await indy.getPairwise(this.handle, theirDid);
+  return pairwiseInfo['my_did'];
+});
 
 schema.pre('remove', async function() {
   log.debug('wallet model pre-remove');

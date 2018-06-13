@@ -406,59 +406,66 @@ paths:
           description: ''
       tags:
       - endpoint
-  /api/proof/:
-    get:
-      operationId: proof_list
-      parameters: []
-      responses:
-        '200':
-          description: ''
-      tags:
-      - proof
+
+  /api/proofrequest/:
     post:
-      consumes:
-      - application/json
-      operationId: proof_create
       parameters:
       - in: body
         name: data
+        type: object
         schema:
           properties:
-            proof_obj:
-              description: ''
+            wallet:
+              description: Wallet id
               type: string
+            recipient:
+              description: recipient did
+              type: string
+            proofRequest:
+              description: proof request object
+              type: object
           required:
-          - proof_obj
-          type: object
+          - wallet
+          - recipient
+          - proofRequest
       responses:
         '201':
           description: ''
       tags:
-      - proof
-  /api/proof/{id}/:
-    delete:
-      operationId: proof_delete
-      parameters:
-      - description: A unique integer value identifying this proof.
-        in: path
-        name: id
-        required: true
-        type: integer
-      responses:
-        '204':
-          description: ''
-      tags:
-      - proof
+      - proofrequest
+  /api/proofrequest/{proofReq}/:
     get:
-      operationId: proof_read
       parameters:
-      - description: A unique integer value identifying this proof.
-        in: path
-        name: id
+      - in: path
+        name: proofReq
+        type: string
         required: true
-        type: integer
+        description: A unique value identifying this proof request
       responses:
         '200':
+          description: ''
+      tags:
+      - proofrequest
+
+  /api/proof/:
+    post:
+      parameters:
+      - in: body
+        name: data
+        type: object
+        schema:
+          properties:
+            wallet:
+              description: Wallet id
+              type: string
+            encryptedProofRequest:
+              description: 'Encrypted Proof Request'
+              type: string
+          required:
+          - wallet
+          - encryptedProofRequest
+      responses:
+        '201':
           description: ''
       tags:
       - proof
