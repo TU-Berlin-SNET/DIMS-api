@@ -40,13 +40,9 @@ paths:
                 encryptedCredential:
                   description: The authcrypted credential offer id
                   type: string
-                connectionDid:
-                  description: A did representing the issuer of the credential
-                  type: string
               required:
               - wallet
               - encryptedCredential
-              - connectionDid
               type: object
           responses:
             '201':
