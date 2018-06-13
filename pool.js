@@ -54,7 +54,7 @@ class PoolLedger {
   async nymRequest(walletHandle, submitterDid, targetDid, verkey, alias, role) {
     return await this._request(indy.buildNymRequest, indy.signAndSubmitRequest,
       [submitterDid, targetDid, verkey, alias, role],
-      [this.handle, walletHandle, submitterDid]);
+      [walletHandle, submitterDid]);
   }
 
   /**
@@ -71,7 +71,47 @@ class PoolLedger {
   async attribRequest(walletHandle, submitterDid, targetDid, hash, raw, enc) {
     return await this._request(indy.buildAttribRequest, indy.signAndSubmitRequest,
       [submitterDid, targetDid, hash, raw, enc],
-      [this.handle, walletHandle, submitterDid]);
+      [walletHandle, submitterDid]);
+  }
+
+  /**
+   * Retrieve Schema from ledger
+   * @param {String} submitterDid
+   * @param {String} schemaId
+   * @return {Object} parsed schema object
+   * @throws APIResult on error
+   */
+  async getSchema(submitterDid, schemaId) {
+    return await this._get(indy.buildGetSchemaRequest, indy.submitRequest, indy.parseGetSchemaResponse,
+      [submitterDid, schemaId], []);
+  }
+
+  /**
+   * Retrieve Credential Definition from ledger
+   * @param {String} submitterDid
+   * @param {String} credDefId
+   * @return {Object} parsed credential definition object
+   * @throws APIResult on error
+   */
+  async getCredDef(submitterDid, credDefId) {
+    return await this._get(indy.buildGetCredDefRequest, indy.submitRequest, indy.parseGetCredDefResponse,
+      [submitterDid, credDefId], []);
+  }
+
+  /**
+   * Build and submit request to ledger and
+   * return parsed response.
+   * @param {Function} buildFn request build function
+   * @param {Function} submitFn request submit function
+   * @param {Function} parseFn response parse function
+   * @param {Any[]} buildOpts build function arguments
+   * @param {Any[]} submitOpts submit function arguments
+   * @return {Object} parsed response
+   * @throws APIResult on error
+   */
+  async _get(buildFn, submitFn, parseFn, buildOpts, submitOpts) {
+    const result = await this._request(buildFn, submitFn, buildOpts, submitOpts);
+    return await parseFn(result);
   }
 
   /**
@@ -80,7 +120,7 @@ class PoolLedger {
    * @param {Function} submitFn request submit function
    * @param {Any[]} buildOpts build function arguments
    * @param {Any[]} submitOpts submit function arguments
-   * @return {Object}
+   * @return {Object} response
    * @throws APIResult on error
    */
   async _request(buildFn, submitFn, buildOpts, submitOpts) {
@@ -88,7 +128,7 @@ class PoolLedger {
       buildFn.name, submitFn.name, buildOpts, submitOpts);
     const request = await buildFn(...buildOpts);
     log.debug('request %j', request);
-    const result = await submitFn(...submitOpts, request);
+    const result = await submitFn(this.handle, ...submitOpts, request);
     log.debug('result %j', result);
     if (['REJECT', 'REQNACK'].includes(result['op'])) {
       throw new APIResult(400, result['reason']);
