@@ -3,17 +3,8 @@
  * Connection Offer Model
  */
 
-const uuidv4 = require('uuid/v4');
 const Mongoose = require('../db');
-
-/**
- * Generates a uuid v4 and converts it to hexadecimal representation
- * @return {String} uuidv4 in hex format
- */
-function uuidv4hex() {
-  // FIXME nonce is some long number instead of a short-ish string
-  return Buffer.from(uuidv4(), 'utf-8').toString('hex');
-}
+const nonce = require('../nonce');
 
 const schema = new Mongoose.Schema({
   created: {
@@ -33,7 +24,7 @@ const schema = new Mongoose.Schema({
     type: String,
     required: true,
     index: true,
-    default: uuidv4hex,
+    default: nonce.uuidv4hex,
   },
   role: {
     type: String,
