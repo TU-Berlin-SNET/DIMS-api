@@ -59,7 +59,7 @@ router.route('/credentialdef/:credDefId/')
   .get(creddef.retrieve);
 
 router.route('/credentialoffer/')
-  .post(credoffer.createByOwnDid);
+  .post(credoffer.create);
 
 router.route('/credentialrequest/')
   .post(credoffer.accept);

@@ -10,27 +10,6 @@ const APIResult = require('../api-result');
 module.exports = {
 
   // Called by Issuer
-  createByOwnDid: wrap(async(req, res, next)=>{
-    const issuerConnDid = req.body.connectionDid;
-    const holderDid = await req.wallet.getTheirDid(req.wallet.handle, issuerConnDid);
-    const holderIssuerVerKey = await indy.keyForDid(pool.handle, req.wallet.handle, holderDid);
-    const issuerHolderKey = await indy.keyForLocalDid(req.wallet.handle, issuerConnDid);
-    let credOffer = await indy.issuerCreateCredentialOffer(req.wallet.handle, req.body.credDefId);
-    let credentialOffer = new CredOffer({
-      wallet: req.wallet,
-      credDefId: req.body.credDefId,
-      data: credOffer,
-    });
-    credentialOffer = await credentialOffer.save();
-    credOffer['cred_offer_id'] = credentialOffer.id;
-    const cryptedCredOffer = await req.wallet.authCrypt(issuerHolderKey, holderIssuerVerKey, credOffer);
-    next(new APIResult(200, {
-      encryptedCredentialOffer: cryptedCredOffer,
-    }));
-  }),
-
-
-  // Called by Issuer
   create: wrap(async (req, res, next) => {
     // Step1: Create CredOffer for IDHolder ToDo still not clear where Issuer gets the correct did from holder
     const holderDid = req.body.holderDid;
