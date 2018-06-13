@@ -52,10 +52,14 @@ module.exports = {
 
   // Called by IDHolder
   store: wrap(async (req, res, next) => {
-    let [credId, credential] = await module.exports.storeCredential(req);
-    const cred = new Credential({credId:credId, data: credential })
+    let [credId, credential, masterSecretName] = await module.exports.storeCredential(req);
+    const cred = new Credential({
+      credId: credId,
+      data: credential,
+      masterSecretName: masterSecretName,
+    });
     await cred.save();
-    next(new APIResult(200, {credId:credId}));
+    next(new APIResult(200, {credId: credId}));
   }),
 
   retrieve: wrap(async(req,res,next)=> {
@@ -89,7 +93,7 @@ module.exports = {
 
     let [credDefId,credDef] = await CredDef.getCredDefFromLedger(holderDid,credential['cred_def_id']);
     credId = await indy.proverStoreCredential(req.wallet.handle,credId, credReqMetadata,credential, credDef, null)
-    return [credId,credential]
+    return [credId, credential, credReq.credReqMetaData.master_secret_name];
   }),
 
 

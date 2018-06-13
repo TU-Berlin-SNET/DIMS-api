@@ -17,10 +17,11 @@ const schema = new Mongoose.Schema({
   credDefId: String,
   credId: String,
   credOffer: Mixed,
-  wallet:{
-    type: String
+  masterSecretName: String,
+  wallet: {
+    type: String,
   },
-  data: Mixed
+  data: Mixed,
 });
 
 
