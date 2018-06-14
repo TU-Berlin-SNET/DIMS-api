@@ -67,11 +67,7 @@ module.exports = {
 
   // Called by IDHolder
   createProof: wrap(async (req, res, next) => {
-    // TODO WIP
-    // Currently only allows for requests
-    // with NO self-attested attributes,
-    // i.e. every attribute MUST come from a credential,
-    // and predicates are untested.
+    // TODO Test with predicates
     const [recipientDid, recipientVk, senderVk, proofReq] = await req.wallet.tryAuthDecrypt(req.body.encryptedProofRequest);
 
     // get necessary credentials, schemas, creddefs, revStates, ...
@@ -85,13 +81,27 @@ module.exports = {
     };
     for (const k in creds['attrs']) {
       if (!creds['attrs'].hasOwnProperty(k)) continue;
-      const credForAttr = creds['attrs'][k][0]['cred_info'];
-      credsForProof[`${credForAttr['referent']}`] = credForAttr;
-      requestedCredentials['requested_attributes'][k] = {
-        'cred_id': credForAttr['referent'],
-        'revealed': true,
-      };
-      someCredId = someCredId || credForAttr['referent'];
+      if (creds['attrs'][k].length > 0) {
+        const credForAttr = creds['attrs'][k][0]['cred_info'];
+        credsForProof[`${credForAttr['referent']}`] = credForAttr;
+        requestedCredentials['requested_attributes'][k] = {
+          'cred_id': credForAttr['referent'],
+          'revealed': true,
+        };
+        someCredId = someCredId || credForAttr['referent'];
+      } else if (proofReq['requested_attributes'].hasOwnProperty(k)
+          && !proofReq['requested_attributes'][k].hasOwnProperty('restrictions')) {
+        const item = proofReq['requested_attributes'][k];
+        if (!req.body.selfAttestedAttributes.hasOwnProperty(item.name)) {
+          return next(new APIResult(400, {message: `missing self-attested-attribute ${item.name}`}));
+        }
+        requestedCredentials['self_attested_attributes'][k] = req.body.selfAttestedAttributes[item.name];
+      } else {
+        log.debug('k is ', k);
+        log.debug('creds is ', creds);
+        log.debug('requestedCredentials is ', requestedCredentials);
+        return next(new APIResult(400));
+      }
     }
     for (const k in creds['predicates']) {
       if (!creds['predicates'].hasOwnProperty(k)) continue;

@@ -420,8 +420,23 @@ paths:
               description: recipient did
               type: string
             proofRequest:
-              description: proof request object
+              description: proof request object (see https://github.com/hyperledger/indy-sdk/blob/master/doc/getting-started/getting-started.md#apply-for-a-job)
               type: object
+              example:
+                name: Ticket
+                version: '0.1'
+                requested_attributes:
+                  attr1_referent:
+                    name: firstname
+                    restrictions:
+                    - cred_def_id: XsjEewC463EYaXeQZcsWND:3:CL:19
+                  attr2_referent:
+                    name: lastname
+                    restrictions:
+                    - cred_def_id: XsjEewC463EYaXeQZcsWND:3:CL:19
+                  attr3_referent:
+                    name: phone
+                requested_predicates: {}
           required:
           - wallet
           - recipient
@@ -448,6 +463,8 @@ paths:
       - proof
   /api/proof/:
     post:
+      summary: Create a Proof
+      description: Create a Proof
       parameters:
       - in: body
         name: data
@@ -460,6 +477,11 @@ paths:
             encryptedProofRequest:
               description: 'Encrypted Proof Request'
               type: string
+            selfAttestedAttributes:
+              description: (Optional) Object containing self-attested-attributes as key-value pairs
+              type: object
+              example:
+                phone: '00001111'
           required:
           - wallet
           - encryptedProofRequest
