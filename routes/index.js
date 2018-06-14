@@ -81,6 +81,9 @@ router.route('/proofrequest/:proofReq')
 router.route('/proof')
   .post(proof.createProof);
 
+router.route('/proofverification')
+  .post(proof.verifyProof);
+
 router.use(walletProvider.after);
 
 module.exports = router;
