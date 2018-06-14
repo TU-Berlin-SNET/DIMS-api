@@ -303,33 +303,6 @@ paths:
           description: ''
       tags:
       - credentialrequest
-  /api/connection/:
-    post:
-      summary: Accept a connection offer
-      description: Accept a connection offer
-      parameters:
-      - in: body
-        name: data
-        schema:
-          properties:
-            wallet:
-              description: 'Wallet to use for accepting the connection offer'
-              type: string
-            endpoint:
-              description: 'Endpoint for communication with accepting user'
-              type: string
-            connectionOffer:
-              description: 'The connection offer object'
-              type: object
-          required:
-          - wallet
-          - connection_offer
-          type: object
-      responses:
-        '200':
-          description: 'Success'
-      tags:
-      - connection
   /api/connectionoffer/:
     post:
       summary: Create a new connection offer
@@ -360,7 +333,34 @@ paths:
         '201':
           description: ''
       tags:
-      - connectionoffer
+      - connection
+  /api/connection/:
+    post:
+      summary: Accept a connection offer
+      description: Accept a connection offer
+      parameters:
+      - in: body
+        name: data
+        schema:
+          properties:
+            wallet:
+              description: 'Wallet to use for accepting the connection offer'
+              type: string
+            endpoint:
+              description: 'Endpoint for communication with accepting user'
+              type: string
+            connectionOffer:
+              description: 'The connection offer object'
+              type: object
+          required:
+          - wallet
+          - connection_offer
+          type: object
+      responses:
+        '200':
+          description: 'Success'
+      tags:
+      - connection
   /api/endpoint/:
     post:
       description: Agent endpoint
@@ -567,7 +567,7 @@ paths:
           description: User successfully created
           headers:
             Location:
-              description: Path to created user, e.g. /users/userId
+              description: Path to created user, e.g. /user/userId
               type: string
       tags:
       - user

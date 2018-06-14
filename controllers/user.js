@@ -15,7 +15,7 @@ module.exports = {
     }
     let u = new User({username: req.body.username, password: req.body.password});
     u = await u.save();
-    res.set('location', '/users/'+u._id);
+    res.set('location', '/user/'+u._id);
     next(new APIResult(201));
   }),
 
