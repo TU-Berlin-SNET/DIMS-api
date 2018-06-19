@@ -12,7 +12,7 @@ module.exports = {
   // Called by Issuer
   create: wrap(async (req, res, next) => {
     // Step1: Create CredOffer for IDHolder ToDo still not clear where Issuer gets the correct did from holder
-    const holderDid = req.body.holderDid;
+    const holderDid = req.body.recipientDid;
     let credOffer = await indy.issuerCreateCredentialOffer(req.wallet.handle, req.body.credDefId);
 
     // Step2: Get verKey between issuer and IDHolder
@@ -35,7 +35,7 @@ module.exports = {
     }));
   }),
 
-  //Called by IDHolder
+  // Called by IDHolder
   accept: wrap(async (req, res, next) => {
     const [cryptedCredReq, credReqMeta, credDefId, credOfferId] = await module.exports.acceptCredentialOfferAndCreateCredentialRequest(req);
     let credReq = new CredReq({wallet: req.wallet.id, credDefId: credDefId, credOfferId: credOfferId,credReqMetaData: credReqMeta, data: cryptedCredReq.toString('base64')});
