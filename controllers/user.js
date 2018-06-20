@@ -1,14 +1,24 @@
 
 const APIResult = require('../api-result');
 const User = require('../models/user');
-const Wallet = require('../models/wallet');
 const wrap = require('../asyncwrap').wrap;
 const log = require('../log').log;
+
+/**
+ * Check if user is the same as requesting user
+ * @param {object} user req.user
+ * @param {string} resource req.params.user
+ * @return {boolean}
+ */
+function isSame(user, resource) {
+  return (resource === 'me' || resource === user.id);
+}
+
+const notFoundResult = new APIResult(404, {message: 'user not found'});
 
 module.exports = {
 
   create: wrap(async (req, res, next) => {
-    log.debug('userController: create called');
     const userExists = await User.count({username: req.body.username}).exec() > 0;
     if (userExists) {
       return next(new APIResult(400, {message: 'username already taken'}));
@@ -20,24 +30,36 @@ module.exports = {
   }),
 
   retrieve: wrap(async (req, res, next) => {
-    log.debug('userController: retrieve called');
-    if (req.params.user !== 'me' && req.params.user !== req.user.id) {
-      return next(new APIResult(404, {message: 'User not found'}));
+    if (!isSame(req.user, req.params.user)) {
+      return next(notFoundResult);
     }
-    const wallets = await Wallet.find({owner: req.user}).exec();
-    const data = req.user.toObject();
-    data.wallets = wallets;
-    next(new APIResult(200, data));
+    next(new APIResult(200, {id: req.user.id, username: req.user.username}));
   }),
 
   update: wrap(async (req, res, next) => {
-    log.debug('userController: update called');
-    next(new APIResult(501, {message: 'Not yet implemented'}));
+    if (!isSame(req.user, req.params.user)) {
+      return next(notFoundResult);
+    }
+    if (!req.body.username && !req.body.password) {
+      return next(new APIResult(400, {message: 'no values to update provided, either username or password must be present'}));
+    }
+    if (req.body.username) req.user.username = req.body.username;
+    if (req.body.password) req.user.password = req.body.password;
+    try {
+      req.user = await req.user.save();
+    } catch (err) {
+      log.warn(err);
+      return next(new APIResult(400, {message: 'username already taken'}));
+    }
+    next(new APIResult(200));
   }),
 
   delete: wrap(async (req, res, next) => {
-    log.debug('userController: delete called');
-    next(new APIResult(501, {message: 'Not yet implemented'}));
+    if (!isSame(req.user, req.params.user)) {
+      return next(notFoundResult);
+    }
+    await req.user.remove();
+    next(new APIResult(204));
   }),
 
 };

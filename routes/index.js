@@ -28,7 +28,7 @@ router.param('wallet', walletProvider.param);
 
 router.route('/user/:user')
   .get(user.retrieve)
-  .post(user.update)
+  .put(user.update)
   .delete(user.delete);
 
 router.route('/wallet')
