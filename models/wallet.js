@@ -138,15 +138,28 @@ schema.method('tryAuthDecrypt', async function(message) {
   throw new APIResult(400, {message: 'decryption failed, no fitting decryption key found'});
 });
 
-schema.method('getTheirDid', async function(wallet, myDid){
+schema.method('getTheirDid', async function(wallet, myDid) {
   const listPairwise = await indy.listPairwise(wallet);
-  const theirDid = listPairwise.filter(e => e.my_did == myDid).pop().their_did;
+  const theirDid = listPairwise.filter((e) => e.my_did === myDid).pop().their_did;
   return theirDid;
 });
 
 schema.method('getMyPairwiseDid', async function(theirDid) {
   const pairwiseInfo = await indy.getPairwise(this.handle, theirDid);
   return pairwiseInfo['my_did'];
+});
+
+schema.method('toMinObject', function() {
+  let m = {};
+  m.id = this._id;
+  m.created = this.created;
+  m.owner = (typeof owner === 'object') ? this.owner._id.toString() : this.owner.toString();
+  m.poolName = this.poolName;
+  m.xtype = this.xtype;
+  m.config = this.config;
+  m.credentials = this.credentials;
+  m.ownDid = this.ownDid;
+  return m;
 });
 
 schema.pre('remove', async function() {
