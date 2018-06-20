@@ -2,15 +2,16 @@
  * IDChain Agent REST API
  * Validation Middleware
  */
+'use strict';
+
 const YAML = require('yamljs');
 const ajv = require('ajv')({removeAdditional: true});
 const wrap = require('../asyncwrap').wrap;
-const log = require('../log').log;
 const APIResult = require('../api-result');
 const swaggerDoc = YAML.load('./swagger.yaml');
 
 ajv.addSchema(swaggerDoc, 'swagger.json');
-const rx= /^\/api\/(\w+)\//;
+const rx= /^\/api\/(\w+)/;
 
 /**
  * Validation Middleware
