@@ -34,7 +34,9 @@ schema.pre('remove', async function() {
   // Per mongoose doc: Model.remove does not call the remove hook
   // only instance-level remove does
   let wallets = await Wallet.find({owner: this._id}).exec();
-  await wallets.forEach(async (w) => await w.remove());
+  for (const w of wallets) {
+    await w.remove();
+  }
 });
 
 module.exports = Mongoose.model('User', schema);
