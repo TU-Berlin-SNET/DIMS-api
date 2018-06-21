@@ -43,11 +43,6 @@ module.exports = {
     await indy.setEndpointForDid(req.wallet.handle, toFromDid,
       req.body.endpoint || ENDPOINT, toFromKey);
     const fromToKey = await indy.keyForDid(pool.handle, req.wallet.handle, connOffer.did);
-    // TODO figure out a better way to handle ownDid creation/saving
-    if (connOffer.role !== 'NONE') {
-      req.wallet.ownDid = toFromDid;
-      await req.wallet.save();
-    }
     const [signature, anonCryptConnRes] = await req.wallet.signAndAnonCrypt(
       toFromKey, fromToKey, {
       did: toFromDid,
@@ -67,6 +62,10 @@ module.exports = {
       });
     if (agentResult.status !== 200) {
       return next(new APIResult(agentResult.status, {message: agentResult.body}));
+    }
+    if (connOffer.role !== 'NONE') {
+      req.wallet.ownDid = toFromDid;
+      await req.wallet.save();
     }
     await indy.storeTheirDid(req.wallet.handle, {did: connOffer.did, verkey: fromToKey});
     await indy.setEndpointForDid(req.wallet.handle, connOffer.did, recipient, fromToKey);
