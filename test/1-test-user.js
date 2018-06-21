@@ -99,10 +99,10 @@ describe('/api/user', function() {
 
   after(async function() {
     // clean up
+    valuesToDelete.reverse();
     for (const v of valuesToDelete) {
-      const res = await agent.delete(`/api/${v.path}/${v.id}`)
-        .auth(v.auth).set(acceptHeader);
-      expect(res.status).to.be.oneOf([204, 401, 404]);
+      await agent.delete(`/api/${v.path}/${v.id}`)
+        .auth(...v.auth).set(acceptHeader);
     }
   });
 });

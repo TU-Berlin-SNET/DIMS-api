@@ -25,7 +25,9 @@ let connectionOffer;
 let issuer;
 let holder;
 let rp;
+let credDefId;
 let holderIssuerDid;
+let holderRPDid;
 
 describe('behaviour', function() {
   describe('prepare for tests', function() {
@@ -134,7 +136,6 @@ describe('behaviour', function() {
 
   describe('credentials', function() {
     let schemaId;
-    let credDefId;
     let credentialOffer;
     let credentialRequest;
     let credential;
@@ -165,6 +166,7 @@ describe('behaviour', function() {
         .send({
           wallet: issuer.wallet.id,
           schemaId: schemaId,
+          // FIXME add another test WITH revocation as soon as revocation is supported by proofs
           supportRevocation: false,
         }).expect(201);
       expect(res.body).to.have.property('credDefId');
@@ -231,9 +233,89 @@ describe('behaviour', function() {
   });
 
   describe('proofs', function() {
-    it('relying party should create proof request');
-    it('holder should accept proof request and create proof');
-    it('relying party should create proof verification');
+    let proofRequest;
+    let proof;
+    it('relying party (TRUST_ANCHOR) should create connectionoffer for holder with role NONE', async function() {
+      const res = await agent.post('/api/connectionoffer')
+        .auth(rp.username, rp.password)
+        .set(bothHeaders)
+        .send({wallet: rp.wallet.id})
+        .expect(201);
+      expect(res.body).to.have.all.keys('did', 'nonce', 'role');
+      expect(res.body.role).to.equal('NONE');
+      connectionOffer = res.body;
+    });
+    it('holder should accept connectionoffer from relying party', async function() {
+      const res = await agent.post('/api/connection')
+        .auth(holder.username, holder.password)
+        .set(bothHeaders)
+        .send({wallet: holder.wallet.id, connectionOffer: connectionOffer})
+        .expect(200);
+      expect(res.body).to.have.all.keys('myDid', 'theirDid');
+      holderRPDid = res.body.myDid;
+    });
+    it('relying party should create proof request', async function() {
+      const res = await agent.post('/api/proofrequest')
+        .auth(rp.username, rp.password)
+        .set(bothHeaders)
+        .send({
+          wallet: rp.wallet.id,
+          recipientDid: holderRPDid,
+          proofRequest: {
+            'name': 'Ticket',
+            'version': '0.1',
+            'requested_attributes': {
+              'attr1_referent': {
+                'name': 'firstname',
+                'restrictions': [{'cred_def_id': `${credDefId}`}],
+              },
+              'attr2_referent': {
+                'name': 'lastname',
+                'restrictions': [{'cred_def_id': `${credDefId}`}],
+              },
+              'attr3_referent': {
+                'name': 'phone',
+              },
+            },
+            'requested_predicates': {
+            // FIXME predicates do not work at the moment, add me back in or add another test
+            //  'predicate1_referent': {
+            //    'name': 'yearOfBirth',
+            //    'p_type': '<',
+            //    'p_value': 2000,
+            //    'restrictions': [{'cred_def_id': credDefId}],
+            //  },
+            },
+          },
+        }).expect(201);
+      expect(res.body).to.have.property('encryptedProofRequest');
+      proofRequest = res.body.encryptedProofRequest;
+    });
+    it('holder should accept proof request and create proof', async function() {
+      const res = await agent.post('/api/proof')
+        .auth(holder.username, holder.password)
+        .set(bothHeaders)
+        .send({
+          wallet: holder.wallet.id,
+          encryptedProofRequest: proofRequest,
+          selfAttestedAttributes: {
+            'phone': '11110000',
+          },
+        }).expect(201);
+      expect(res.body).to.have.property('encryptedProof');
+      proof = res.body.encryptedProof;
+    });
+    it('relying party should create proof verification', async function() {
+      const res = await agent.post('/api/proofverification')
+        .auth(rp.username, rp.password)
+        .set(bothHeaders)
+        .send({
+          wallet: rp.wallet.id,
+          encryptedProof: proof,
+        }).expect(200);
+      expect(res.body).to.have.property('isValid');
+      expect(res.body.isValid).to.be.true;
+    });
   });
 
   after(async function() {

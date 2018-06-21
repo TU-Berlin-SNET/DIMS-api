@@ -39,7 +39,7 @@ module.exports = {
 
   // Called by Verifier
   createProofRequest: wrap(async (req, res, next) => {
-    const recipientDid = req.body.recipient;
+    const recipientDid = req.body.recipientDid;
     const proofReqJson = req.body.proofRequest;
     const senderDid = await req.wallet.getMyPairwiseDid(recipientDid);
     const recipientVk = await indy.keyForDid(pool.handle, req.wallet.handle, recipientDid);
