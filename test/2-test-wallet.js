@@ -6,16 +6,14 @@
 'use strict';
 
 const mocha = require('mocha');
-const supertest = require('supertest');
 const expect = require('chai').expect;
 
 const vars = require('./0-test-vars');
-const app = require('../app');
 const describe = mocha.describe;
 const after = mocha.after;
 const it = mocha.it;
-const agent = supertest(app);
 
+const agent = vars.agent;
 const acceptHeader = vars.acceptHeader;
 const bothHeaders = vars.bothHeaders;
 let valuesToDelete = [];
@@ -44,8 +42,10 @@ describe('/api/wallet', function() {
     expect(res.body).to.have.property('config').that.is.null;
     expect(res.body).to.have.property('credentials').that.is.null;
     testwallet = res.body;
-    delete testwallet.name;
-    valuesToDelete.push({id: testwallet.id, auth: [testuser.username, testuser.password], path: 'wallet'});
+    valuesToDelete.push({
+      id: testwallet.id,
+      auth: [testuser.username, testuser.password], path: 'wallet',
+    });
   });
 
   it('GET /:id should retrieve specific wallet', async function() {

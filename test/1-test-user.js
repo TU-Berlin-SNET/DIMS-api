@@ -6,16 +6,14 @@
 'use strict';
 
 const mocha = require('mocha');
-const supertest = require('supertest');
 const expect = require('chai').expect;
 
 const vars = require('./0-test-vars');
-const app = require('../app');
 const describe = mocha.describe;
 const after = mocha.after;
 const it = mocha.it;
-const agent = supertest(app);
 
+const agent = vars.agent;
 const acceptHeader = vars.acceptHeader;
 const bothHeaders = vars.bothHeaders;
 let valuesToDelete = [];
