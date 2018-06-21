@@ -9,7 +9,7 @@
   "main": "app.js",
   "scripts": {
     "start": "node app.js",
-    "dev": "DEBUG=* nodemon -r pino-debug app.js | pino",
+    "dev": "DEBUG=* nodemon --inspect -r pino-debug app.js | pino",
     "test": "NODE_ENV=testing mocha --exit"
   },
   "dependencies": {
