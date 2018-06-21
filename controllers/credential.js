@@ -59,7 +59,7 @@ module.exports = {
       masterSecretName: masterSecretName,
     });
     await cred.save();
-    next(new APIResult(200, {credId: credId}));
+    next(new APIResult(200, {credentialId: credId}));
   }),
 
   retrieve: wrap(async(req,res,next)=> {

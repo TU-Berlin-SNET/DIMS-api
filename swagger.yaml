@@ -100,15 +100,15 @@ definitions:
       wallet:
         description: A unique string value identifying a wallet
         type: string
-      schema:
-        description: A unique name of the schema
+      schemaId:
+        description: A unique string value identifying a schema
         type: string
       supportRevocation:
         description: States if revocation should be supported for this credential definiton
         type: boolean
     required:
     - wallet
-    - schema
+    - schemaId
   credentialoffer_post:
     type: object
     properties:

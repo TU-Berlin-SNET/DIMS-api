@@ -7,13 +7,13 @@ const APIResult = require('../api-result');
 module.exports = {
 
   create: wrap(async (req, res, next) => {
-    let [schemaId,credSchema,response] = await module.exports.createAndStoreSchemaToLedger(req);
-    if(response['op']=='REJECT' || response['op']=='REQNACK'){
-      next(new APIResult(400,response['reason']));
-    }else {
-      credSchema.set({data:response['result'], schemaId: schemaId});
+    let [schemaId, credSchema, response] = await module.exports.createAndStoreSchemaToLedger(req);
+    if (response['op'] === 'REJECT' || response['op'] === 'REQNACK') {
+      next(new APIResult(400, response['reason']));
+    } else {
+      credSchema.set({data: response['result'], schemaId: schemaId});
       await credSchema.save();
-      next(new APIResult(201,schemaId));
+      next(new APIResult(201, {schemaId: schemaId}));
     }
   }),
 

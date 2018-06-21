@@ -14,7 +14,7 @@ module.exports = {
     if (response['op'] == 'REPLY') {
       credDef.set({data: response['result']});
       await credDef.save();
-      next(new APIResult(200, credDefId));
+      next(new APIResult(201, {credDefId: credDefId}));
     } else {
       next(new APIResult(400, response['reason']));
     }
@@ -47,7 +47,7 @@ module.exports = {
 
   createAndSendCredDefToLedger: wrap(async (req) => {
     const submitterDid = req.wallet.ownDid;
-    const schemaId = req.body.schema;
+    const schemaId = req.body.schemaId;
     let [,schema] = await Schema.getSchemaFromLedger(submitterDid,schemaId);
     const support_revocation= req.body.supportRevocation ? { support_revocation: req.body.supportRevocation} : {support_revocation: false};
     let [credDefId, credDef ] = await indy.issuerCreateAndStoreCredentialDef(req.wallet.handle,req.wallet.ownDid,schema,'TAG1','CL', support_revocation);

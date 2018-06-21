@@ -30,7 +30,7 @@ module.exports = {
     credentialOffer = await credentialOffer.save();
     credOffer['cred_offer_id'] = credentialOffer.id;
     const cryptedCredOffer = await req.wallet.authCrypt(issuerKey, holderVerKey, credOffer);
-      next(new APIResult(200, {
+      next(new APIResult(201, {
       encryptedCredentialOffer: cryptedCredOffer,
     }));
   }),
@@ -40,7 +40,7 @@ module.exports = {
     const [cryptedCredReq, credReqMeta, credDefId, credOfferId] = await module.exports.acceptCredentialOfferAndCreateCredentialRequest(req);
     let credReq = new CredReq({wallet: req.wallet.id, credDefId: credDefId, credOfferId: credOfferId,credReqMetaData: credReqMeta, data: cryptedCredReq.toString('base64')});
     credReq = await credReq.save();
-    next(new APIResult(200, {
+    next(new APIResult(201, {
       encryptedCredentialRequest: credReq.data,
     }));
   }),
