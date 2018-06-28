@@ -97,6 +97,18 @@ class PoolLedger {
   }
 
   /**
+   * Submit a credential definition to the ledger.
+   * @param {Number} walletHandle
+   * @param {String} submitterDid
+   * @param {Object} data the credential definition
+   * @return {Promise} a promise which resolves when the request is completed
+   */
+  credDefRequest(walletHandle, submitterDid, data) {
+    return this._request(indy.buildCredDefRequest, indy.signAndSubmitRequest,
+      [submitterDid, data], [walletHandle, submitterDid]);
+  }
+
+  /**
    * Retrieve Schema from ledger
    * @param {String} submitterDid
    * @param {String} schemaId

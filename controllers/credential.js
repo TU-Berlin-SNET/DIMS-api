@@ -88,10 +88,10 @@ module.exports = {
 
     // revRegDef Revocation Registry Definiton is currently set to null, ToDo support revocation features in the future
     const credOfferId = credential['cred_offer_id'];
-    const credReq = await CredentialRequest.findOne({credOfferId:credOfferId});
+    const credReq = await CredentialRequest.findOne({credOfferId: credOfferId});
     const credReqMetadata = credReq.credReqMetaData;
 
-    let [credDefId,credDef] = await CredDef.getCredDefFromLedger(holderDid,credential['cred_def_id']);
+    let [credDefId, credDef] = await pool.getCredDef(holderDid, credential['cred_def_id']);
     credId = await indy.proverStoreCredential(req.wallet.handle,credId, credReqMetadata,credential, credDef, null)
     return [credId, credential, credReq.credReqMetaData.master_secret_name];
   }),

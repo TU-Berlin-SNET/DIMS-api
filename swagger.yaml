@@ -300,8 +300,13 @@ paths:
           - credentialissue
   /api/credentialdef/:
     get:
-      summary: List credential definitions of user
-      description: List credential definitions of user
+      summary: List credential definitions of wallet
+      description: List credential definitions of wallet
+      parameters:
+        - in: header
+          name: wallet
+          required: true
+          type: string
       responses:
         '200':
           description: ''
@@ -333,8 +338,8 @@ paths:
         required: true
         type: string
     get:
-      summary: Retrieve a credential definition
-      description: Retrieve a credential definition
+      summary: Retrieve a credential definition from the ledger
+      description: Retrieve a credential definition from the ledger
       responses:
         '200':
           description: ''

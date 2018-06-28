@@ -53,6 +53,7 @@ router.route('/schema/:schema/')
   .get(schema.retrieve);
 
 router.route('/credentialdef/')
+  .get(creddef.list)
   .post(creddef.create);
 
 router.route('/credentialdef/:credDefId/')
