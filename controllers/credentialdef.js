@@ -21,11 +21,30 @@ module.exports = {
       req.wallet.handle, req.wallet.ownDid, schema, 'TAG1', 'CL',
       {'support_revocation': supportRevocation});
     const response = await pool.credDefRequest(req.wallet.handle, req.wallet.ownDid, credDef);
-    const credDefDoc = await new CredDef({
+
+    let doc = {
       credDefId: credDefId,
       wallet: req.wallet.id,
       data: response['result'],
-    }).save();
+    };
+    if (supportRevocation) {
+      const blobStorageWriter = await pool.openBlobStorageWriter();
+      // supported config keys depend on credential type
+      // currently, indy only supports CL_ACCUM as credential type
+      const revocRegConfig = {
+        'issuance_type': 'ISSUANCE_ON_DEMAND',
+        'max_cred_num': 1000,
+      };
+      const [revocRegId, revocRegDef, revocRegEntry] = await indy.issuerCreateAndStoreRevocReg(
+        req.wallet.handle, req.wallet.ownDid, null, 'TAG1', credDefId, revocRegConfig, blobStorageWriter);
+      await pool.revocRegDefRequest(req.wallet.handle, req.wallet.ownDid, revocRegDef);
+      await pool.revocRegEntryRequest(req.wallet.handle, req.wallet.ownDid, revocRegId,
+        revocRegDef.revocDefType, revocRegEntry);
+      doc.revocRegId = revocRegId;
+      doc.revocRegType = revocRegDef.revocDefType;
+    }
+
+    const credDefDoc = await new CredDef(doc).save();
     next(new APIResult(201, {credDefId: credDefDoc.credDefId}));
   }),
 

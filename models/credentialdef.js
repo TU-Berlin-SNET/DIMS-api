@@ -15,6 +15,12 @@ const schema = new Mongoose.Schema({
     type: String,
     index: true,
   },
+  revocRegId: {
+    type: String,
+  },
+  revocRegType: {
+    type: String,
+  },
   wallet: {
     type: String,
     ref: 'Wallet',

@@ -3,10 +3,19 @@
  * Pool Ledger Representation
  */
 
+const os = require('os');
+const path = require('path');
 const util = require('util');
 const indy = require('indy-sdk');
 const APIResult = require('./api-result');
 const log = require('./log').log;
+
+const indyHomePath = path.join(os.homedir(), '.indy_client');
+const tailsPath = path.join(indyHomePath, 'tails');
+const blobStorageConfig = {
+  'base_dir': tailsPath,
+  'uri_pattern': '',
+};
 
 /**
  * Pool Representation
@@ -63,6 +72,22 @@ class PoolLedger {
   }
 
   /**
+   * Open a default blob storage writer for $HOME/.indy_client/tails
+   * @return {Promise} resolves to a handle (number)
+   */
+  async openBlobStorageWriter() {
+    return indy.openBlobStorageWriter('default', blobStorageConfig);
+  }
+
+  /**
+   * Open a default blob storage reader for $HOME/.indy_client/tails
+   * @return {Promise} resolves to a handle (number)
+   */
+  async openBlobStorageReader() {
+    return indy.openBlobStorageReader('default', blobStorageConfig);
+  }
+
+  /**
    * Create, sign, and submit nym request to ledger.
    * @param {any} walletHandle
    * @param {any} submitterDid
@@ -109,10 +134,36 @@ class PoolLedger {
   }
 
   /**
+   * Submit a revocation registry definition to the ledger.
+   * @param {Number} walletHandle
+   * @param {String} submitterDid
+   * @param {Object} data the revocRegDef
+   * @return {Promise} a promise which resolves to the response
+   */
+  revocRegDefRequest(walletHandle, submitterDid, data) {
+    return this._request(indy.buildRevocRegDefRequest, indy.signAndSubmitRequest,
+      [submitterDid, data], [walletHandle, submitterDid]);
+  }
+
+  /**
+   * Submit a revocation registry entry to the ledger.
+   * @param {Number} walletHandle
+   * @param {String} submitterDid
+   * @param {String} revocRegDefId ID of the corresponding RevocRegDef
+   * @param {String} revDefType revocation registry type
+   * @param {Object} value registry specific data
+   * @return {Promise} a promise which resolves to the response
+   */
+  revocRegEntryRequest(walletHandle, submitterDid, revocRegDefId, revDefType, value) {
+    return this._request(indy.buildRevocRegEntryRequest, indy.signAndSubmitRequest,
+      [submitterDid, revocRegDefId, revDefType, value], [walletHandle, submitterDid]);
+  }
+
+  /**
    * Retrieve Schema from ledger
    * @param {String} submitterDid
    * @param {String} schemaId
-   * @return {Object} parsed schema object
+   * @return {any[]} [schemaId, schema]
    * @throws APIResult on error
    */
   async getSchema(submitterDid, schemaId) {
@@ -124,12 +175,24 @@ class PoolLedger {
    * Retrieve Credential Definition from ledger
    * @param {String} submitterDid
    * @param {String} credDefId
-   * @return {Object} parsed credential definition object
+   * @return {Any[]} [credDefId, credDef]
    * @throws APIResult on error
    */
   async getCredDef(submitterDid, credDefId) {
     return await this._get(indy.buildGetCredDefRequest, indy.submitRequest, indy.parseGetCredDefResponse,
       [submitterDid, credDefId], []);
+  }
+
+  /**
+   * Retrieve Revocation Registry Definition from ledger
+   * @param {String} submitterDid
+   * @param {String} revocRegId
+   * @return {Promise} resolves to [revocRegDefId, revocRegDef]
+   * @throws APIResult on error
+   */
+  async getRevocRegDef(submitterDid, revocRegId) {
+    return this._get(indy.buildGetRevocRegDefRequest, indy.submitRequest, indy.parseGetRevocRegDefResponse,
+      [submitterDid, revocRegId], []);
   }
 
   /**
