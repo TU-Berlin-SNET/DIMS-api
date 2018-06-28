@@ -14,13 +14,14 @@ const creddef= require('../controllers/credentialdef');
 const credential= require('../controllers/credential');
 const credoffer= require('../controllers/credentialoffer');
 const proof = require('../controllers/proof');
+const endpoint = require('../controllers/endpoint');
 
 router.route('/user')
   // TODO rate-limiting?
   .post(user.create);
 
 router.route('/endpoint')
-  .post(connection.endpoint);
+  .post(endpoint.handle);
 
 router.use(auth);
 router.use(walletProvider.before);

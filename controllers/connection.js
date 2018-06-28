@@ -10,7 +10,6 @@ const wrap = require('../asyncwrap').wrap;
 const log = require('../log').log;
 const pool = require('../pool');
 const APIResult = require('../api-result');
-const Wallet = require('../models/wallet');
 const ConnectionOffer = require('../models/connectionoffer');
 
 const ENDPOINT = `${process.env.APP_HOST}:${process.env.APP_PORT}`;
@@ -18,7 +17,6 @@ const ENDPOINT = `${process.env.APP_HOST}:${process.env.APP_PORT}`;
 module.exports = {
 
   create: wrap(async (req, res, next) => {
-    log.debug('connection controller create');
     const [fromToDid, fromToKey] = await req.wallet.createDid();
     await pool.nymRequest(req.wallet.handle, req.wallet.ownDid, fromToDid, fromToKey);
     await pool.attribRequest(req.wallet.handle, fromToDid, fromToDid, null,
@@ -37,7 +35,6 @@ module.exports = {
   }),
 
   accept: wrap(async (req, res, next) => {
-    log.debug('connection controller accept');
     const connOffer = req.body.connectionOffer;
     const [toFromDid, toFromKey] = await req.wallet.createDid();
     await indy.setEndpointForDid(req.wallet.handle, toFromDid,
@@ -76,33 +73,6 @@ module.exports = {
       myDid: toFromDid,
       theirDid: connOffer.did,
     }));
-  }),
-
-  endpoint: wrap(async (req, res, next) => {
-    log.debug('connection controller endpoint');
-    const type = req.body.type;
-    const target = req.body.target;
-    const nonce = req.body.ref;
-    const signature = req.body.signature;
-    const message = req.body.message;
-    if (type !== 'anon' || target !== 'accept_connection') {
-      return next(new APIResult(501, {message: 'Not yet implemented'}));
-    }
-    const connOffer = await ConnectionOffer.findOne({nonce: nonce}).exec();
-    if (!connOffer) {
-      return next(new APIResult(404, {message: 'Unknown nonce'}));
-    }
-    // TODO interface with walletProvider here
-    req.wallet = await Wallet.findOne({_id: connOffer.issuerWallet}).exec();
-    await req.wallet.open();
-    const fromToKey = await indy.keyForDid(pool.handle, req.wallet.handle, connOffer.ownDid);
-    const connRes = await req.wallet.anonDecryptAndVerify(fromToKey, message, signature);
-    const role = (connOffer.role === 'NONE') ? null : connOffer.role;
-    await pool.nymRequest(req.wallet.handle, req.wallet.ownDid, connRes.did, connRes.verkey, null, role);
-    await indy.storeTheirDid(req.wallet.handle, {did: connRes.did, verkey: connRes.verkey});
-    await indy.createPairwise(req.wallet.handle, connRes.did, connOffer.ownDid);
-    await connOffer.remove();
-    next(new APIResult(200, {message: 'Success'}));
   }),
 
 };
