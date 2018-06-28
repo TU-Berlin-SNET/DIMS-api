@@ -7,34 +7,6 @@ const APIResult = require('../api-result');
 const ProofRequest = require('../models/proofreq');
 const Credential = require('../models/credential');
 
-/**
- * Retrieves schemas, credDefs, revStates, revRegDefs, and revRegs from ledger.
- * @param {String} submitterDid did to use for submitting requests to ledger
- * @param {Object[]} identifiers Array of objects containing schemaId, credDefId, and revRegId
- * @return {Any[]} [schemas, credDefs, revStates, revRegDefs, revRegs]
- */
-async function getEntitiesFromLedger(submitterDid, identifiers) {
-  let schemas = {};
-  let credDefs = {};
-  let revStates = {};
-  let revRegDefs = {};
-  let revRegs = {};
-  for (const referent of Object.keys(identifiers)) {
-    const item = identifiers[referent];
-    const [schemaId, schema] = await pool.getSchema(submitterDid, item['schema_id']);
-    schemas[schemaId] = schema;
-    const [credDefId, credDef] = await pool.getCredDef(submitterDid, item['cred_def_id']);
-    credDefs[credDefId] = credDef;
-
-    if (item.rev_reg_seq_no) {
-      // TODO for prover: create revocation states
-      // TODO for verifier: get revocation definitions and registries
-    }
-  }
-
-  return [schemas, credDefs, revStates, revRegDefs, revRegs];
-}
-
 module.exports = {
 
   // Called by Verifier
@@ -97,9 +69,6 @@ module.exports = {
         }
         requestedCredentials['self_attested_attributes'][k] = req.body.selfAttestedAttributes[item.name];
       } else {
-        log.debug('k is ', k);
-        log.debug('creds is ', creds);
-        log.debug('requestedCredentials is ', requestedCredentials);
         return next(new APIResult(400));
       }
     }
@@ -107,11 +76,11 @@ module.exports = {
       if (!creds['predicates'].hasOwnProperty(k)) continue;
       const credForPredicate = creds['predicates'][k][0]['cred_info'];
       credsForProof[`${credForPredicate['referent']}`] = credForPredicate;
-      requestedCredentials.requested_predicates[k] = {
+      requestedCredentials['requested_predicates'][k] = {
         'cred_id': credForPredicate['referent'],
       };
     }
-    const [schemas, credDefs, revStates] = await getEntitiesFromLedger(recipientDid, credsForProof);
+    const [schemas, credDefs, revStates] = await pool.proverGetEntitiesFromLedger(recipientDid, credsForProof);
 
     // retrieve masterSecretName from one of the used credentials
     // NOTE: we can only give one masterSecretName to the proof creation function,
@@ -131,7 +100,7 @@ module.exports = {
   verifyProof: wrap(async (req, res, next) => {
     const [recipientDid, recipientVk, senderVk, proofJson] = await req.wallet.tryAuthDecrypt(req.body.encryptedProof);
     const proofReqDoc = await ProofRequest.findById(proofJson.proofReqId).exec();
-    const [schemas, credDefs, revStates, revRegDefs, revRegs] = await getEntitiesFromLedger(recipientDid, proofJson['identifiers']);
+    const [schemas, credDefs, revRegDefs, revRegs] = await pool.verifierGetEntitiesFromLedger(recipientDid, proofJson['identifiers']);
     const isValid = await indy.verifierVerifyProof(proofReqDoc.data, proofJson, schemas, credDefs, revRegDefs, revRegs);
     next(new APIResult(200, {
       proof: proofJson,

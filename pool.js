@@ -41,6 +41,28 @@ class PoolLedger {
   }
 
   /**
+   * Retrieves schemas, credDefs, revStates, revRegDefs, and revRegs from ledger.
+   * @param {String} submitterDid did to use for submitting requests to ledger
+   * @param {Object[]} identifiers Array of objects containing schemaId, credDefId, and revRegId
+   * @return {Any[]} [schemas, credDefs, revStates]
+   */
+  async proverGetEntitiesFromLedger(submitterDid, identifiers) {
+    // TODO revocFn
+    return this._getEntitiesFromLedger(submitterDid, identifiers, null);
+  }
+
+  /**
+   * Retrieves schemas, credDefs, revStates, revRegDefs, and revRegs from ledger.
+   * @param {String} submitterDid did to use for submitting requests to ledger
+   * @param {Object[]} identifiers Array of objects containing schemaId, credDefId, and revRegId
+   * @return {Any[]} [schemas, credDefs, revRegDefs, revRegs]
+   */
+  async verifierGetEntitiesFromLedger(submitterDid, identifiers) {
+    // TODO revocFn
+    return this._getEntitiesFromLedger(submitterDid, identifiers, null);
+  }
+
+  /**
    * Create, sign, and submit nym request to ledger.
    * @param {any} walletHandle
    * @param {any} submitterDid
@@ -115,6 +137,34 @@ class PoolLedger {
   }
 
   /**
+   * Retrieves schemas, credDefs, revStates, revRegDefs, and revRegs from ledger.
+   * @param {String} submitterDid did to use for submitting requests to ledger
+   * @param {Object[]} identifiers Array of objects containing schemaId, credDefId, and revRegId
+   * @param {function} revocFn Function which creates revocStates or retrieves revocation definitions and registries
+   * @return {Any[]} [schemas, credDefs, revStates, revRegDefs, revRegs]
+   */
+  async _getEntitiesFromLedger(submitterDid, identifiers, revocFn) {
+    let schemas = {};
+    let credDefs = {};
+    let revRegDefsOrStates = {};
+    let revRegs = {};
+    for (const referent of Object.keys(identifiers)) {
+      const item = identifiers[referent];
+      const [schemaId, schema] = await this.getSchema(submitterDid, item['schema_id']);
+      schemas[schemaId] = schema;
+      const [credDefId, credDef] = await this.getCredDef(submitterDid, item['cred_def_id']);
+      credDefs[credDefId] = credDef;
+
+      if (item.rev_reg_seq_no) {
+        // TODO for prover: create revocation states
+        // TODO for verifier: get revocation definitions and registries
+      }
+    }
+
+    return [schemas, credDefs, revRegDefsOrStates, revRegs];
+  }
+
+  /**
    * Build and submit request to ledger.
    * @param {Function} buildFn request build function
    * @param {Function} submitFn request submit function
@@ -127,9 +177,7 @@ class PoolLedger {
     log.debug('pool_request; buildFn %s, requestFn %s, buildOpts %j, submitOpts %j',
       buildFn.name, submitFn.name, buildOpts, submitOpts);
     const request = await buildFn(...buildOpts);
-    log.debug('request %j', request);
     const result = await submitFn(this.handle, ...submitOpts, request);
-    log.debug('result %j', result);
     if (['REJECT', 'REQNACK'].includes(result['op'])) {
       throw new APIResult(400, result['reason']);
     }
