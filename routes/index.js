@@ -70,8 +70,8 @@ router.route('/credentialissue/')
   .post(credential.issue);
 
 router.route('/credential/')
-  .post(credential.store)
-  .get(credential.retrieveWithFilter);
+  .get(credential.list)
+  .post(credential.store);
 router.route('/credential/:credId')
   .get(credential.retrieve);
 

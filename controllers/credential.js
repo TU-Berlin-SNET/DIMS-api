@@ -96,39 +96,29 @@ module.exports = {
     next(new APIResult(200, {credentialId: credId}));
   }),
 
-  retrieve: wrap(async(req,res,next)=> {
-    const cred = await Credential.findOne({credId:req.params.credId})
-    next(new APIResult(200, cred))
-  }),
-
-  retrieveWithFilter: wrap(async(req,res,next)=> {
-    let filter;
-    if(req.params.schema) filter.schema_id = req.params.schema;
-    if(req.params.schemaIssuerDid) filter.schema_issuer_did = req.params.schemaIssuerDid;
-    if(req.params.schemaName) filter.schema_name = req.params.schemaName;
-    if(req.params.schemaVersion) filter.schema_version = req.params.schemaVersion;
-    if(req.params.issuerDid) filter.issuer_did = req.params.issuerDid;
-    if(req.params.credDefId) filter.cred_def_did = req.params.credDefId;
+  list: wrap(async (req, res, next)=> {
+    let filter = {};
+    if (req.query.schema) filter.schema_id = req.params.schema;
+    if (req.query.schemaIssuerDid) filter.schema_issuer_did = req.params.schemaIssuerDid;
+    if (req.query.schemaName) filter.schema_name = req.params.schemaName;
+    if (req.query.schemaVersion) filter.schema_version = req.params.schemaVersion;
+    if (req.query.issuerDid) filter.issuer_did = req.params.issuerDid;
+    if (req.query.credDefId) filter.cred_def_did = req.params.credDefId;
 
     const credentials = await indy.proverGetCredentials(req.wallet.handle, filter);
+    next(new APIResult(200, credentials));
   }),
 
-  // Called by IDHolder
-  storeCredential: wrap(async (req) =>  {
-    let [holderDid, holderVk, issuerVerKey, credential] = await req.wallet.tryAuthDecrypt(req.body.encryptedCredential);
-
-    // credId can be self-defined, if null then random credId is returned
-    let credId = req.body.credId ? req.body.credId : null
-
-    // revRegDef Revocation Registry Definiton is currently set to null, ToDo support revocation features in the future
-    const credOfferId = credential['cred_offer_id'];
-    const credReq = await CredentialRequest.findOne({credOfferId: credOfferId});
-    const credReqMetadata = credReq.credReqMetaData;
-
-    let [credDefId, credDef] = await pool.getCredDef(holderDid, credential['cred_def_id']);
-    credId = await indy.proverStoreCredential(req.wallet.handle,credId, credReqMetadata,credential, credDef, null)
-    return [credId, credential, credReq.credReqMetaData.master_secret_name];
+  retrieve: wrap(async (req, res, next)=> {
+    const cred = await Credential.findOne({
+      credId: req.params.credId,
+      wallet: req.wallet.id,
+    }).exec();
+    if (!cred) {
+      next(new APIResult(404));
+    } else {
+      next(new APIResult(200, cred));
+    }
   }),
-
 
 };
