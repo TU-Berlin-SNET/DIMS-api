@@ -1,3 +1,7 @@
+/**
+ * IDChain Agent REST API
+ * Credential Controller
+ */
 
 const crypto = require('crypto');
 const indy = require('indy-sdk');
@@ -11,11 +15,24 @@ const CredentialRequest = require('../models/credentialreq');
 const Credential = require('../models/credential');
 const APIResult = require('../api-result');
 
+/**
+ * Encode a value as required by indy, i.e.
+ * toString numbers and process strings.
+ * @param {any} value value to encode
+ * @return {string} encoded value
+ */
+function encode(value) {
+  if (typeof value === 'number') {
+    return value.toString();
+  } else {
+    return Buffer.from(crypto.createHmac('sha256', value).digest('hex'), 'utf-8').toString('hex');
+  }
+}
+
 module.exports = {
 
   // Called by Issuer
   issue: wrap(async (req, res, next) => {
-    log.debug('credential controller create');
     const cryptCredReq = req.body.encryptedCredentialRequest;
     const [_, issuerKey, holderKey, credReqJson] = await req.wallet.tryAuthDecrypt(cryptCredReq);
     const credOfferId = credReqJson['cred_offer_id']
@@ -29,9 +46,7 @@ module.exports = {
     let credValues = {};
     for (const key of Object.keys(req.body.values)) {
       const value = req.body.values[key];
-      const encodedValue =
-        typeof value === 'number' ? value.toString():
-        Buffer.from(crypto.createHmac('sha256', value).digest('hex'), 'utf-8').toString('hex');
+      const encodedValue = encode(value);
       credValues[key] = {raw: value, encoded: encodedValue};
     }
     await delete credReqJson['cred_offer_id'];
