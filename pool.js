@@ -3,10 +3,19 @@
  * Pool Ledger Representation
  */
 
+const os = require('os');
+const path = require('path');
 const util = require('util');
 const indy = require('indy-sdk');
 const APIResult = require('./api-result');
 const log = require('./log').log;
+
+const indyHomePath = path.join(os.homedir(), '.indy_client');
+const tailsPath = path.join(indyHomePath, 'tails');
+const blobStorageConfig = {
+  'base_dir': tailsPath,
+  'uri_pattern': '',
+};
 
 /**
  * Pool Representation
@@ -38,6 +47,44 @@ class PoolLedger {
     log.info('providing pool handle for pool_name %s', process.env.POOL_NAME);
     this.handle = await indy.openPoolLedger(process.env.POOL_NAME);
     log.info('connection to pool ledger established');
+  }
+
+  /**
+   * Retrieves schemas, credDefs, revStates, revRegDefs, and revRegs from ledger.
+   * @param {String} submitterDid did to use for submitting requests to ledger
+   * @param {Object[]} identifiers Array of objects containing schemaId, credDefId, and revRegId
+   * @return {Any[]} [schemas, credDefs, revStates]
+   */
+  async proverGetEntitiesFromLedger(submitterDid, identifiers) {
+    // TODO revocFn
+    return this._getEntitiesFromLedger(submitterDid, identifiers, null);
+  }
+
+  /**
+   * Retrieves schemas, credDefs, revStates, revRegDefs, and revRegs from ledger.
+   * @param {String} submitterDid did to use for submitting requests to ledger
+   * @param {Object[]} identifiers Array of objects containing schemaId, credDefId, and revRegId
+   * @return {Any[]} [schemas, credDefs, revRegDefs, revRegs]
+   */
+  async verifierGetEntitiesFromLedger(submitterDid, identifiers) {
+    // TODO revocFn
+    return this._getEntitiesFromLedger(submitterDid, identifiers, null);
+  }
+
+  /**
+   * Open a default blob storage writer for $HOME/.indy_client/tails
+   * @return {Promise} resolves to a handle (number)
+   */
+  async openBlobStorageWriter() {
+    return indy.openBlobStorageWriter('default', blobStorageConfig);
+  }
+
+  /**
+   * Open a default blob storage reader for $HOME/.indy_client/tails
+   * @return {Promise} resolves to a handle (number)
+   */
+  async openBlobStorageReader() {
+    return indy.openBlobStorageReader('default', blobStorageConfig);
   }
 
   /**
@@ -75,10 +122,48 @@ class PoolLedger {
   }
 
   /**
+   * Submit a credential definition to the ledger.
+   * @param {Number} walletHandle
+   * @param {String} submitterDid
+   * @param {Object} data the credential definition
+   * @return {Promise} a promise which resolves when the request is completed
+   */
+  credDefRequest(walletHandle, submitterDid, data) {
+    return this._request(indy.buildCredDefRequest, indy.signAndSubmitRequest,
+      [submitterDid, data], [walletHandle, submitterDid]);
+  }
+
+  /**
+   * Submit a revocation registry definition to the ledger.
+   * @param {Number} walletHandle
+   * @param {String} submitterDid
+   * @param {Object} data the revocRegDef
+   * @return {Promise} a promise which resolves to the response
+   */
+  revocRegDefRequest(walletHandle, submitterDid, data) {
+    return this._request(indy.buildRevocRegDefRequest, indy.signAndSubmitRequest,
+      [submitterDid, data], [walletHandle, submitterDid]);
+  }
+
+  /**
+   * Submit a revocation registry entry to the ledger.
+   * @param {Number} walletHandle
+   * @param {String} submitterDid
+   * @param {String} revocRegDefId ID of the corresponding RevocRegDef
+   * @param {String} revDefType revocation registry type
+   * @param {Object} value registry specific data
+   * @return {Promise} a promise which resolves to the response
+   */
+  revocRegEntryRequest(walletHandle, submitterDid, revocRegDefId, revDefType, value) {
+    return this._request(indy.buildRevocRegEntryRequest, indy.signAndSubmitRequest,
+      [submitterDid, revocRegDefId, revDefType, value], [walletHandle, submitterDid]);
+  }
+
+  /**
    * Retrieve Schema from ledger
    * @param {String} submitterDid
    * @param {String} schemaId
-   * @return {Object} parsed schema object
+   * @return {any[]} [schemaId, schema]
    * @throws APIResult on error
    */
   async getSchema(submitterDid, schemaId) {
@@ -90,12 +175,24 @@ class PoolLedger {
    * Retrieve Credential Definition from ledger
    * @param {String} submitterDid
    * @param {String} credDefId
-   * @return {Object} parsed credential definition object
+   * @return {Any[]} [credDefId, credDef]
    * @throws APIResult on error
    */
   async getCredDef(submitterDid, credDefId) {
     return await this._get(indy.buildGetCredDefRequest, indy.submitRequest, indy.parseGetCredDefResponse,
       [submitterDid, credDefId], []);
+  }
+
+  /**
+   * Retrieve Revocation Registry Definition from ledger
+   * @param {String} submitterDid
+   * @param {String} revocRegId
+   * @return {Promise} resolves to [revocRegDefId, revocRegDef]
+   * @throws APIResult on error
+   */
+  async getRevocRegDef(submitterDid, revocRegId) {
+    return this._get(indy.buildGetRevocRegDefRequest, indy.submitRequest, indy.parseGetRevocRegDefResponse,
+      [submitterDid, revocRegId], []);
   }
 
   /**
@@ -115,6 +212,34 @@ class PoolLedger {
   }
 
   /**
+   * Retrieves schemas, credDefs, revStates, revRegDefs, and revRegs from ledger.
+   * @param {String} submitterDid did to use for submitting requests to ledger
+   * @param {Object[]} identifiers Array of objects containing schemaId, credDefId, and revRegId
+   * @param {function} revocFn Function which creates revocStates or retrieves revocation definitions and registries
+   * @return {Any[]} [schemas, credDefs, revStates, revRegDefs, revRegs]
+   */
+  async _getEntitiesFromLedger(submitterDid, identifiers, revocFn) {
+    let schemas = {};
+    let credDefs = {};
+    let revRegDefsOrStates = {};
+    let revRegs = {};
+    for (const referent of Object.keys(identifiers)) {
+      const item = identifiers[referent];
+      const [schemaId, schema] = await this.getSchema(submitterDid, item['schema_id']);
+      schemas[schemaId] = schema;
+      const [credDefId, credDef] = await this.getCredDef(submitterDid, item['cred_def_id']);
+      credDefs[credDefId] = credDef;
+
+      if (item.rev_reg_seq_no) {
+        // TODO for prover: create revocation states
+        // TODO for verifier: get revocation definitions and registries
+      }
+    }
+
+    return [schemas, credDefs, revRegDefsOrStates, revRegs];
+  }
+
+  /**
    * Build and submit request to ledger.
    * @param {Function} buildFn request build function
    * @param {Function} submitFn request submit function
@@ -127,9 +252,7 @@ class PoolLedger {
     log.debug('pool_request; buildFn %s, requestFn %s, buildOpts %j, submitOpts %j',
       buildFn.name, submitFn.name, buildOpts, submitOpts);
     const request = await buildFn(...buildOpts);
-    log.debug('request %j', request);
     const result = await submitFn(this.handle, ...submitOpts, request);
-    log.debug('result %j', result);
     if (['REJECT', 'REQNACK'].includes(result['op'])) {
       throw new APIResult(400, result['reason']);
     }

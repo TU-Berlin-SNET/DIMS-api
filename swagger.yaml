@@ -260,6 +260,44 @@ definitions:
 
 paths:
   /api/credential/:
+    get:
+      summary: List all credentials of specific wallet (UNTESTED ENDPOINT)
+      description: List all credentials of specific wallet (UNTESTED ENDPOINT)
+      parameters:
+        - in: header
+          name: wallet
+          description: A unique string value identifying a wallet.
+          required: true
+          type: string
+        - in: query
+          name: schema
+          type: string
+          description: schemaId to filter credentials
+        - in: query
+          name: schemaIssuerDid
+          type: string
+          description: schemaIssuerDid to filter credentials
+        - in: query
+          name: schemaName
+          type: string
+          description: schemaName to filter credentials
+        - in: query
+          name: schemaVersion
+          type: string
+          description: schemaVersion to filter credentials
+        - in: query
+          name: issuerDid
+          type: string
+          description: issuerDid to filter credentials
+        - in: query
+          name: credDefId
+          type: string
+          description: credDefId to filter credentials
+      responses:
+        '200':
+          description: ''
+      tags:
+        - credential
     post:
       summary: Store a credential
       description: Store a credential
@@ -278,6 +316,11 @@ paths:
     - description: A unique string value identifying this credential.
       in: path
       name: id
+      required: true
+      type: string
+    - in: header
+      description: A unique string value identifying a wallet.
+      name: wallet
       required: true
       type: string
     get:
@@ -304,8 +347,13 @@ paths:
           - credentialissue
   /api/credentialdef/:
     get:
-      summary: List credential definitions of user
-      description: List credential definitions of user
+      summary: List credential definitions of wallet
+      description: List credential definitions of wallet
+      parameters:
+        - in: header
+          name: wallet
+          required: true
+          type: string
       responses:
         '200':
           description: ''
@@ -337,8 +385,8 @@ paths:
         required: true
         type: string
     get:
-      summary: Retrieve a credential definition
-      description: Retrieve a credential definition
+      summary: Retrieve a credential definition from the ledger
+      description: Retrieve a credential definition from the ledger
       responses:
         '200':
           description: ''

@@ -1,7 +1,11 @@
-const Schema = require('./credentialschema');
-const CredDef = require('../models/credentialdef');
+/**
+ * IDChain Agent REST API
+ * Credential Definition Controller
+ */
 
 const indy = require('indy-sdk');
+
+const CredDef = require('../models/credentialdef');
 const wrap = require('../asyncwrap').wrap;
 const pool = require('../pool');
 const APIResult = require('../api-result');
@@ -9,50 +13,51 @@ const APIResult = require('../api-result');
 module.exports = {
 
   create: wrap(async (req, res, next) => {
-    let [credDefId, response] = await module.exports.createAndSendCredDefToLedger(req);
-    let credDef = new CredDef({wallet:req.wallet.id, credDefId: credDefId, owner:req.user});
-    if (response['op'] == 'REPLY') {
-      credDef.set({data: response['result']});
-      await credDef.save();
-      next(new APIResult(201, {credDefId: credDefId}));
-    } else {
-      next(new APIResult(400, response['reason']));
+    const submitterDid = req.wallet.ownDid;
+    const schemaId = req.body.schemaId;
+    const supportRevocation = req.body.supportRevocation || false;
+    const [, schema] = await pool.getSchema(submitterDid, schemaId);
+    const [credDefId, credDef] = await indy.issuerCreateAndStoreCredentialDef(
+      req.wallet.handle, req.wallet.ownDid, schema, 'TAG1', 'CL',
+      {'support_revocation': supportRevocation});
+    const response = await pool.credDefRequest(req.wallet.handle, req.wallet.ownDid, credDef);
+
+    let doc = {
+      credDefId: credDefId,
+      wallet: req.wallet.id,
+      data: response['result'],
+    };
+    if (supportRevocation) {
+      const blobStorageWriter = await pool.openBlobStorageWriter();
+      // supported config keys depend on credential type
+      // currently, indy only supports CL_ACCUM as credential type
+      const revocRegConfig = {
+        'issuance_type': 'ISSUANCE_ON_DEMAND',
+        'max_cred_num': 1000,
+      };
+      const [revocRegId, revocRegDef, revocRegEntry] = await indy.issuerCreateAndStoreRevocReg(
+        req.wallet.handle, req.wallet.ownDid, null, 'TAG1', credDefId, revocRegConfig, blobStorageWriter);
+      await pool.revocRegDefRequest(req.wallet.handle, req.wallet.ownDid, revocRegDef);
+      await pool.revocRegEntryRequest(req.wallet.handle, req.wallet.ownDid, revocRegId,
+        revocRegDef.revocDefType, revocRegEntry);
+      doc.revocRegId = revocRegId;
+      doc.revocRegType = revocRegDef.revocDefType;
     }
+
+    const credDefDoc = await new CredDef(doc).save();
+    next(new APIResult(201, {credDefId: credDefDoc.credDefId}));
+  }),
+
+  list: wrap(async (req, res, next) => {
+      const w = await CredDef.find({wallet: req.wallet.id}).exec();
+      next(new APIResult(200, w));
   }),
 
   retrieve: wrap(async (req, res, next) => {
-    const credDefId = req.params.credDefId ? req.params.credDefId: req.body.credDefId;
-    const submittedDid = req.wallet.ownDid;
-    let [_, credDef] = await module.exports.getCredDefFromLedger(submittedDid, credDefId);
+    const credDefId = req.params.credDefId;
+    const submitterDid = req.wallet.ownDid;
+    const [, credDef] = await pool.getCredDef(submitterDid, credDefId);
     next(new APIResult(200, credDef));
   }),
 
-  list: wrap(async (req,res,next) => {
-      log.debug('walletController list');
-      const w = await CredDef.find({owner: req.user}).exec();
-      next(new APIResult(200, w));
-
-  }),
-
-  getCredDefFromLocal: wrap(async (credDefId) => {
-    let credDef =await CredDef.findOne({credDefId:credDefId});
-    return credDef.data;
-  }),
-
-  getCredDefFromLedger: wrap(async (submitterDid, credDefId) =>  {
-    let request = await indy.buildGetCredDefRequest(submitterDid,credDefId);
-    let response = await indy.submitRequest(pool.handle,request);
-    return await indy.parseGetCredDefResponse(response);
-  }),
-
-  createAndSendCredDefToLedger: wrap(async (req) => {
-    const submitterDid = req.wallet.ownDid;
-    const schemaId = req.body.schemaId;
-    let [,schema] = await Schema.getSchemaFromLedger(submitterDid,schemaId);
-    const support_revocation= req.body.supportRevocation ? { support_revocation: req.body.supportRevocation} : {support_revocation: false};
-    let [credDefId, credDef ] = await indy.issuerCreateAndStoreCredentialDef(req.wallet.handle,req.wallet.ownDid,schema,'TAG1','CL', support_revocation);
-    let credDefRequest = await indy.buildCredDefRequest(req.wallet.ownDid, credDef);
-    let response = await indy.signAndSubmitRequest(pool.handle,req.wallet.handle,req.wallet.ownDid,credDefRequest);
-    return [credDefId, response]
-  })
 };

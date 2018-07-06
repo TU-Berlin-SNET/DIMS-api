@@ -14,13 +14,14 @@ const creddef= require('../controllers/credentialdef');
 const credential= require('../controllers/credential');
 const credoffer= require('../controllers/credentialoffer');
 const proof = require('../controllers/proof');
+const endpoint = require('../controllers/endpoint');
 
 router.route('/user')
   // TODO rate-limiting?
   .post(user.create);
 
 router.route('/endpoint')
-  .post(connection.endpoint);
+  .post(endpoint.handle);
 
 router.use(auth);
 router.use(walletProvider.before);
@@ -53,6 +54,7 @@ router.route('/schema/:schema/')
   .get(schema.retrieve);
 
 router.route('/credentialdef/')
+  .get(creddef.list)
   .post(creddef.create);
 
 router.route('/credentialdef/:credDefId/')
@@ -68,8 +70,8 @@ router.route('/credentialissue/')
   .post(credential.issue);
 
 router.route('/credential/')
-  .post(credential.store)
-  .get(credential.retrieveWithFilter);
+  .get(credential.list)
+  .post(credential.store);
 router.route('/credential/:credId')
   .get(credential.retrieve);
 

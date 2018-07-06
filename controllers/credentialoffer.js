@@ -54,7 +54,7 @@ module.exports = {
 
     // GetCredDef in the name of the holderIssuerDid (not the default issuerDid)
     const credDefIdFromCredOffer = credOfferJson['cred_def_id'];
-    const [credDefId, credDef] = await CredDef.getCredDefFromLedger(holderDid, credDefIdFromCredOffer);
+    const [credDefId, credDef] = await pool.getCredDef(holderDid, credDefIdFromCredOffer);
     const credDefJson = JSON.stringify(credDef);
 
     // Create Credential Request
