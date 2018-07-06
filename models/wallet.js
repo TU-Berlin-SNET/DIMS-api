@@ -42,9 +42,11 @@ const schema = new Mongoose.Schema({
     default: null,
   },
   credentials: {
-    type: String,
-    required: false,
-    default: null,
+    key: {
+      type:String,
+      required:true,
+      default:null
+    }
   },
   ownDid: {
     type: String,

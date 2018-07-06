@@ -56,8 +56,12 @@ definitions:
         description: '(Optional) Wallet Config JSON. Supported keys vary by wallet type. A default config will be used if none is provided.'
         type: string
       credentials:
-        description: '(Optional) Wallet Credentials JSON. Supported keys vary by wallet type. A default config will be used if none is provided.'
-        type: string
+        description: 'Wallet Credentials JSON. Supported keys vary by wallet type. A default config will be used if none is provided.'
+        type: object
+        properties:
+          key:
+            description: 'Passphrase used to derive wallet master key'
+            type: string
       poolName:
         description: '(Optional) Name of the Pool to associate with this wallet. A default config will be used if none is provided.'
         type: string
