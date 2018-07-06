@@ -1,35 +1,30 @@
 
-# IdentityChain Indy-API
+# IdentityChain Agent REST API
 
-Indy REST API Agent built with python using the libindy python wrapper.
+WIP
 
-## Dependencies
+## Run ##
 
-- Python
-- Pipenv
-- Targeted Python Version (w/ virtualenv): Python 3.6
-- libindy ([How to Install](https://github.com/hyperledger/indy-sdk#how-to-install))
+		npm install
+		npm run dev
 
-## Quickstart
-```
-# Install dependencies and virtualenv declared in Pipfile
-pipenv install
+## Config ##
 
-# activate the virtualenv
-pipenv shell
+Check `.env` file for configuration of indy-pool, host and port of API and DB. If required add own `pool_transaction_genesis` file and change configuration here.
 
-# switch directory
-cd identitychain_agent
+## Requirements ##
 
-# optional: run migrations
-python manage.py migrate
+Running [Hyperledger Indy Node](https://github.com/hyperledger/indy-node) Pool.
 
-# run the dev server
-python manage.py runserver
+Running [MongoDB](https://www.mongodb.com/) instance which is used for persistence on top of Indy-DLT to support stateless REST API.
 
-# You can now access it at localhost:8000
-# Try localhost:8000/api and localhost:8000/api/overview
-```
+Check [Install MongoDB Community Edition](https://docs.mongodb.com/manual/administration/install-community/) on how to install MongoDB on your system.
 
-NOTE: libindy creates a `.indy_client` directory in your home directory to store data
+## Tests ##
 
+1. Start the Agent
+2. Run `npm test`
+
+---
+
+NOTE: libindy creates a `.indy_client` directory in your home directory to store data. If API does not connect correctly to the pool, please remove this folder to allow for new configuration settings.
