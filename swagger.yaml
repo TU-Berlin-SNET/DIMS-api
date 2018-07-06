@@ -2,8 +2,8 @@ swagger: '2.0'
 info:
   description: 'IdentityChain Agent REST API'
   title: IdentityChain API
-  version: '0.0.1'
-host: localhost:8000
+  version: '0.1.0'
+host: "REPLACE":80
 schemes:
   - http
 securityDefinitions:
