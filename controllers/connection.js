@@ -64,7 +64,8 @@ module.exports = {
       req.wallet.ownDid = toFromDid;
       await req.wallet.save();
     }
-    await indy.storeTheirDid(req.wallet.handle, {did: connOffer.did, verkey: fromToKey});
+    // ToDo The following line creates indy error with new version of indy-sdk
+    //  await indy.storeTheirDid(req.wallet.handle, {did: connOffer.did, verkey: fromToKey});
     await indy.setEndpointForDid(req.wallet.handle, connOffer.did, recipient, fromToKey);
     await pool.attribRequest(req.wallet.handle, toFromDid, toFromDid, null,
       {endpoint: {ha: req.body.endpoint || ENDPOINT}}, null);

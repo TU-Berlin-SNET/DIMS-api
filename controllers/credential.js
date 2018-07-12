@@ -47,7 +47,7 @@ module.exports = {
     for (const key of Object.keys(req.body.values)) {
       const value = req.body.values[key];
       const encodedValue = encode(value);
-      credValues[key] = {raw: value, encoded: encodedValue};
+      credValues[key] = {raw: value.toString(), encoded: encodedValue};
     }
 
     let params = [req.wallet.handle, credOffer.data, credReqJson, credValues];
