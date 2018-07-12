@@ -422,8 +422,7 @@ paths:
       - in: body
         name: data
         schema:
-          properties:
-            $ref: '#/definitions/credentialrequest_post'
+          $ref: '#/definitions/credentialrequest_post'
       responses:
         '201':
           description: ''
