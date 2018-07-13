@@ -243,6 +243,7 @@ describe('behaviour', function() {
       const res = await agent.get(`/api/credential/${credentialId}`)
         .auth(holder.username, holder.password)
         .set(bothHeaders)
+        .set({wallet:holder.wallet.id})
         .expect(200);
       expect(res.body).to.be.an('object');
       // TODO add more checks after standardizing output
