@@ -14,18 +14,20 @@ module.exports.contentHeader = {'Content-Type': 'application/json'};
 module.exports.bothHeaders = Object.assign(
   {}, module.exports.acceptHeader, module.exports.contentHeader);
 
+const randomNumber = Math.round(Math.random()*100)
+
 module.exports.users = [
-  {username: 'teststeward'+Math.random(), password: 'steward'},
-  {username: 'testissuer'+Math.random(), password: 'issuer'},
-  {username: 'testholder'+Math.random(), password: 'holder'},
-  {username: 'testrelyingpary'+Math.random(), password: 'relyingpary'},
+  {username: 'teststeward'+randomNumber, password: 'steward'},
+  {username: 'testissuer'+randomNumber, password: 'issuer'},
+  {username: 'testholder'+randomNumber, password: 'holder'},
+  {username: 'testrelyingpary'+randomNumber, password: 'relyingpary'},
 ];
 
 module.exports.wallets = [
-    {name: 'teststewardWallet'+Math.random(), seed: '000000000000000000000000Steward1', credentials: {key:'teststewardkey'}},
-    {name: 'testissuerWallet'+Math.random(), credentials: {key:'testissuerKey'}},
-    {name: 'testholderWallet'+Math.random(), credentials: {key:'testholderKey'}},
-    {name: 'testrelyingparywallet'+Math.random(), credentials: {key:'testrelyingparyKey'}},
+    {name: 'teststewardWallet'+randomNumber, seed: '000000000000000000000000Steward1', credentials: {key:'teststewardkey'}},
+    {name: 'testissuerWallet'+randomNumber, credentials: {key:'testissuerKey'}},
+    {name: 'testholderWallet'+randomNumber, credentials: {key:'testholderKey'}},
+    {name: 'testrelyingparywallet'+randomNumber, credentials: {key:'testrelyingparyKey'}},
 ];
 
 module.exports.validSchema = {
