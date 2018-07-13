@@ -32,6 +32,7 @@ let holderRPDid;
 describe('behaviour', function() {
   describe('prepare for tests', function() {
     it('should create users', async function() {
+      this.timeout(60000);
       for (const u of users) {
         const res = await agent.post('/api/user/').set(bothHeaders).send(u).expect(201);
         const id = res.get('location').substring(6);
@@ -44,6 +45,7 @@ describe('behaviour', function() {
       }
     });
     it('should create wallets', async function() {
+      this.timeout(60000);
       for (let i = 0; i < wallets.length; i++) {
         const res = await agent.post('/api/wallet')
           .auth(users[i].username, users[i].password)
@@ -64,6 +66,7 @@ describe('behaviour', function() {
 
   describe('onboarding', function() {
     it('steward should create connectionoffers for issuer with role TRUST_ANCHOR', async function() {
+      this.timeout(60000);
       const res = await agent.post('/api/connectionoffer')
         .auth(users[0].username, users[0].password)
         .set(bothHeaders)
@@ -74,6 +77,7 @@ describe('behaviour', function() {
       connectionOffer = res.body;
     });
     it('issuer should accept connectionoffer from steward', async function() {
+      this.timeout(60000);
       const res = await agent.post('/api/connection')
         .auth(users[1].username, users[1].password)
         .set(bothHeaders)
@@ -82,6 +86,7 @@ describe('behaviour', function() {
       expect(res.body).to.have.all.keys('myDid', 'theirDid');
     });
     it('issuer should should NOT accept connectionoffer from steward repeatedly', async function() {
+      this.timeout(60000);
       await agent.post('/api/connection')
         .auth(users[1].username, users[1].password)
         .set(bothHeaders)
@@ -89,6 +94,7 @@ describe('behaviour', function() {
         .expect(404);
     });
     it('steward should create connectionoffers for relyingpary with role TRUST_ANCHOR', async function() {
+      this.timeout(60000);
       const res = await agent.post('/api/connectionoffer')
         .auth(users[0].username, users[0].password)
         .set(bothHeaders)
@@ -99,6 +105,7 @@ describe('behaviour', function() {
       connectionOffer = res.body;
     });
     it('relyingpary should accept connectionoffer from steward', async function() {
+      this.timeout(60000);
       const res = await agent.post('/api/connection')
         .auth(users[3].username, users[3].password)
         .set(bothHeaders)
@@ -107,6 +114,7 @@ describe('behaviour', function() {
       expect(res.body).to.have.all.keys('myDid', 'theirDid');
     });
     it('issuer (TRUST_ANCHOR) should create connectionoffer for holder with role NONE', async function() {
+      this.timeout(60000);
       const res = await agent.post('/api/connectionoffer')
         .auth(users[1].username, users[1].password)
         .set(bothHeaders)
@@ -117,6 +125,7 @@ describe('behaviour', function() {
       connectionOffer = res.body;
     });
     it('holder should accept connectionoffer from issuer', async function() {
+      this.timeout(60000);
       const res = await agent.post('/api/connection')
         .auth(users[2].username, users[2].password)
         .set(bothHeaders)
@@ -126,6 +135,7 @@ describe('behaviour', function() {
       holderIssuerDid = res.body.myDid;
     });
     it('holder (NONE) should NOT be able to create connectionOffers', async function() {
+      this.timeout(60000);
       await agent.post('/api/connectionoffer')
         .auth(users[2].username, users[2].password)
         .set(bothHeaders)
@@ -141,11 +151,13 @@ describe('behaviour', function() {
     let credential;
     let credentialId;
     it('should prepare variables', async function() {
+      this.timeout(60000);
       issuer = Object.assign({}, users[1], {wallet: wallets[1]});
       holder = Object.assign({}, users[2], {wallet: wallets[2]});
       rp = Object.assign({}, users[3], {wallet: wallets[3]});
     });
     it('issuer should create a schema', async function() {
+      this.timeout(60000);
       const res = await agent.post('/api/schema')
         .auth(issuer.username, issuer.password)
         .set(bothHeaders)
@@ -173,6 +185,7 @@ describe('behaviour', function() {
       credDefId = res.body.credDefId;
     });
     it('issuer should create a credential offer', async function() {
+      this.timeout(60000);
       const res = await agent.post('/api/credentialoffer')
         .auth(issuer.username, issuer.password)
         .set(bothHeaders)
@@ -185,6 +198,7 @@ describe('behaviour', function() {
       credentialOffer = res.body.encryptedCredentialOffer;
     });
     it('holder should accept credential offer and create credential request', async function() {
+      this.timeout(60000);
       const res = await agent.post('/api/credentialrequest')
         .auth(holder.username, holder.password)
         .set(bothHeaders)
@@ -196,6 +210,7 @@ describe('behaviour', function() {
       credentialRequest = res.body.encryptedCredentialRequest;
     });
     it('issuer should accept credential request and issue credential', async function() {
+      this.timeout(60000);
       const res = await agent.post('/api/credentialissue')
         .auth(issuer.username, issuer.password)
         .set(bothHeaders)
@@ -212,6 +227,7 @@ describe('behaviour', function() {
       credential = res.body.encryptedCredential;
     });
     it('holder should store credential', async function() {
+      this.timeout(60000);
       const res = await agent.post('/api/credential')
         .auth(holder.username, holder.password)
         .set(bothHeaders)
@@ -223,6 +239,7 @@ describe('behaviour', function() {
       credentialId = res.body.credentialId;
     });
     it('holder should be able to retrieve credential', async function() {
+      this.timeout(60000);
       const res = await agent.get(`/api/credential/${credentialId}`)
         .auth(holder.username, holder.password)
         .set(bothHeaders)
@@ -236,6 +253,7 @@ describe('behaviour', function() {
     let proofRequest;
     let proof;
     it('relying party (TRUST_ANCHOR) should create connectionoffer for holder with role NONE', async function() {
+      this.timeout(60000);
       const res = await agent.post('/api/connectionoffer')
         .auth(rp.username, rp.password)
         .set(bothHeaders)
@@ -246,6 +264,7 @@ describe('behaviour', function() {
       connectionOffer = res.body;
     });
     it('holder should accept connectionoffer from relying party', async function() {
+      this.timeout(60000);
       const res = await agent.post('/api/connection')
         .auth(holder.username, holder.password)
         .set(bothHeaders)
@@ -255,6 +274,7 @@ describe('behaviour', function() {
       holderRPDid = res.body.myDid;
     });
     it('relying party should create proof request', async function() {
+      this.timeout(60000);
       const res = await agent.post('/api/proofrequest')
         .auth(rp.username, rp.password)
         .set(bothHeaders)
@@ -292,6 +312,7 @@ describe('behaviour', function() {
       proofRequest = res.body.encryptedProofRequest;
     });
     it('holder should accept proof request and create proof', async function() {
+      this.timeout(60000);
       const res = await agent.post('/api/proof')
         .auth(holder.username, holder.password)
         .set(bothHeaders)
@@ -306,6 +327,7 @@ describe('behaviour', function() {
       proof = res.body.encryptedProof;
     });
     it('relying party should create proof verification', async function() {
+      this.timeout(60000);
       const res = await agent.post('/api/proofverification')
         .auth(rp.username, rp.password)
         .set(bothHeaders)
@@ -320,6 +342,7 @@ describe('behaviour', function() {
 
   after(async function() {
     // clean up
+    this.timeout(60000);
     valuesToDelete.reverse();
     for (const v of valuesToDelete) {
       await agent.delete(`/api/${v.path}/${v.id}`)

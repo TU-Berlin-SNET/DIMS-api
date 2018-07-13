@@ -15,17 +15,17 @@ module.exports.bothHeaders = Object.assign(
   {}, module.exports.acceptHeader, module.exports.contentHeader);
 
 module.exports.users = [
-  {username: 'teststeward', password: 'steward'},
-  {username: 'testissuer', password: 'issuer'},
-  {username: 'testholder', password: 'holder'},
-  {username: 'testrelyingpary', password: 'relyingpary'},
+  {username: 'teststeward'+Math.random(), password: 'steward'},
+  {username: 'testissuer'+Math.random(), password: 'issuer'},
+  {username: 'testholder'+Math.random(), password: 'holder'},
+  {username: 'testrelyingpary'+Math.random(), password: 'relyingpary'},
 ];
 
 module.exports.wallets = [
-    {name: 'teststewardWallet', seed: '000000000000000000000000Steward1'},
-    {name: 'testissuerWallet'},
-    {name: 'testholderWallet'},
-    {name: 'testrelyingparywallet'},
+    {name: 'teststewardWallet'+Math.random(), seed: '000000000000000000000000Steward1', credentials: {key:'teststewardkey'}},
+    {name: 'testissuerWallet'+Math.random(), credentials: {key:'testissuerKey'}},
+    {name: 'testholderWallet'+Math.random(), credentials: {key:'testholderKey'}},
+    {name: 'testrelyingparywallet'+Math.random(), credentials: {key:'testrelyingparyKey'}},
 ];
 
 module.exports.validSchema = {

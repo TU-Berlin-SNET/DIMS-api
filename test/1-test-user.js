@@ -22,6 +22,7 @@ describe('/api/user', function() {
   let tmpUser = {username: 'willDelete', password: 'afterThis'};
 
   it('POST / should create an user with username and password', async function() {
+    this.timeout(60000);
     const res = await agent.post('/api/user').set(bothHeaders).send(tmpUser);
     const id = res.get('location').substring(6);
     tmpUser.id = id;
