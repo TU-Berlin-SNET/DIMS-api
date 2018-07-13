@@ -3,7 +3,7 @@ info:
   description: 'IdentityChain Agent REST API'
   title: IdentityChain API
   version: '0.1.5'
-host: "REPLACE":80
+host: localhost:8000
 schemes:
   - http
 securityDefinitions:
