@@ -108,8 +108,9 @@ definitions:
         description: A unique string value identifying a schema
         type: string
       supportRevocation:
-        description: States if revocation should be supported for this credential definiton
+        description: (Optional) States if revocation should be supported for this credential definiton
         type: boolean
+        default: false
     required:
     - wallet
     - schemaId
