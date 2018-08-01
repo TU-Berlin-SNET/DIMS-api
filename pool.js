@@ -35,6 +35,7 @@ class PoolLedger {
    * Create Pool Ledger Config
    */
   async createConfig() {
+    await indy.setProtocolVersion(2);
     log.info('Creating pool ledger config %s with %s',
       this.name, util.inspect(this.config));
     await indy.createPoolLedgerConfig(this.name, this.config);

@@ -1,0 +1,36 @@
+version: '3'
+services:
+  pool:
+    build:
+      context: .
+      dockerfile: indy-pool.dockerfile
+      args:
+        - POOL_IP=pool
+    ports:
+      - 127.0.0.1:9701-9708:9701-9708
+
+  mongodb:
+    image: mongo:latest
+    environment:
+      - MONGO_DATA_DIR=/data/db
+      - MONGO_LOG_DIR=/dev/null
+    volumes:
+      - ./data/db:/data/db
+    ports:
+        - 127.0.0.1:27017:27017
+    command: mongod --smallfiles
+
+  api:
+    build:
+      context: .
+    container_name: idchain-api
+    image: indy-api:latest
+    environment:
+      - APP_HOST=api
+      - DB_HOST=mongodb
+      - GENESIS_TXN=pool_transactions_genesis.docker-compose
+    ports:
+      - 8000:8000
+    depends_on:
+      - mongodb
+      - pool
