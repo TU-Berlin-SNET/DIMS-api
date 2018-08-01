@@ -1,9 +1,0 @@
-before_script:
-  - docker info
-
-
-build:
-  stage: build
-  script:
-  - docker-compose up
-  - npm test
