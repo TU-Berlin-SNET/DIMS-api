@@ -36,7 +36,7 @@ describe('/api/wallet', function() {
     .send(testwallet)
     .expect(201);
     expect(res.body).to.have.property('id').that.equals(testwallet.name);
-    expect(res.body).to.have.property('poolName').that.equals('sandbox');
+    expect(res.body).to.have.property('poolName').that.equals(process.env.POOL_NAME);
     expect(res.body).to.have.property('ownDid');
     expect(res.body).to.have.property('owner').that.equals(testuser.id);
     expect(res.body).to.have.property('xtype').that.is.null;
