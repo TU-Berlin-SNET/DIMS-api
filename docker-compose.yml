@@ -5,10 +5,12 @@ services:
       context: .
       dockerfile: indy-pool.dockerfile
       args:
-        - POOL_IP=${APP_HOST}
+        - pool_ip=172.16.0.100
     ports:
       - 9701-9708:9701-9708
-    network_mode: host
+    networks:
+      services:
+        ipv4_address: 172.16.0.100
 
   mongodb:
     image: mongo:latest
@@ -20,7 +22,9 @@ services:
     ports:
         - 27017:27017
     command: mongod --smallfiles
-    network_mode: host
+    networks:
+      services:
+        ipv4_address: 172.16.0.150
 
   api:
     build:
@@ -28,10 +32,18 @@ services:
     container_name: idchain-api
     image: indy-api:latest
     environment:
-      - GENESIS_TXN=pool_transactions_genesis.docker-compose
+      - GENESIS_TXN=pool_transactions_genesis
     ports:
       - 8000:8000
     depends_on:
       - mongodb
       - pool
-    network_mode: host
+    networks:
+      services:
+        ipv4_address: 172.16.0.200
+
+networks:
+  services:
+    ipam:
+      config:
+        - subnet: 172.16.0.0/24
