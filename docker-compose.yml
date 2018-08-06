@@ -32,7 +32,7 @@ services:
     container_name: idchain-api
     image: indy-api:latest
     environment:
-      - GENESIS_TXN=pool_transactions_genesis
+      - GENESIS_TXN=pool_transactions_genesis.docker-compose
     ports:
       - 8000:8000
     depends_on:
