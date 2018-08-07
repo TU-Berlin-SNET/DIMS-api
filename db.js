@@ -6,7 +6,7 @@ const Mongoose = require('mongoose');
 const log = require('./log').log;
 
 const connRetriesLimit = 3;
-const connRetriesInterval = 1000;
+const connRetriesInterval = 3000;
 
 let connString = 'mongodb://';
 let connRetries = 0;
