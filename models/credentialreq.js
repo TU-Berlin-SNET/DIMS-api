@@ -10,21 +10,17 @@ const pool = require('../pool');
 var Mixed = Mongoose.Schema.Types.Mixed;
 
 const schema = new Mongoose.Schema({
-  created: {
-    type: Date,
-    default: Date.now,
-  },
-  credDefId: String,
-  credOfferId: String,
-  credReqMetaData: Mixed,
-  wallet:{
-    type: String
-  },
-  data: Mixed
+    created: {
+        type: Date,
+        default: Date.now
+    },
+    credDefId: String,
+    credOfferId: String,
+    credReqMetaData: Mixed,
+    wallet: {
+        type: String
+    },
+    data: Mixed
 });
-
-
-
-
 
 module.exports = Mongoose.model('CredentialRequest', schema);

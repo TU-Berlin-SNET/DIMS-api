@@ -52,17 +52,20 @@ definitions:
         description: '(Optional) Wallet name, must be globally unique. Automatically generated if none is provided.'
         type: string
       config:
-        description: '(Optional) Wallet Config JSON. Supported keys vary by wallet type. A default config will be used if none is provided.'
+        description:
+          '(Optional) Wallet Config JSON. Supported keys vary by wallet type. A default config will be used if none is provided.'
         type: string
       credentials:
-        description: 'Wallet Credentials JSON. Supported keys vary by wallet type. A default config will be used if none is provided.'
+        description:
+          'Wallet Credentials JSON. Supported keys vary by wallet type. A default config will be used if none is provided.'
         type: object
         properties:
           key:
             description: 'Passphrase used to derive wallet master key'
             type: string
       poolName:
-        description: '(Optional) Name of the Pool to associate with this wallet. A default config will be used if none is provided.'
+        description:
+          '(Optional) Name of the Pool to associate with this wallet. A default config will be used if none is provided.'
         type: string
       seed:
         description: '(Optional) Seed to use for initial did creation.'
@@ -92,7 +95,8 @@ definitions:
         description: 'The authcrypted Credential Request'
         type: string
       values:
-        description: Object containing attributes defined in schema as key-value pairs (e.g. {"attrName":"attrValue", "attrName1":"attrValue1"})
+        description:
+          'Object containing attributes defined in schema as key-value pairs (e.g. {"attrName":"attrValue", "attrName1":"attrValue1"})'
         type: object
     required:
       - wallet
@@ -110,8 +114,8 @@ definitions:
         description: States if revocation should be supported for this credential definiton
         type: boolean
     required:
-    - wallet
-    - schemaId
+      - wallet
+      - schemaId
   credentialoffer_post:
     type: object
     properties:
@@ -184,7 +188,8 @@ definitions:
         description: 'DID for whom to create a proof request'
         type: string
       proofRequest:
-        description: proof request object (see https://github.com/hyperledger/indy-sdk/blob/master/doc/getting-started/getting-started.md#apply-for-a-job)
+        description:
+          'proof request object (see https://github.com/hyperledger/indy-sdk/blob/master/doc/getting-started/getting-started.md#apply-for-a-job)'
         type: object
         example:
           name: Ticket
@@ -301,27 +306,27 @@ paths:
       summary: Store a credential
       description: Store a credential
       parameters:
-      - in: body
-        name: data
-        schema:
-          $ref: '#/definitions/credential_post'
+        - in: body
+          name: data
+          schema:
+            $ref: '#/definitions/credential_post'
       responses:
         '201':
           description: ''
       tags:
-      - credential
+        - credential
   /api/credential/{id}/:
     parameters:
-    - description: A unique string value identifying this credential.
-      in: path
-      name: id
-      required: true
-      type: string
-    - in: header
-      description: A unique string value identifying a wallet.
-      name: wallet
-      required: true
-      type: string
+      - description: A unique string value identifying this credential.
+        in: path
+        name: id
+        required: true
+        type: string
+      - in: header
+        description: A unique string value identifying a wallet.
+        name: wallet
+        required: true
+        type: string
     get:
       summary: Retrieve a credential
       description: Retrieve a credential
@@ -331,19 +336,19 @@ paths:
       tags:
         - credential
   /api/credentialissue/:
-      post:
-        summary: Issue a credential
-        description: Issue a credential
-        parameters:
+    post:
+      summary: Issue a credential
+      description: Issue a credential
+      parameters:
         - in: body
           name: data
           schema:
             $ref: '#/definitions/credentialissue_post'
-        responses:
-          '201':
-            description: ''
-        tags:
-          - credentialissue
+      responses:
+        '201':
+          description: ''
+      tags:
+        - credentialissue
   /api/credentialdef/:
     get:
       summary: List credential definitions of wallet
@@ -362,10 +367,10 @@ paths:
       summary: Create a credential definition
       description: Create a credential definition
       parameters:
-      - in: body
-        name: data
-        schema:
-          $ref: '#/definitions/credentialdef_post'
+        - in: body
+          name: data
+          schema:
+            $ref: '#/definitions/credentialdef_post'
       responses:
         '201':
           description: ''
@@ -390,7 +395,7 @@ paths:
         '200':
           description: ''
       tags:
-      - credentialdef
+        - credentialdef
     delete:
       summary: Delete a credential definition
       description: Delete a credential definition
@@ -398,7 +403,7 @@ paths:
         '204':
           description: ''
       tags:
-      - credentialdef
+        - credentialdef
   /api/credentialoffer/:
     post:
       summary: Create a credential offer
@@ -418,10 +423,10 @@ paths:
       summary: Accept credential offer and create credential request
       description: Accept credential offer and create credential request
       parameters:
-      - in: body
-        name: data
-        schema:
-          $ref: '#/definitions/credentialrequest_post'
+        - in: body
+          name: data
+          schema:
+            $ref: '#/definitions/credentialrequest_post'
       responses:
         '201':
           description: ''
@@ -432,10 +437,10 @@ paths:
       summary: Create a new connection offer
       description: Create a new connection offer
       parameters:
-      - in: body
-        name: data
-        schema:
-          $ref: '#/definitions/connectionoffer_post'
+        - in: body
+          name: data
+          schema:
+            $ref: '#/definitions/connectionoffer_post'
       responses:
         '201':
           description: ''
@@ -446,25 +451,25 @@ paths:
       summary: Accept a connection offer
       description: Accept a connection offer
       parameters:
-      - in: body
-        name: data
-        schema:
-          $ref: '#/definitions/connection_post'
+        - in: body
+          name: data
+          schema:
+            $ref: '#/definitions/connection_post'
       responses:
         '200':
           description: 'Success'
       tags:
-      - connection
+        - connection
   /api/proofrequest/:
     post:
       summary: Create a proof request
       description: Create a proof request
       parameters:
-      - in: body
-        name: data
-        type: object
-        schema:
-          $ref: '#/definitions/proofrequest_post'
+        - in: body
+          name: data
+          type: object
+          schema:
+            $ref: '#/definitions/proofrequest_post'
       responses:
         '201':
           description: ''
@@ -475,11 +480,11 @@ paths:
       summary: Create a Proof
       description: Create a Proof
       parameters:
-      - in: body
-        name: data
-        type: object
-        schema:
-          $ref: '#/definitions/proof_post'
+        - in: body
+          name: data
+          type: object
+          schema:
+            $ref: '#/definitions/proof_post'
       responses:
         '201':
           description: ''
@@ -490,10 +495,10 @@ paths:
       summary: Create a proof verification
       description: Create a proof verification
       parameters:
-      - in: body
-        name: data
-        schema:
-          $ref: '#/definitions/proofverification_post'
+        - in: body
+          name: data
+          schema:
+            $ref: '#/definitions/proofverification_post'
       responses:
         '200':
           description: ''
@@ -512,10 +517,10 @@ paths:
       summary: Create a Schema
       description: Create a Schema
       parameters:
-      - in: body
-        name: data
-        schema:
-          $ref: '#/definitions/schema_post'
+        - in: body
+          name: data
+          schema:
+            $ref: '#/definitions/schema_post'
       responses:
         '201':
           description: ''
@@ -546,10 +551,10 @@ paths:
       summary: Register a new user
       description: Register a new user
       parameters:
-      - in: body
-        name: data
-        schema:
-          $ref: '#/definitions/user_post'
+        - in: body
+          name: data
+          schema:
+            $ref: '#/definitions/user_post'
       responses:
         '201':
           description: User successfully created
@@ -558,7 +563,7 @@ paths:
               description: Path to created user, e.g. /user/userId
               type: string
       tags:
-      - user
+        - user
   /api/user/{user}/:
     parameters:
       - $ref: '#/parameters/userParam'
@@ -569,34 +574,34 @@ paths:
         '200':
           description: 'Success'
       tags:
-      - user
+        - user
     put:
       summary: Update a User
       description: Update a User (at least one of the properties must be provided)
       parameters:
-      - in: body
-        name: data
-        schema:
-          $ref: '#/definitions/user_put'
+        - in: body
+          name: data
+          schema:
+            $ref: '#/definitions/user_put'
       responses:
         '200':
           description: 'Success'
         '501':
           description: 'Not yet implemented'
       tags:
-      - user
+        - user
     delete:
       summary: Delete a User
       description: Delete a User
       parameters:
-      - $ref: '#/parameters/userParam'
+        - $ref: '#/parameters/userParam'
       responses:
         '204':
           description: ''
         '501':
           description: 'Not yet implemented'
       tags:
-      - user
+        - user
   /api/wallet/:
     get:
       summary: List all wallets of user
@@ -605,20 +610,20 @@ paths:
         '200':
           description: ''
       tags:
-      - wallet
+        - wallet
     post:
       summary: Create a new Wallet (optionally with given name and settings)
       description: Create a new Wallet (optionally with given name and settings)
       parameters:
-      - in: body
-        name: data
-        schema:
-          $ref: '#/definitions/wallet_post'
+        - in: body
+          name: data
+          schema:
+            $ref: '#/definitions/wallet_post'
       responses:
         '201':
           description: ''
       tags:
-      - wallet
+        - wallet
   /api/wallet/{wallet}/:
     parameters:
       - $ref: '#/parameters/walletParam'
@@ -629,7 +634,7 @@ paths:
         '200':
           description: ''
       tags:
-      - wallet
+        - wallet
     delete:
       summary: Delete a Wallet
       description: Delete a Wallet
@@ -637,43 +642,43 @@ paths:
         '204':
           description: ''
       tags:
-      - wallet
+        - wallet
   /api/endpoint/:
     post:
       description: Agent endpoint
       summary: Agent endpoint
       parameters:
-      - in: body
-        name: data
-        schema:
-          properties:
-            type:
-              description: 'Message encryption type'
-              type: string
-              default: anon
-              enum:
-              - anon
-              - auth
-            target:
-              description: 'Reason for the message'
-              type: string
-              enum:
-              - accept_connection
-            ref:
-              description: 'A reference value, e.g. nonce'
-              type: string
-            message:
-              description: 'Encrypted message string'
-              type: string
-            signature:
-              description: 'Message Signature'
-              type: string
-          required:
-          - target
-          - ref
-          - message
-          - signature
-          type: object
+        - in: body
+          name: data
+          schema:
+            properties:
+              type:
+                description: 'Message encryption type'
+                type: string
+                default: anon
+                enum:
+                  - anon
+                  - auth
+              target:
+                description: 'Reason for the message'
+                type: string
+                enum:
+                  - accept_connection
+              ref:
+                description: 'A reference value, e.g. nonce'
+                type: string
+              message:
+                description: 'Encrypted message string'
+                type: string
+              signature:
+                description: 'Message Signature'
+                type: string
+            required:
+              - target
+              - ref
+              - message
+              - signature
+            type: object
       responses:
         '200':
           description: ''
