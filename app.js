@@ -25,22 +25,21 @@ app.use('/api/', routes);
 app.use(middleware.after);
 
 const server = app.listen(process.env.APP_PORT, process.env.APP_HOST, async () => {
-  log.info('IDChain API now up at %s:%s',
-    server.address().address, server.address().port);
-  log.info('Access APIDocs at /api/docs');
+    log.info('IDChain API now up at %s:%s', server.address().address, server.address().port);
+    log.info('Access APIDocs at /api/docs');
 
-  try {
-    await pool.createConfig();
-  } catch (err) {
-    log.warn(err);
-  }
+    try {
+        await pool.createConfig();
+    } catch (err) {
+        log.warn(err);
+    }
 
-  try {
-    await pool.openLedger();
-  } catch (err) {
-    log.error(err);
-    process.exit(1);
-  }
+    try {
+        await pool.openLedger();
+    } catch (err) {
+        log.error(err);
+        process.exit(1);
+    }
 });
 
 // for testing purposes

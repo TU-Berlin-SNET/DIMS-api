@@ -5,13 +5,13 @@
 'use strict';
 
 const YAML = require('yamljs');
-const ajv = require('ajv')({removeAdditional: true});
+const ajv = require('ajv')({ removeAdditional: true });
 const wrap = require('../asyncwrap').wrap;
 const APIResult = require('../api-result');
 const swaggerDoc = YAML.load('./swagger.yaml');
 
 ajv.addSchema(swaggerDoc, 'swagger.json');
-const rx= /^\/api\/(\w+)/;
+const rx = /^\/api\/(\w+)/;
 
 /**
  * Validation Middleware
@@ -22,16 +22,16 @@ const rx= /^\/api\/(\w+)/;
  * @param {function} next expressjs callback function
  */
 async function middleware(req, res, next) {
-  const url = req.originalUrl;
-  const match = rx.exec(url);
-  const vName = (match && match.length > 1) ? `${match[1]}_${req.method.toLowerCase()}` : null;
-  const validate = (vName) ? ajv.getSchema(`swagger.json#/definitions/${vName}`) : null;
-  const valid = (validate) ? validate(req.body) : true;
-  if (!valid) {
-    next(new APIResult(400, {message: ajv.errorsText(validate.errors)}));
-  } else {
-    next();
-  }
+    const url = req.originalUrl;
+    const match = rx.exec(url);
+    const vName = match && match.length > 1 ? `${match[1]}_${req.method.toLowerCase()}` : null;
+    const validate = vName ? ajv.getSchema(`swagger.json#/definitions/${vName}`) : null;
+    const valid = validate ? validate(req.body) : true;
+    if (!valid) {
+        next(new APIResult(400, { message: ajv.errorsText(validate.errors) }));
+    } else {
+        next();
+    }
 }
 
 module.exports = wrap(middleware);
