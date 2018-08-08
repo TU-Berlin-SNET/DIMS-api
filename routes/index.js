@@ -15,6 +15,7 @@ const credential = require('../controllers/credential');
 const credoffer = require('../controllers/credentialoffer');
 const proof = require('../controllers/proof');
 const endpoint = require('../controllers/endpoint');
+const transactions = require('../controllers/transactions');
 
 router
     .route('/user')
@@ -71,14 +72,18 @@ router
     .route('/credential/')
     .get(credential.list)
     .post(credential.store);
+
 router.route('/credential/:credId').get(credential.retrieve);
 
 router.route('/proofrequest').post(proof.createProofRequest);
+
 router.route('/proofrequest/:proofReq').get(proof.getProofRequest);
 
 router.route('/proof').post(proof.createProof);
 
 router.route('/proofverification').post(proof.verifyProof);
+
+router.route('/transactions').get(transactions.list);
 
 router.use(walletProvider.after);
 

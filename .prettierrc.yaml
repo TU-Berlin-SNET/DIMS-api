@@ -8,13 +8,13 @@ useTabs: false
 arrowParens: avoid
 
 overrides:
-- files: '*.json'
-  options:
-      tabWidth: 2
-      parser: json
-- files: '*.yml'
-  options:
-      tabWidth: 2
-- files: '*.yaml'
-  options:
-      tabWidth: 2
+    - files: '*.json'
+      options:
+          tabWidth: 2
+          parser: json
+    - files: '*.yml'
+      options:
+          tabWidth: 2
+    - files: '*.yaml'
+      options:
+          tabWidth: 2

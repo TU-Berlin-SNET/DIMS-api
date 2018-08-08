@@ -684,3 +684,33 @@ paths:
           description: ''
       tags:
         - endpoint
+  /api/transactions:
+    get:
+      description: 'Get ledger transactions from-to indexes'
+      parameters:
+        - in: header
+          name: wallet
+          description: A unique string value identifying a wallet.
+          required: true
+          type: string
+        - in: query
+          name: from
+          type: number
+          description: Sequence Number of first transaction to query (greater than 0)
+        - in: query
+          name: to
+          type: number
+          description: Sequence Number of last transaction to query (greater than from index)
+        - in: query
+          name: type
+          type: string
+          description: 'Ledger Type: pool, domain, config. By default is DOMAIN'
+      required:
+        - wallet
+        - from
+        - to
+      responses:
+        '200':
+          description: 'Returns list of transactions'
+      tags:
+        - transactions
