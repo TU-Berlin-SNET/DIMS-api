@@ -229,6 +229,34 @@ class PoolLedger {
     }
 
     /**
+     * Get Ledger Transactions using from and to indexes
+     * @param {Number} walletHandle
+     * @param {String} submitterDid
+     * @param {Number} from
+     * @param {Number} to
+     * @param {String} type, Ledger type: pool, domain, config
+     * @return {Array} List of transactions
+     * @throws APIResult on error
+     */
+    async getLedgerTransactions(walletHandle, submitterDid, from, to, type) {
+        const response = [];
+        for (let i = from; i < to; i++) {
+            response.push(
+                await this._request(
+                    indy.buildGetTxnRequest,
+                    indy.signAndSubmitRequest,
+                    [submitterDid, type.toUpperCase(), i],
+                    [walletHandle, submitterDid]
+                )
+            );
+        }
+        return response
+            .filter(r => typeof r.result === 'object')
+            .filter(r => r.result.data !== null)
+            .map(r => r.result.data);
+    }
+
+    /**
      * Build and submit request to ledger and
      * return parsed response.
      * @param {Function} buildFn request build function
