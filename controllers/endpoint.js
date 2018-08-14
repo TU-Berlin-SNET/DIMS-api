@@ -8,6 +8,7 @@ const indy = require('indy-sdk');
 const pool = require('../pool');
 const Wallet = require('../models/wallet');
 const ConnectionOffer = require('../models/connectionoffer');
+const WalletProvider = require('../middleware/walletProvider');
 const wrap = require('../asyncwrap').wrap;
 const APIResult = require('../api-result');
 
@@ -27,7 +28,7 @@ module.exports = {
         }
         // TODO interface with walletProvider here
         req.wallet = await Wallet.findOne({ _id: connOffer.issuerWallet }).exec();
-        await req.wallet.open();
+        await WalletProvider.provideHandle(req.wallet);
         const fromToKey = await indy.keyForDid(pool.handle, req.wallet.handle, connOffer.ownDid);
         const connRes = await req.wallet.anonDecryptAndVerify(fromToKey, message, signature);
         const role = connOffer.role === 'NONE' ? null : connOffer.role;

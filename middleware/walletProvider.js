@@ -5,8 +5,10 @@
 
 const { wrap, wrapEx } = require('../asyncwrap');
 const log = require('../log').log;
-const NotFound = require('../error').NotFound;
+const APIResult = require('../api-result');
 const Wallet = require('../models/wallet');
+
+const cache = {};
 
 /**
  * Finds and opens the wallet with walletId of user
@@ -22,8 +24,8 @@ async function provideWallet(req, walletId) {
         _id: walletId,
         owner: req.user
     }).exec();
-    if (!w) throw new NotFound('Wallet not found');
-    await w.open();
+    if (!w) throw new APIResult(404, { message: 'Wallet not found' });
+    await module.exports.provideHandle(w);
     req.wallet = w;
     return w;
 }
@@ -46,13 +48,36 @@ module.exports = {
     after: [
         wrap(async (req, res, next) => {
             log.debug('walletProvider after');
-            if (req.wallet) await req.wallet.close();
+            if (req.wallet) await module.exports.returnHandle(req.wallet);
             next();
         }),
         wrapEx(async (result, req, res, next) => {
             log.debug('walletProvider after result-handler');
-            if (req.wallet) await req.wallet.close();
+            if (req.wallet) await module.exports.returnHandle(req.wallet);
             next(result);
         })
-    ]
+    ],
+
+    async provideHandle(wallet) {
+        const name = wallet.id;
+        if (cache[name] && cache[name].counter > 0 && cache[name].handle) {
+            log.debug('wallet cache hit', wallet.id, cache);
+            cache[name].counter += 1;
+            wallet.handle = cache[name].handle;
+        } else {
+            log.debug('wallet cache miss ', wallet.id, cache);
+            cache[name] = { counter: 1, handle: await wallet.open() };
+        }
+        return wallet;
+    },
+
+    async returnHandle(wallet) {
+        log.debug('walletProvider return handle');
+        const name = wallet.id;
+        if (!cache[name] || cache[name].counter <= 1) {
+            delete cache[name];
+            await wallet.close();
+        }
+        return;
+    }
 };
