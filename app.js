@@ -13,10 +13,13 @@ const log = require('./log').log;
 const pool = require('./pool');
 const middleware = require('./middleware');
 const routes = require('./routes');
+const message = require('./controllers/message');
 
 const app = express();
 
 app.use(middleware.before);
+
+app.use('/indy', message.receiveMessage);
 
 app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerDoc));
 
@@ -42,5 +45,4 @@ const server = app.listen(process.env.APP_PORT, process.env.APP_HOST, async () =
     }
 });
 
-// for testing purposes
 module.exports = app;

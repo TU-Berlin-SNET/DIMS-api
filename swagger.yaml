@@ -261,8 +261,50 @@ definitions:
       - name
       - version
       - attrNames
+  message_post:
+    type: object
+    properties:
+      wallet:
+        description: A unique string value identifying a wallet
+        type: string
+      did:
+        description: Recipient DID
+        type: string
+      message:
+        description: authcrypted, base64-encoded message to send
+        type: string
+    required:
+      - wallet
+      - did
+      - message
+  indy_post:
+    type: object
+    properties:
+      message:
+        description: Anoncrypted-message
+        type: string
+    required:
+      - message
 
 paths:
+  /indy/:
+    post:
+      summary: Agent Message Endpoint
+      description: Agent Message Endpoint
+      parameters:
+        - in: body
+          name: data
+          schema:
+            $ref: '#/definitions/indy_post'
+  /api/message/:
+    post:
+      summary: Send message
+      description: Send message
+      parameters:
+        - in: body
+          name: data
+          schema:
+            $ref: '#/definitions/message_post'
   /api/credential/:
     get:
       summary: List all credentials of specific wallet (UNTESTED ENDPOINT)
