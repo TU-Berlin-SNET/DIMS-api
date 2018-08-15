@@ -22,6 +22,8 @@ router
     // TODO rate-limiting?
     .post(user.create);
 
+router.post('/login', auth.login);
+
 router.route('/endpoint').post(endpoint.handle);
 
 router.use(auth);

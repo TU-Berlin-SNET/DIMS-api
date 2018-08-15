@@ -39,4 +39,8 @@ schema.pre('remove', async function() {
     }
 });
 
+schema.methods.checkPassword = async function(password) {
+    return bcrypt.compare(password, this.password);
+};
+
 module.exports = Mongoose.model('User', schema);

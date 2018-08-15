@@ -39,6 +39,12 @@ This will build and run 3 services: Indy-Pool, MongoDB & this project API.
 
 Please follow the instruction to install [Docker] & [Docker-Compose]
 
+Before run docker-compose, you need to run
+
+```bash
+docker network create --subnet 172.16.0.0/24 indy-network
+```
+
 #### Run
 
 ```bash
