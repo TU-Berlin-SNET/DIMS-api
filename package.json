@@ -15,10 +15,7 @@
     "precommit": "lint-staged"
   },
   "lint-staged": {
-    "*.js": [
-      "npm run pretty",
-      "git add"
-    ]
+    "*.js": ["npm run pretty", "git add"]
   },
   "dependencies": {
     "ajv": "^6.5.1",
