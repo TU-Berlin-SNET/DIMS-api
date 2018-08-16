@@ -7,10 +7,12 @@ const indy = require('indy-sdk');
 const agent = require('superagent');
 
 const wrap = require('../asyncwrap').wrap;
+const lib = require('../lib');
 const log = require('../log').log;
 const pool = require('../pool');
 const APIResult = require('../api-result');
 const ConnectionOffer = require('../models/connectionoffer');
+const Message = require('../models/message');
 
 const ENDPOINT = `${process.env.APP_HOST}:${process.env.APP_PORT}`;
 
@@ -49,6 +51,7 @@ module.exports = {
         const [signature, anonCryptConnRes] = await req.wallet.signAndAnonCrypt(toFromKey, fromToKey, {
             did: toFromDid,
             verkey: toFromKey,
+            endpoint: req.body.endpoint || ENDPOINT,
             nonce: connOffer.nonce
         });
         const [recipient] = await indy.getEndpointForDid(req.wallet.handle, pool.handle, connOffer.did);
@@ -72,14 +75,14 @@ module.exports = {
         // ToDo The following line creates indy error with new version of indy-sdk
         //  await indy.storeTheirDid(req.wallet.handle, {did: connOffer.did, verkey: fromToKey});
         await indy.setEndpointForDid(req.wallet.handle, connOffer.did, recipient, fromToKey);
-        await pool.attribRequest(
+        /* await pool.attribRequest(
             req.wallet.handle,
             toFromDid,
             toFromDid,
             null,
             { endpoint: { ha: req.body.endpoint || ENDPOINT } },
             null
-        );
+        ); */
         await indy.createPairwise(req.wallet.handle, connOffer.did, toFromDid);
         next(
             new APIResult(200, {
@@ -87,5 +90,91 @@ module.exports = {
                 theirDid: connOffer.did
             })
         );
-    })
+    }),
+
+    async offer(wallet, message) {
+        await Message.store(wallet.id, message.id, message.type, message.message);
+        return APIResult.accepted();
+    },
+
+    async request(wallet, message) {
+        const connOffer = await Message.findOne({
+            messageId: message.id,
+            wallet: wallet.id
+        }).exec();
+
+        // previous offer exists
+        if (connOffer) {
+            return await module.exports.acceptRequest(wallet, message.message);
+        }
+
+        // no previous offer, so just store the request
+        await Message.store(wallet.id, message.message.nonce, message.type, message.message);
+        return APIResult.accepted();
+    },
+
+    async response(wallet, message) {
+        // TODO
+        return new APIResult(501, { message: 'not implemented' });
+    },
+
+    async acknowledgement(wallet, message) {
+        // TODO
+        return new APIResult(501, { message: 'not implemented' });
+    },
+
+    async acceptRequest(wallet, connReq, connOffer) {
+        const theirDid = connReq.did;
+        let theirVk = connReq.verkey;
+        const theirEndpointDid = connReq.endpointDid;
+        let theirEndpoint = connReq.theirEndpoint;
+        let theirEndpointVk;
+        try {
+            if (!theirEndpoint) {
+                [theirEndpoint, theirEndpointVk] = await indy.getEndpointForDid(
+                    wallet.handle,
+                    pool.handle,
+                    theirEndpointDid
+                );
+            }
+            if (!theirEndpointVk) {
+                theirEndpointVk = await indy.keyForDid(pool.handle, wallet.handle, theirEndpointDid);
+            }
+            if (!theirVk) {
+                theirVk = await indy.keyForDid(pool.handle, wallet.handle, theirDid);
+            }
+        } catch (err) {
+            log.warn('failed to retrieve endpoint details', err);
+            return new APIResult(400, { message: 'endpoint details missing from request and not found on ledger' });
+        }
+
+        const [myDid, myVk] = await indy.createAndStoreMyDid(wallet.handle, {});
+        await indy.storeTheirDid(wallet.handle, {
+            did: theirDid,
+            verkey: theirVk
+        });
+        await indy.createPairwise(
+            wallet.handle,
+            theirDid,
+            myDid,
+            JSON.stringify({
+                theirEndpointDid: theirEndpointDid,
+                verified: false
+            })
+        );
+        await indy.setEndpointForDid(wallet.handle, theirEndpointDid, theirEndpoint, theirEndpointVk);
+
+        const connRes = lib.connection.createConnectionResponse(
+            wallet,
+            myDid,
+            myVk,
+            theirDid,
+            theirVk,
+            connReq.request_nonce
+        );
+        // TODO store unencrypted message somewhere?
+
+        connRes.message = await lib.crypto.anonCrypt(theirVk, connRes.message);
+        return lib.message.sendAnoncryptMessage(pool.handle, wallet.handle, theirEndpointDid, connRes);
+    }
 };

@@ -269,6 +269,30 @@ definitions:
       - name
       - version
       - attrNames
+  message_post:
+    type: object
+    properties:
+      wallet:
+        description: A unique string value identifying a wallet
+        type: string
+      did:
+        description: Recipient DID
+        type: string
+      message:
+        description: authcrypted, base64-encoded message to send
+        type: string
+    required:
+      - wallet
+      - did
+      - message
+  indy_post:
+    type: object
+    properties:
+      message:
+        description: Anoncrypted-message
+        type: string
+    required:
+      - message
   login_post:
     type: object
     properties:
@@ -281,6 +305,15 @@ definitions:
       - password
 
 paths:
+  /indy/:
+    post:
+      summary: Agent Message Endpoint
+      description: Agent Message Endpoint
+      parameters:
+        - in: body
+          name: data
+          schema:
+            $ref: '#/definitions/indy_post'
   /api/login:
     post:
       summary: Allow users to login, will return them a JWT valid for a specific amount of time
@@ -295,8 +328,58 @@ paths:
           description: ''
       tags:
         - user
-
-  /api/credential:
+  /api/message/:
+    get:
+      summary: List messages
+      description: List messages
+      parameters:
+        - in: header
+          name: wallet
+          description: A unique string value identifying a wallet.
+          required: true
+          type: string
+        - in: query
+          name: type
+          description: A single message type to filter by
+          type: string
+    post:
+      summary: Send message
+      description: Send message
+      parameters:
+        - in: body
+          name: data
+          schema:
+            $ref: '#/definitions/message_post'
+  /api/message/{messageId}:
+    get:
+      summary: Retrieve a message
+      description: Retrieve a message
+      parameters:
+        - in: header
+          name: wallet
+          description: A unique string value identifying a wallet.
+          required: true
+          type: string
+        - in: path
+          name: messageId
+          description: A unique string value identifying a message.
+          required: true
+          type: string
+    delete:
+      summary: Delete a message
+      description: Delete a message
+      parameters:
+        - in: header
+          name: wallet
+          description: A unique string value identifying a wallet.
+          required: true
+          type: string
+        - in: path
+          name: messageId
+          description: A unique string value identifying a message.
+          required: true
+          type: string
+  /api/credential/:
     get:
       security:
         - Bearer: []

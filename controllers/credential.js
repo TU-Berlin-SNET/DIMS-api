@@ -127,5 +127,20 @@ module.exports = {
         } else {
             next(new APIResult(200, cred));
         }
-    })
+    }),
+
+    async offer(wallet, message) {
+        // TODO
+        return new APIResult(501, { message: 'not implemented' });
+    },
+
+    async request(wallet, message) {
+        // TODO
+        return new APIResult(501, { message: 'not implemented' });
+    },
+
+    async credential(wallet, message) {
+        // TODO
+        return new APIResult(501, { message: 'not implemented' });
+    }
 };

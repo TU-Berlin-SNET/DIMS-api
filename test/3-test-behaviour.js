@@ -117,9 +117,10 @@ describe('behaviour', function() {
             const res = await agent
                 .post('/api/connection')
                 .set(bothHeaders)
-                .send({ wallet: wallets[1].id, connectionOffer: connectionOffer })
+                .send({ wallet: wallets[1].id, connectionOffer: connectionOffer, endpoint: `${vars.serverURL}/indy` })
                 .expect(200);
             expect(res.body).to.have.all.keys('myDid', 'theirDid');
+            wallets[1].ownDid = res.body.myDid;
         });
         it('issuer should should NOT accept connectionoffer from steward repeatedly', async function() {
             this.timeout(60000);
@@ -185,6 +186,74 @@ describe('behaviour', function() {
                 .set(bothHeaders)
                 .send({ wallet: wallets[2].id })
                 .expect(400);
+        });
+    });
+
+    describe('messaging', function() {
+        let messageId;
+
+        it('POST /api/message should return HTTP 202 on valid connection request', async function() {
+            this.timeout(60000);
+            await agent
+                .post('/api/message')
+                .auth(users[0].username, users[0].password)
+                .set(bothHeaders)
+                .send({
+                    wallet: wallets[0].id,
+                    did: wallets[1].ownDid,
+                    message: JSON.stringify({
+                        id: 'someNonce',
+                        type: 'urn:sovrin:agent:message_type:sovrin.org/connection_request',
+                        message: {
+                            did: 'someDid',
+                            nonce: 'someNonce',
+                            verkey: 'someVerkey',
+                            endpoindDid: 'endpointDid',
+                            endpoint: 'endpoint'
+                        }
+                    })
+                })
+                .expect(202);
+        });
+
+        it('GET /api/message should return list of messages', async function() {
+            const res = await agent
+                .get('/api/message')
+                .auth(users[1].username, users[1].password)
+                .set(bothHeaders)
+                .set({ wallet: wallets[1].id })
+                .expect(200);
+            expect(res.body)
+                .to.be.an('array')
+                .with.lengthOf(1);
+            expect(res.body[0]).to.have.all.keys('id', 'wallet', 'messageId', 'type', 'message');
+            messageId = res.body[0].id;
+        });
+
+        it('GET /api/message/:messageId should retrieve a single message', async function() {
+            const res = await agent
+                .get('/api/message/' + messageId)
+                .auth(users[1].username, users[1].password)
+                .set(bothHeaders)
+                .set({ wallet: wallets[1].id })
+                .expect(200);
+            expect(res.body).to.have.all.keys('id', 'wallet', 'messageId', 'type', 'message');
+            expect(res.body.id).to.equal(messageId);
+        });
+
+        it('DELETE /api/message/:messageId should delete a single message', async function() {
+            await agent
+                .delete('/api/message/' + messageId)
+                .auth(users[1].username, users[1].password)
+                .set(bothHeaders)
+                .set({ wallet: wallets[1].id })
+                .expect(204);
+            await agent
+                .get('/api/message/' + messageId)
+                .auth(users[1].username, users[1].password)
+                .set(bothHeaders)
+                .set({ wallet: wallets[1].id })
+                .expect(404);
         });
     });
 
