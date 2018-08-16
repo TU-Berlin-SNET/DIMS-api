@@ -86,7 +86,15 @@ router.route('/proofverification').post(proof.verifyProof);
 
 router.route('/transactions').get(transactions.list);
 
-router.route('/message').post(message.sendMessage);
+router
+    .route('/message')
+    .get(message.list)
+    .post(message.sendMessage);
+
+router
+    .route('/message/:messageId')
+    .get(message.retrieve)
+    .delete(message.delete);
 
 router.use(walletProvider.after);
 

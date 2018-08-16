@@ -297,6 +297,19 @@ paths:
           schema:
             $ref: '#/definitions/indy_post'
   /api/message/:
+    get:
+      summary: List messages
+      description: List messages
+      parameters:
+        - in: header
+          name: wallet
+          description: A unique string value identifying a wallet.
+          required: true
+          type: string
+        - in: query
+          name: type
+          description: A single message type to filter by
+          type: string
     post:
       summary: Send message
       description: Send message
@@ -305,6 +318,35 @@ paths:
           name: data
           schema:
             $ref: '#/definitions/message_post'
+  /api/message/{messageId}:
+    get:
+      summary: Retrieve a message
+      description: Retrieve a message
+      parameters:
+        - in: header
+          name: wallet
+          description: A unique string value identifying a wallet.
+          required: true
+          type: string
+        - in: path
+          name: messageId
+          description: A unique string value identifying a message.
+          required: true
+          type: string
+    delete:
+      summary: Delete a message
+      description: Delete a message
+      parameters:
+        - in: header
+          name: wallet
+          description: A unique string value identifying a wallet.
+          required: true
+          type: string
+        - in: path
+          name: messageId
+          description: A unique string value identifying a message.
+          required: true
+          type: string
   /api/credential/:
     get:
       summary: List all credentials of specific wallet (UNTESTED ENDPOINT)

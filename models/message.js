@@ -22,6 +22,14 @@ const schema = new Mongoose.Schema({
     }
 });
 
+schema.set('toJSON', {
+    versionKey: false,
+    transform: (doc, ret, game) => {
+        ret.id = String(ret._id);
+        delete ret._id;
+    }
+});
+
 schema.statics.store = function(walletId, messageId, messageType, message) {
     return new this({
         wallet: walletId,

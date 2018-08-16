@@ -16,21 +16,37 @@ class APIResult {
     }
 
     /**
-     * @return {Object} APIResult with status 400
+     * @return {APIResult} APIResult with status 202
+     */
+    static accepted() {
+        return accepted;
+    }
+
+    /**
+     * @return {APIResult} APIResult with status 204
+     */
+    static noContent() {
+        return noContent;
+    }
+
+    /**
+     * @return {APIResult} APIResult with status 400
      */
     static badRequest() {
         return badRequest;
     }
 
     /**
-     * @return {Object} APIResult with status 202
+     * @return {APIResult} APIResult with status 404
      */
-    static accepted() {
-        return accepted;
+    static notFound() {
+        return notFound;
     }
 }
 
-const badRequest = new APIResult(400);
 const accepted = new APIResult(202);
+const noContent = new APIResult(204);
+const badRequest = new APIResult(400);
+const notFound = new APIResult(404);
 
 module.exports = APIResult;

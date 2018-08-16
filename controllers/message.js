@@ -10,6 +10,7 @@ const pool = require('../pool');
 const lib = require('../lib');
 const APIResult = require('../api-result');
 const Wallet = require('../models/wallet');
+const Message = require('../models/message');
 
 const WalletProvider = require('../middleware/walletProvider');
 const connection = require('./connection');
@@ -52,27 +53,59 @@ async function tryAnonDecrypt(encryptedMessage) {
 }
 
 module.exports = {
-    // TODO register crd (the u is omitted) in routes/index.js
     list: wrap(async (req, res, next) => {
-        // TODO list messages of wallet
-        // also allow for query params to filter by type
-        return next(new APIResult(501, { message: 'not implemented' }));
+        let query = { wallet: req.wallet.id };
+        if (req.query.type) query.messageType = req.query.type;
+        const result = await Message.find(query).exec();
+        return next(new APIResult(200, result));
     }),
 
     retrieve: wrap(async (req, res, next) => {
-        // TODO
-        return next(new APIResult(501, { message: 'not implemented' }));
+        const result = await Message.findOne({
+            _id: req.params.messageId,
+            wallet: req.wallet.id
+        }).exec();
+        if (!result) {
+            return next(APIResult.notFound());
+        } else {
+            return next(new APIResult(200, result));
+        }
     }),
 
     delete: wrap(async (req, res, next) => {
-        // TODO
-        return next(new APIResult(501, { message: 'not implemented' }));
+        const message = await Message.findOne({
+            _id: req.params.messageId,
+            wallet: req.wallet.id
+        }).exec();
+        if (!message) {
+            return next(APIResult.notFound());
+        }
+        await message.remove();
+        return next(APIResult.noContent());
     }),
 
     sendMessage: wrap(async (req, res, next) => {
         const wallet = req.wallet;
         const did = req.body.did;
         const message = req.body.message;
+        const apiResult = await module.exports.anoncryptSendMessage(wallet, did, message);
+        return next(apiResult);
+    }),
+
+    receiveMessage: wrap(async (req, res, next) => {
+        const apiResult = await module.exports.receiveAnoncryptMessage(req.body.message);
+        return next(apiResult);
+    }),
+
+    /**
+     * Send anoncrypted message, only anoncrypts full message,
+     * any additional anon-/authcrypt has to be done before manually
+     * @param {Object} wallet
+     * @param {String} did recipient did
+     * @param {Object} message
+     * @return {APIResult} apiresult
+     */
+    async anoncryptSendMessage(wallet, did, message) {
         let endpointDid = did;
 
         try {
@@ -102,24 +135,29 @@ module.exports = {
                 };
             }
         }
-        return next(new APIResult(result.status, result.data));
-    }),
+        return new APIResult(result.status, result.data);
+    },
 
-    receiveMessage: wrap(async (req, res, next) => {
-        const [wallet, message] = await tryAnonDecrypt(req.body.message);
+    /**
+     * Anondecrypt message and forward to its handler
+     * @param {String} encryptedMessage anoncrypted message
+     * @return {APIResult} apiresult
+     */
+    async receiveAnoncryptMessage(encryptedMessage) {
+        const [wallet, message] = await tryAnonDecrypt(encryptedMessage);
         if (!wallet || !message) {
-            return next(new APIResult(400, { message: 'could not decrypt' }));
+            return new APIResult(400, { message: 'could not decrypt' });
         }
 
         const handler = handlers[message.type];
         try {
             if (handler) {
                 const result = await handler(wallet, message);
-                return next(result);
+                return result;
             }
-            next(new APIResult(400, { message: 'unknown message type ' + message.type }));
+            return new APIResult(400, { message: 'unknown message type ' + message.type });
         } finally {
             await WalletProvider.returnHandle(wallet);
         }
-    })
+    }
 };
