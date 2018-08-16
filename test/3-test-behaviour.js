@@ -99,6 +99,7 @@ describe('behaviour', function() {
                 .send({ wallet: wallets[1].id, connectionOffer: connectionOffer })
                 .expect(200);
             expect(res.body).to.have.all.keys('myDid', 'theirDid');
+            wallets[1].ownDid = res.body.myDid;
         });
         it('issuer should should NOT accept connectionoffer from steward repeatedly', async function() {
             this.timeout(60000);
@@ -162,6 +163,31 @@ describe('behaviour', function() {
                 .set(bothHeaders)
                 .send({ wallet: wallets[2].id })
                 .expect(400);
+        });
+    });
+
+    describe('messaging', function() {
+        it('should return HTTP 202 on valid connection request', async function() {
+            this.timeout(60000);
+            await agent
+                .post('/api/message')
+                .auth(users[0].username, users[0].password)
+                .set(bothHeaders)
+                .send({
+                    wallet: wallets[0].id,
+                    did: wallets[1].ownDid,
+                    message: JSON.stringify({
+                        id: 'someNonce',
+                        type: 'urn:sovrin:agent:message_type:sovrin.org/connection_request',
+                        message: {
+                            did: 'someDid',
+                            request_nonce: 'someNonce',
+                            endpoind_did: 'endpointDid',
+                            endpoint: 'endpoint'
+                        }
+                    })
+                })
+                .expect(202);
         });
     });
 
