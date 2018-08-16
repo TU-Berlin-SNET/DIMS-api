@@ -10,7 +10,6 @@ const pool = require('../pool');
 const lib = require('../lib');
 const APIResult = require('../api-result');
 const Wallet = require('../models/wallet');
-const Message = require('../models/message');
 
 const WalletProvider = require('../middleware/walletProvider');
 const connection = require('./connection');
@@ -18,14 +17,14 @@ const credential = require('./credential');
 const proof = require('./proof');
 
 const handlers = {};
-handlers[lib.message.messageTypes.CONNECTIONOFFER] = module.exports.storeMessage;
-handlers[lib.message.messageTypes.CONNECTIONREQUEST] = module.exports.storeMessage;
+handlers[lib.message.messageTypes.CONNECTIONOFFER] = connection.offer;
+handlers[lib.message.messageTypes.CONNECTIONREQUEST] = connection.request;
 handlers[lib.message.messageTypes.CONNECTIONRESPONSE] = connection.response;
 handlers[lib.message.messageTypes.CONNECTIONACKNOWLEDGE] = connection.acknowledgement;
-handlers[lib.message.messageTypes.CREDENTIALOFFER] = module.exports.storeMessage;
-handlers[lib.message.messageTypes.CREDENTIALREQUEST] = module.exports.storeMessage;
+handlers[lib.message.messageTypes.CREDENTIALOFFER] = credential.offer;
+handlers[lib.message.messageTypes.CREDENTIALREQUEST] = credential.request;
 handlers[lib.message.messageTypes.CREDENTIAL] = credential.credential;
-handlers[lib.message.messageTypes.PROOFREQUEST] = module.exports.storeMessage;
+handlers[lib.message.messageTypes.PROOFREQUEST] = proof.request;
 handlers[lib.message.messageTypes.PROOF] = proof.proof;
 
 /**
@@ -34,6 +33,7 @@ handlers[lib.message.messageTypes.PROOF] = proof.proof;
  * @return {any[]} [wallet, decryptedMessage]
  */
 async function tryAnonDecrypt(encryptedMessage) {
+    // This is one hacky solution to this problem
     let wallet;
     let decryptedMessage;
     const cursor = Wallet.find({}).cursor();
@@ -44,6 +44,7 @@ async function tryAnonDecrypt(encryptedMessage) {
             wallet = w;
             break;
         } catch (err) {
+            await WalletProvider.returnHandle(w);
             log.warn(err);
         }
     }
@@ -51,20 +52,56 @@ async function tryAnonDecrypt(encryptedMessage) {
 }
 
 module.exports = {
+    // TODO register crd (the u is omitted) in routes/index.js
+    list: wrap(async (req, res, next) => {
+        // TODO list messages of wallet
+        // also allow for query params to filter by type
+        return next(new APIResult(501, { message: 'not implemented' }));
+    }),
+
+    retrieve: wrap(async (req, res, next) => {
+        // TODO
+        return next(new APIResult(501, { message: 'not implemented' }));
+    }),
+
+    delete: wrap(async (req, res, next) => {
+        // TODO
+        return next(new APIResult(501, { message: 'not implemented' }));
+    }),
+
     sendMessage: wrap(async (req, res, next) => {
         const wallet = req.wallet;
         const did = req.body.did;
         const message = req.body.message;
+        let endpointDid = did;
+
+        try {
+            const pairwise = await indy.getPairwise(wallet.handle, did);
+            if (pairwise) {
+                const metadata = JSON.parse(pairwise.metadata);
+                endpointDid = metadata.theirEndpointDid || did;
+            }
+        } catch (err) {
+            log.info('no pairwise found ', err);
+        }
+
         let result;
         try {
-            result = await lib.message.sendAnoncryptMessage(pool.handle, wallet.handle, did, message);
+            result = await lib.message.sendAnoncryptMessage(pool.handle, wallet.handle, endpointDid, message);
         } catch (err) {
-            result = {
-                status: result.status,
-                message: JSON.parse(result.response.text)
-            };
+            if (err.status && err.response && err.response.text) {
+                result = {
+                    status: err.status,
+                    data: JSON.parse(err.response.text).message
+                };
+            } else {
+                log.err(err);
+                result = {
+                    status: 500,
+                    data: { message: 'unexpected error' }
+                };
+            }
         }
-        log.debug('sendMessage result', result);
         return next(new APIResult(result.status, result.data));
     }),
 
@@ -77,21 +114,12 @@ module.exports = {
         const handler = handlers[message.type];
         try {
             if (handler) {
-                await handler(wallet, message);
-                return next(new APIResult(202));
+                const result = await handler(wallet, message);
+                return next(result);
             }
-            next(new APIResult(400, { message: 'unknown message type' }));
+            next(new APIResult(400, { message: 'unknown message type ' + message.type }));
         } finally {
             await WalletProvider.returnHandle(wallet);
         }
-    }),
-
-    async storeMessage(wallet, message) {
-        await new Message({
-            wallet: wallet,
-            messageId: message.id,
-            type: message.type,
-            message: message
-        }).save();
-    }
+    })
 };
