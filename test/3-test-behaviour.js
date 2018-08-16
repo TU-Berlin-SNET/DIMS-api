@@ -29,31 +29,51 @@ let credDefId;
 let holderIssuerDid;
 let holderRPDid;
 
+const User = require('../models/user');
+
 describe('behaviour', function() {
+    before(async function() {
+        this.timeout(60000);
+        for (const u of users) {
+            let username = u.username;
+            await User.remove({ username });
+
+            const res = await agent
+                .post('/api/user/')
+                .set(bothHeaders)
+                .send(u)
+                .expect(201);
+            const id = res.get('location').substring(6);
+            u.id = id;
+            valuesToDelete.push({
+                id: id,
+                auth: [u.username, u.password],
+                path: 'user'
+            });
+        }
+
+        // TODO: add cleanup for all collections
+    });
+
+    beforeEach(async function() {
+        for (const user of users) {
+            const res = await agent
+                .post('/api/login')
+                .set(bothHeaders)
+                .send(user)
+                .expect(200);
+
+            user.token = res.body.token;
+        }
+    });
+
     describe('prepare for tests', function() {
-        it('should create users', async function() {
-            this.timeout(60000);
-            for (const u of users) {
-                const res = await agent
-                    .post('/api/user/')
-                    .set(bothHeaders)
-                    .send(u)
-                    .expect(201);
-                const id = res.get('location').substring(6);
-                u.id = id;
-                valuesToDelete.push({
-                    id: id,
-                    auth: [u.username, u.password],
-                    path: 'user'
-                });
-            }
-        });
         it('should create wallets', async function() {
             this.timeout(60000);
             for (let i = 0; i < wallets.length; i++) {
+                bothHeaders.Authorization = users[i].token;
                 const res = await agent
                     .post('/api/wallet')
-                    .auth(users[i].username, users[i].password)
                     .set(bothHeaders)
                     .send(wallets[i])
                     .expect(201);
@@ -80,9 +100,9 @@ describe('behaviour', function() {
     describe('onboarding', function() {
         it('steward should create connectionoffers for issuer with role TRUST_ANCHOR', async function() {
             this.timeout(60000);
+            bothHeaders.Authorization = users[0].token;
             const res = await agent
                 .post('/api/connectionoffer')
-                .auth(users[0].username, users[0].password)
                 .set(bothHeaders)
                 .send({ wallet: wallets[0].id, role: 'TRUST_ANCHOR' })
                 .expect(201);
@@ -90,11 +110,12 @@ describe('behaviour', function() {
             expect(res.body.role).to.equal('TRUST_ANCHOR');
             connectionOffer = res.body;
         });
+
         it('issuer should accept connectionoffer from steward', async function() {
             this.timeout(60000);
+            bothHeaders.Authorization = users[1].token;
             const res = await agent
                 .post('/api/connection')
-                .auth(users[1].username, users[1].password)
                 .set(bothHeaders)
                 .send({ wallet: wallets[1].id, connectionOffer: connectionOffer, endpoint: `${vars.serverURL}/indy` })
                 .expect(200);
@@ -103,18 +124,19 @@ describe('behaviour', function() {
         });
         it('issuer should should NOT accept connectionoffer from steward repeatedly', async function() {
             this.timeout(60000);
+            bothHeaders.Authorization = users[1].token;
             await agent
                 .post('/api/connection')
-                .auth(users[1].username, users[1].password)
                 .set(bothHeaders)
                 .send({ wallet: wallets[1].id, connectionOffer: connectionOffer })
                 .expect(404);
         });
         it('steward should create connectionoffers for relyingpary with role TRUST_ANCHOR', async function() {
             this.timeout(60000);
+
+            bothHeaders.Authorization = users[0].token;
             const res = await agent
                 .post('/api/connectionoffer')
-                .auth(users[0].username, users[0].password)
                 .set(bothHeaders)
                 .send({ wallet: wallets[0].id, role: 'TRUST_ANCHOR' })
                 .expect(201);
@@ -124,9 +146,9 @@ describe('behaviour', function() {
         });
         it('relyingpary should accept connectionoffer from steward', async function() {
             this.timeout(60000);
+            bothHeaders.Authorization = users[3].token;
             const res = await agent
                 .post('/api/connection')
-                .auth(users[3].username, users[3].password)
                 .set(bothHeaders)
                 .send({ wallet: wallets[3].id, connectionOffer: connectionOffer })
                 .expect(200);
@@ -134,9 +156,9 @@ describe('behaviour', function() {
         });
         it('issuer (TRUST_ANCHOR) should create connectionoffer for holder with role NONE', async function() {
             this.timeout(60000);
+            bothHeaders.Authorization = users[1].token;
             const res = await agent
                 .post('/api/connectionoffer')
-                .auth(users[1].username, users[1].password)
                 .set(bothHeaders)
                 .send({ wallet: wallets[1].id })
                 .expect(201);
@@ -146,9 +168,10 @@ describe('behaviour', function() {
         });
         it('holder should accept connectionoffer from issuer', async function() {
             this.timeout(60000);
+            bothHeaders.Authorization = users[2].token;
+
             const res = await agent
                 .post('/api/connection')
-                .auth(users[2].username, users[2].password)
                 .set(bothHeaders)
                 .send({ wallet: wallets[2].id, connectionOffer: connectionOffer })
                 .expect(200);
@@ -157,9 +180,9 @@ describe('behaviour', function() {
         });
         it('holder (NONE) should NOT be able to create connectionOffers', async function() {
             this.timeout(60000);
+            bothHeaders.Authorization = users[2].token;
             await agent
                 .post('/api/connectionoffer')
-                .auth(users[2].username, users[2].password)
                 .set(bothHeaders)
                 .send({ wallet: wallets[2].id })
                 .expect(400);
@@ -246,11 +269,12 @@ describe('behaviour', function() {
             holder = Object.assign({}, users[2], { wallet: wallets[2] });
             rp = Object.assign({}, users[3], { wallet: wallets[3] });
         });
+
         it('issuer should create a schema', async function() {
             this.timeout(60000);
+            bothHeaders.Authorization = issuer.token;
             const res = await agent
                 .post('/api/schema')
-                .auth(issuer.username, issuer.password)
                 .set(bothHeaders)
                 .send({
                     wallet: issuer.wallet.id,
@@ -264,9 +288,10 @@ describe('behaviour', function() {
         });
         it('issuer should create a credential definition', async function() {
             this.timeout(60000);
+            bothHeaders.Authorization = issuer.token;
+
             const res = await agent
                 .post('/api/credentialdef')
-                .auth(issuer.username, issuer.password)
                 .set(bothHeaders)
                 .send({
                     wallet: issuer.wallet.id,
@@ -280,6 +305,7 @@ describe('behaviour', function() {
         });
         it('issuer should create a credential offer', async function() {
             this.timeout(60000);
+            bothHeaders.Authorization = issuer.token;
             const res = await agent
                 .post('/api/credentialoffer')
                 .auth(issuer.username, issuer.password)
@@ -295,9 +321,9 @@ describe('behaviour', function() {
         });
         it('holder should accept credential offer and create credential request', async function() {
             this.timeout(60000);
+            bothHeaders.Authorization = holder.token;
             const res = await agent
                 .post('/api/credentialrequest')
-                .auth(holder.username, holder.password)
                 .set(bothHeaders)
                 .send({
                     wallet: holder.wallet.id,
@@ -309,9 +335,9 @@ describe('behaviour', function() {
         });
         it('issuer should accept credential request and issue credential', async function() {
             this.timeout(60000);
+            bothHeaders.Authorization = issuer.token;
             const res = await agent
                 .post('/api/credentialissue')
-                .auth(issuer.username, issuer.password)
                 .set(bothHeaders)
                 .send({
                     wallet: issuer.wallet.id,
@@ -328,9 +354,10 @@ describe('behaviour', function() {
         });
         it('holder should store credential', async function() {
             this.timeout(60000);
+            bothHeaders.Authorization = holder.token;
+
             const res = await agent
                 .post('/api/credential')
-                .auth(holder.username, holder.password)
                 .set(bothHeaders)
                 .send({
                     wallet: holder.wallet.id,
@@ -342,9 +369,10 @@ describe('behaviour', function() {
         });
         it('holder should be able to retrieve credential', async function() {
             this.timeout(60000);
+            bothHeaders.Authorization = holder.token;
+
             const res = await agent
                 .get(`/api/credential/${credentialId}`)
-                .auth(holder.username, holder.password)
                 .set(bothHeaders)
                 .set({ wallet: holder.wallet.id })
                 .expect(200);
@@ -358,9 +386,10 @@ describe('behaviour', function() {
         let proof;
         it('relying party (TRUST_ANCHOR) should create connectionoffer for holder with role NONE', async function() {
             this.timeout(60000);
+            bothHeaders.Authorization = rp.token;
+
             const res = await agent
                 .post('/api/connectionoffer')
-                .auth(rp.username, rp.password)
                 .set(bothHeaders)
                 .send({ wallet: rp.wallet.id })
                 .expect(201);
@@ -370,9 +399,9 @@ describe('behaviour', function() {
         });
         it('holder should accept connectionoffer from relying party', async function() {
             this.timeout(60000);
+            bothHeaders.Authorization = holder.token;
             const res = await agent
                 .post('/api/connection')
-                .auth(holder.username, holder.password)
                 .set(bothHeaders)
                 .send({ wallet: holder.wallet.id, connectionOffer: connectionOffer })
                 .expect(200);
@@ -381,6 +410,7 @@ describe('behaviour', function() {
         });
         it('relying party should create proof request', async function() {
             this.timeout(60000);
+            bothHeaders.Authorization = rp.token;
             const res = await agent
                 .post('/api/proofrequest')
                 .auth(rp.username, rp.password)
@@ -421,9 +451,9 @@ describe('behaviour', function() {
         });
         it('holder should accept proof request and create proof', async function() {
             this.timeout(60000);
+            bothHeaders.Authorization = holder.token;
             const res = await agent
                 .post('/api/proof')
-                .auth(holder.username, holder.password)
                 .set(bothHeaders)
                 .send({
                     wallet: holder.wallet.id,
@@ -438,9 +468,9 @@ describe('behaviour', function() {
         });
         it('relying party should create proof verification', async function() {
             this.timeout(60000);
+            bothHeaders.Authorization = rp.token;
             const res = await agent
                 .post('/api/proofverification')
-                .auth(rp.username, rp.password)
                 .set(bothHeaders)
                 .send({
                     wallet: rp.wallet.id,
@@ -509,5 +539,7 @@ describe('behaviour', function() {
                 .auth(...v.auth)
                 .set(acceptHeader);
         }
+
+        // TODO: add cleanup for other collections
     });
 });

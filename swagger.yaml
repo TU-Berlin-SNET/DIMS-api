@@ -6,8 +6,16 @@ info:
 schemes:
   - http
 securityDefinitions:
-  basic:
-    type: basic
+  Bearer:
+    description: |
+      JWT Authorization header using the Bearer scheme.
+      Example: 'Authorization: Bearer {token}'
+
+      Please add Bearer in front of the JWT token:
+      > Bearer xxxxx.yyyyy.zzzzz
+    type: apiKey
+    name: Authorization
+    in: header
 consumes:
   - application/json
 produces:
@@ -285,6 +293,16 @@ definitions:
         type: string
     required:
       - message
+  login_post:
+    type: object
+    properties:
+      username:
+        type: string
+      password:
+        type: string
+    required:
+      - username
+      - password
 
 paths:
   /indy/:
@@ -296,6 +314,20 @@ paths:
           name: data
           schema:
             $ref: '#/definitions/indy_post'
+  /api/login:
+    post:
+      summary: Allow users to login, will return them a JWT valid for a specific amount of time
+      description: Allow users to login, will return them a JWT valid for a specific amount of time
+      parameters:
+        - in: body
+          name: credentials
+          schema:
+            $ref: '#/definitions/login_post'
+      responses:
+        '200':
+          description: ''
+      tags:
+        - user
   /api/message/:
     get:
       summary: List messages
@@ -349,6 +381,8 @@ paths:
           type: string
   /api/credential/:
     get:
+      security:
+        - Bearer: []
       summary: List all credentials of specific wallet (UNTESTED ENDPOINT)
       description: List all credentials of specific wallet (UNTESTED ENDPOINT)
       parameters:
@@ -387,6 +421,8 @@ paths:
       tags:
         - credential
     post:
+      security:
+        - Bearer: []
       summary: Store a credential
       description: Store a credential
       parameters:
@@ -399,19 +435,22 @@ paths:
           description: ''
       tags:
         - credential
-  /api/credential/{id}/:
-    parameters:
-      - description: A unique string value identifying this credential.
-        in: path
-        name: id
-        required: true
-        type: string
-      - in: header
-        description: A unique string value identifying a wallet.
-        name: wallet
-        required: true
-        type: string
+  /api/credential/{id}:
     get:
+      security:
+        - Bearer: []
+      parameters:
+        - description: A unique string value identifying this credential.
+          in: path
+          name: id
+          required: true
+          type: string
+        - in: header
+          description: A unique string value identifying a wallet.
+          name: wallet
+          required: true
+          type: string
+
       summary: Retrieve a credential
       description: Retrieve a credential
       responses:
@@ -419,8 +458,10 @@ paths:
           description: ''
       tags:
         - credential
-  /api/credentialissue/:
+  /api/credentialissue:
     post:
+      security:
+        - Bearer: []
       summary: Issue a credential
       description: Issue a credential
       parameters:
@@ -433,21 +474,25 @@ paths:
           description: ''
       tags:
         - credentialissue
-  /api/credentialdef/:
+  /api/credentialdef:
+    parameters:
+      - in: header
+        name: wallet
+        required: true
+        type: string
     get:
+      security:
+        - Bearer: []
       summary: List credential definitions of wallet
       description: List credential definitions of wallet
-      parameters:
-        - in: header
-          name: wallet
-          required: true
-          type: string
       responses:
         '200':
           description: ''
       tags:
         - credentialdef
     post:
+      security:
+        - Bearer: []
       summary: Create a credential definition
       description: Create a credential definition
       parameters:
@@ -460,7 +505,7 @@ paths:
           description: ''
       tags:
         - credentialdef
-  /api/credentialdef/{creddef}/:
+  /api/credentialdef/{creddef}:
     parameters:
       - description: A unique string value identifying this credential definition.
         in: path
@@ -473,6 +518,8 @@ paths:
         required: true
         type: string
     get:
+      security:
+        - Bearer: []
       summary: Retrieve a credential definition from the ledger
       description: Retrieve a credential definition from the ledger
       responses:
@@ -481,6 +528,8 @@ paths:
       tags:
         - credentialdef
     delete:
+      security:
+        - Bearer: []
       summary: Delete a credential definition
       description: Delete a credential definition
       responses:
@@ -488,8 +537,10 @@ paths:
           description: ''
       tags:
         - credentialdef
-  /api/credentialoffer/:
+  /api/credentialoffer:
     post:
+      security:
+        - Bearer: []
       summary: Create a credential offer
       description: Create a credential offer
       parameters:
@@ -502,8 +553,10 @@ paths:
           description: ''
       tags:
         - credentialoffer
-  /api/credentialrequest/:
+  /api/credentialrequest:
     post:
+      security:
+        - Bearer: []
       summary: Accept credential offer and create credential request
       description: Accept credential offer and create credential request
       parameters:
@@ -516,8 +569,10 @@ paths:
           description: ''
       tags:
         - credentialrequest
-  /api/connectionoffer/:
+  /api/connectionoffer:
     post:
+      security:
+        - Bearer: []
       summary: Create a new connection offer
       description: Create a new connection offer
       parameters:
@@ -530,8 +585,10 @@ paths:
           description: ''
       tags:
         - connection
-  /api/connection/:
+  /api/connection:
     post:
+      security:
+        - Bearer: []
       summary: Accept a connection offer
       description: Accept a connection offer
       parameters:
@@ -544,8 +601,10 @@ paths:
           description: 'Success'
       tags:
         - connection
-  /api/proofrequest/:
+  /api/proofrequest:
     post:
+      security:
+        - Bearer: []
       summary: Create a proof request
       description: Create a proof request
       parameters:
@@ -559,8 +618,10 @@ paths:
           description: ''
       tags:
         - proof
-  /api/proof/:
+  /api/proof:
     post:
+      security:
+        - Bearer: []
       summary: Create a Proof
       description: Create a Proof
       parameters:
@@ -574,8 +635,10 @@ paths:
           description: ''
       tags:
         - proof
-  /api/proofverification/:
+  /api/proofverification:
     post:
+      security:
+        - Bearer: []
       summary: Create a proof verification
       description: Create a proof verification
       parameters:
@@ -588,8 +651,10 @@ paths:
           description: ''
       tags:
         - proof
-  /api/schema/:
+  /api/schema:
     get:
+      security:
+        - Bearer: []
       summary: List schemas
       description: List schemas
       responses:
@@ -598,6 +663,8 @@ paths:
       tags:
         - schema
     post:
+      security:
+        - Bearer: []
       summary: Create a Schema
       description: Create a Schema
       parameters:
@@ -610,7 +677,7 @@ paths:
           description: ''
       tags:
         - schema
-  /api/schema/{schemaid}/:
+  /api/schema/{schemaid}:
     parameters:
       - description: A unique string value identifying this schema.
         in: path
@@ -623,6 +690,8 @@ paths:
         required: true
         type: string
     get:
+      security:
+        - Bearer: []
       summary: Retrieve a schema
       description: Retrieve a schema
       responses:
@@ -630,7 +699,7 @@ paths:
           description: ''
       tags:
         - schema
-  /api/user/:
+  /api/user:
     post:
       summary: Register a new user
       description: Register a new user
@@ -648,10 +717,12 @@ paths:
               type: string
       tags:
         - user
-  /api/user/{user}/:
+  /api/user/{user}:
     parameters:
       - $ref: '#/parameters/userParam'
     get:
+      security:
+        - Bearer: []
       summary: Retrieve a user
       description: Retrieve a user
       responses:
@@ -660,6 +731,8 @@ paths:
       tags:
         - user
     put:
+      security:
+        - Bearer: []
       summary: Update a User
       description: Update a User (at least one of the properties must be provided)
       parameters:
@@ -675,6 +748,8 @@ paths:
       tags:
         - user
     delete:
+      security:
+        - Bearer: []
       summary: Delete a User
       description: Delete a User
       parameters:
@@ -686,8 +761,10 @@ paths:
           description: 'Not yet implemented'
       tags:
         - user
-  /api/wallet/:
+  /api/wallet:
     get:
+      security:
+        - Bearer: []
       summary: List all wallets of user
       description: List all wallets of user
       responses:
@@ -696,6 +773,8 @@ paths:
       tags:
         - wallet
     post:
+      security:
+        - Bearer: []
       summary: Create a new Wallet (optionally with given name and settings)
       description: Create a new Wallet (optionally with given name and settings)
       parameters:
@@ -708,10 +787,12 @@ paths:
           description: ''
       tags:
         - wallet
-  /api/wallet/{wallet}/:
+  /api/wallet/{wallet}:
     parameters:
       - $ref: '#/parameters/walletParam'
     get:
+      security:
+        - Bearer: []
       summary: Retrieve a Wallet.
       description: Retrieve a Wallet.
       responses:
@@ -720,6 +801,8 @@ paths:
       tags:
         - wallet
     delete:
+      security:
+        - Bearer: []
       summary: Delete a Wallet
       description: Delete a Wallet
       responses:
@@ -727,7 +810,7 @@ paths:
           description: ''
       tags:
         - wallet
-  /api/endpoint/:
+  /api/endpoint:
     post:
       description: Agent endpoint
       summary: Agent endpoint
@@ -770,6 +853,8 @@ paths:
         - endpoint
   /api/transactions:
     get:
+      security:
+        - Bearer: []
       description: 'Get ledger transactions from-to indexes'
       parameters:
         - in: header

@@ -18,18 +18,36 @@ const acceptHeader = vars.acceptHeader;
 const bothHeaders = vars.bothHeaders;
 let valuesToDelete = [];
 
+const User = require('../models/user');
+
 describe('/api/user', function() {
     let tmpUser = { username: 'willDelete', password: 'afterThis' };
 
-    it('POST / should create an user with username and password', async function() {
+    before(async function() {
         this.timeout(60000);
+
+        let username = tmpUser.username;
+        await User.remove({ username });
+
         const res = await agent
             .post('/api/user')
             .set(bothHeaders)
-            .send(tmpUser);
+            .send(tmpUser)
+            .expect(201);
         const id = res.get('location').substring(6);
         tmpUser.id = id;
         valuesToDelete.push({ id: id, auth: [tmpUser.username, tmpUser.password], path: 'user' });
+    });
+
+    beforeEach(async function() {
+        this.timeout(60000);
+        const res = await agent
+            .post('/api/login')
+            .set(bothHeaders)
+            .send(tmpUser)
+            .expect(200);
+
+        bothHeaders.Authorization = res.body.token;
     });
 
     it('POST / should return 400 on missing parameter', async function() {
@@ -43,8 +61,7 @@ describe('/api/user', function() {
     it('GET /:id should retrieve specific user', async function() {
         const res = await agent
             .get(`/api/user/${tmpUser.id}`)
-            .auth(tmpUser.username, tmpUser.password)
-            .set(acceptHeader)
+            .set(bothHeaders)
             .expect(200);
         expect(res.body).to.eql({
             id: tmpUser.id,
@@ -55,8 +72,7 @@ describe('/api/user', function() {
     it('GET /me should retrieve current user', async function() {
         const res = await agent
             .get('/api/user/me')
-            .auth(tmpUser.username, tmpUser.password)
-            .set(acceptHeader)
+            .set(bothHeaders)
             .expect(200);
         expect(res.body).to.eql({
             id: tmpUser.id,
@@ -67,22 +83,20 @@ describe('/api/user', function() {
     it('GET /otheruser should return 404', async function() {
         await agent
             .get('/api/user/otheruser')
-            .auth(tmpUser.username, tmpUser.password)
-            .set(acceptHeader)
+            .set(bothHeaders)
             .expect(404);
     });
 
     it('PUT /:id should update specific user', async function() {
         await agent
             .put(`/api/user/${tmpUser.id}`)
-            .auth(tmpUser.username, tmpUser.password)
             .set(bothHeaders)
             .send({ username: 'newName', password: 'newPass' })
             .expect(200);
         const res2 = await agent
             .get(`/api/user/${tmpUser.id}`)
             .auth('newName', 'newPass')
-            .set(acceptHeader)
+            .set(bothHeaders)
             .expect(200);
         expect(res2.body).to.eql({ id: tmpUser.id, username: 'newName' });
         tmpUser.username = res2.body.username;
@@ -92,14 +106,13 @@ describe('/api/user', function() {
     it('PUT /me with only username should succeed', async function() {
         await agent
             .put(`/api/user/${tmpUser.id}`)
-            .auth(tmpUser.username, tmpUser.password)
             .set(bothHeaders)
             .send({ username: 'willDelete' })
             .expect(200);
         const res2 = await agent
             .get(`/api/user/${tmpUser.id}`)
             .auth('willDelete', tmpUser.password)
-            .set(acceptHeader)
+            .set(bothHeaders)
             .expect(200);
         expect(res2.body).to.eql({ id: tmpUser.id, username: 'willDelete' });
         tmpUser.username = res2.body.username;
@@ -108,8 +121,7 @@ describe('/api/user', function() {
     it('DELETE /user/:id should delete specific user', async function() {
         await agent
             .delete(`/api/user/${tmpUser.id}`)
-            .auth(tmpUser.username, tmpUser.password)
-            .set(acceptHeader)
+            .set(bothHeaders)
             .expect(204);
     });
 
