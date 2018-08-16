@@ -33,6 +33,7 @@ module.exports = {
         const role = connOffer.role === 'NONE' ? null : connOffer.role;
         await pool.nymRequest(req.wallet.handle, req.wallet.ownDid, connRes.did, connRes.verkey, null, role);
         await indy.storeTheirDid(req.wallet.handle, { did: connRes.did, verkey: connRes.verkey });
+        await indy.setEndpointForDid(req.wallet.handle, connRes.did, connRes.endpoint, connRes.verkey);
         await indy.createPairwise(req.wallet.handle, connRes.did, connOffer.ownDid);
         await connOffer.remove();
         next(new APIResult(200, { message: 'Success' }));
