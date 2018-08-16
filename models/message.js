@@ -22,4 +22,13 @@ const schema = new Mongoose.Schema({
     }
 });
 
+schema.statics.store = function(walletId, messageId, messageType, message) {
+    return new this({
+        wallet: walletId,
+        messageId: messageId,
+        type: messageType,
+        message: message
+    }).save();
+};
+
 module.exports = Mongoose.model('Message', schema);

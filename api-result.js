@@ -14,6 +14,23 @@ class APIResult {
         this.data = data;
         this.error = error;
     }
+
+    /**
+     * @return {Object} APIResult with status 400
+     */
+    static badRequest() {
+        return badRequest;
+    }
+
+    /**
+     * @return {Object} APIResult with status 202
+     */
+    static accepted() {
+        return accepted;
+    }
 }
+
+const badRequest = new APIResult(400);
+const accepted = new APIResult(202);
 
 module.exports = APIResult;

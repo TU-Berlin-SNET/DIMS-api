@@ -130,5 +130,15 @@ module.exports = {
                 isValid: isValid
             })
         );
-    })
+    }),
+
+    async request(wallet, message) {
+        // TODO
+        return new APIResult(501, { message: 'not implemented' });
+    },
+
+    async proof(wallet, message) {
+        // TODO
+        return new APIResult(501, { message: 'not implemented' });
+    }
 };

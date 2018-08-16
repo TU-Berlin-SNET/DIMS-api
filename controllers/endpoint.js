@@ -26,7 +26,6 @@ module.exports = {
         if (!connOffer) {
             return next(new APIResult(404, { message: 'Unknown nonce' }));
         }
-        // TODO interface with walletProvider here
         req.wallet = await Wallet.findOne({ _id: connOffer.issuerWallet }).exec();
         await WalletProvider.provideHandle(req.wallet);
         const fromToKey = await indy.keyForDid(pool.handle, req.wallet.handle, connOffer.ownDid);

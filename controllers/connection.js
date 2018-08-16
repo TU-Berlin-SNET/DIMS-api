@@ -7,10 +7,12 @@ const indy = require('indy-sdk');
 const agent = require('superagent');
 
 const wrap = require('../asyncwrap').wrap;
+const lib = require('../lib');
 const log = require('../log').log;
 const pool = require('../pool');
 const APIResult = require('../api-result');
 const ConnectionOffer = require('../models/connectionoffer');
+const Message = require('../models/message');
 
 const ENDPOINT = `${process.env.APP_HOST}:${process.env.APP_PORT}`;
 
@@ -87,5 +89,26 @@ module.exports = {
                 theirDid: connOffer.did
             })
         );
-    })
+    }),
+
+    async offer(wallet, message) {
+        await Message.store(wallet.id, message.id, message.type, message.message);
+        return APIResult.accepted();
+    },
+
+    async request(wallet, message) {
+        // TODO check if previous offer exists
+        await Message.store(wallet.id, message.message.request_nonce, message.type, message.message);
+        return APIResult.accepted();
+    },
+
+    async response(wallet, message) {
+        // TODO
+        return new APIResult(501, { message: 'not implemented' });
+    },
+
+    async acknowledgement(wallet, message) {
+        // TODO
+        return new APIResult(501, { message: 'not implemented' });
+    }
 };
