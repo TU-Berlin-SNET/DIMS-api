@@ -9,48 +9,37 @@ const mocha = require('mocha');
 const expect = require('chai').expect;
 
 const vars = require('./0-test-vars');
+const core = require('./0-test-core');
 const describe = mocha.describe;
-const after = mocha.after;
+const afterEach = mocha.afterEach;
+const beforeEach = mocha.beforeEach;
 const it = mocha.it;
 
 const agent = vars.agent;
 const bothHeaders = vars.bothHeaders;
+const acceptHeader = vars.acceptHeader;
 let valuesToDelete = [];
-const User = require('../models/user');
 
 describe('/api/wallet', function() {
-    let testuser = { username: 'testuser' + Math.random(), password: 'testpassword' };
-    let testwallet = { name: 'testwallet' + Math.random(), credentials: { key: 'testkey' } };
-
-    before(async function() {
-        this.timeout(60000);
-
-        let username = testuser.username;
-        await User.remove({ username });
-
-        const res = await agent
-            .post('/api/user')
-            .set(bothHeaders)
-            .send(testuser)
-            .expect(201);
-        const id = res.get('location').substring(6);
-        testuser.id = id;
-        valuesToDelete.push({ id: id, auth: [testuser.username, testuser.password], path: 'user' });
-    });
+    let testuser;
+    let testwallet;
 
     beforeEach(async function() {
         this.timeout(60000);
-        const res = await agent
-            .post('/api/login')
-            .set(bothHeaders)
-            .send(testuser)
-            .expect(200);
 
-        bothHeaders.Authorization = res.body.token;
+        testuser = { username: 'testuser' + Math.random(), password: 'testpassword' };
+        testwallet = { name: 'testwallet' + Math.random(), credentials: { key: 'testkey' } };
+
+        const id = await core.createUser(testuser);
+        valuesToDelete.push({ id: id, auth: [testuser.username, testuser.password], path: 'user' });
+        const res = await core.login(testuser);
+        testuser.token = res.body.token;
+        bothHeaders.Authorization = testuser.token;
     });
 
     it('POST / should create a wallet', async function() {
         this.timeout(60000);
+
         const res = await agent
             .post('/api/wallet')
             .set(bothHeaders)
@@ -78,6 +67,15 @@ describe('/api/wallet', function() {
     });
 
     it('GET /:id should retrieve specific wallet', async function() {
+        this.timeout(60000);
+
+        const resWallet = await agent
+            .post('/api/wallet')
+            .set(bothHeaders)
+            .send(testwallet)
+            .expect(201);
+        testwallet = resWallet.body;
+
         const res = await agent
             .get(`/api/wallet/${testwallet.id}`)
             .set(bothHeaders)
@@ -96,17 +94,29 @@ describe('/api/wallet', function() {
 
     it('DELETE /:id should delete specific wallet', async function() {
         this.timeout(60000);
+
+        const resWallet = await agent
+            .post('/api/wallet')
+            .set(bothHeaders)
+            .send(testwallet)
+            .expect(201);
+        testwallet = resWallet.body;
+
         await agent
             .delete(`/api/wallet/${testwallet.id}`)
             .set(bothHeaders)
             .expect(204);
     });
 
-    after(async function() {
-        // clean up
+    afterEach(async function() {
+        this.timeout(60000);
+
         valuesToDelete.reverse();
         for (const v of valuesToDelete) {
-            await agent.delete(`/api/${v.path}/${v.id}`).set(bothHeaders);
+            await agent
+                .delete(`/api/${v.path}/${v.id}`)
+                .auth(...v.auth)
+                .set(acceptHeader);
         }
     });
 });

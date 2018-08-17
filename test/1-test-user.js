@@ -8,46 +8,42 @@
 const mocha = require('mocha');
 const expect = require('chai').expect;
 
+const testCore = require('./0-test-core');
 const vars = require('./0-test-vars');
 const describe = mocha.describe;
-const after = mocha.after;
 const it = mocha.it;
 
 const agent = vars.agent;
 const acceptHeader = vars.acceptHeader;
 const bothHeaders = vars.bothHeaders;
-let valuesToDelete = [];
 
-const User = require('../models/user');
+let valuesToDelete = [];
+let token = '';
 
 describe('/api/user', function() {
     let tmpUser = { username: 'willDelete', password: 'afterThis' };
 
-    before(async function() {
-        this.timeout(60000);
-
-        let username = tmpUser.username;
-        await User.remove({ username });
-
-        const res = await agent
-            .post('/api/user')
-            .set(bothHeaders)
-            .send(tmpUser)
-            .expect(201);
-        const id = res.get('location').substring(6);
-        tmpUser.id = id;
-        valuesToDelete.push({ id: id, auth: [tmpUser.username, tmpUser.password], path: 'user' });
-    });
-
     beforeEach(async function() {
         this.timeout(60000);
-        const res = await agent
-            .post('/api/login')
-            .set(bothHeaders)
-            .send(tmpUser)
-            .expect(200);
 
-        bothHeaders.Authorization = res.body.token;
+        const id = await testCore.createUser(tmpUser);
+        valuesToDelete.push({ id: id, auth: [tmpUser.username, tmpUser.password], path: 'user' });
+
+        const res = await testCore.login(tmpUser);
+
+        token = res.body.token;
+        bothHeaders.Authorization = token;
+    });
+
+    afterEach(async function() {
+        // clean up
+        valuesToDelete.reverse();
+        for (const v of valuesToDelete) {
+            await agent
+                .delete(`/api/${v.path}/${v.id}`)
+                .auth(...v.auth)
+                .set(acceptHeader);
+        }
     });
 
     it('POST / should return 400 on missing parameter', async function() {
@@ -123,16 +119,5 @@ describe('/api/user', function() {
             .delete(`/api/user/${tmpUser.id}`)
             .set(bothHeaders)
             .expect(204);
-    });
-
-    after(async function() {
-        // clean up
-        valuesToDelete.reverse();
-        for (const v of valuesToDelete) {
-            await agent
-                .delete(`/api/${v.path}/${v.id}`)
-                .auth(...v.auth)
-                .set(acceptHeader);
-        }
     });
 });
