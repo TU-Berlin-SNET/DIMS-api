@@ -194,9 +194,9 @@ describe('behaviour', function() {
 
         it('POST /api/message should return HTTP 202 on valid connection request', async function() {
             this.timeout(60000);
+            bothHeaders.Authorization = users[0].token;
             await agent
                 .post('/api/message')
-                .auth(users[0].username, users[0].password)
                 .set(bothHeaders)
                 .send({
                     wallet: wallets[0].id,
@@ -217,9 +217,9 @@ describe('behaviour', function() {
         });
 
         it('GET /api/message should return list of messages', async function() {
+            bothHeaders.Authorization = users[1].token;
             const res = await agent
                 .get('/api/message')
-                .auth(users[1].username, users[1].password)
                 .set(bothHeaders)
                 .set({ wallet: wallets[1].id })
                 .expect(200);
@@ -231,9 +231,9 @@ describe('behaviour', function() {
         });
 
         it('GET /api/message/:messageId should retrieve a single message', async function() {
+            bothHeaders.Authorization = users[1].token;
             const res = await agent
                 .get('/api/message/' + messageId)
-                .auth(users[1].username, users[1].password)
                 .set(bothHeaders)
                 .set({ wallet: wallets[1].id })
                 .expect(200);
@@ -242,15 +242,14 @@ describe('behaviour', function() {
         });
 
         it('DELETE /api/message/:messageId should delete a single message', async function() {
+            bothHeaders.Authorization = users[1].token;
             await agent
                 .delete('/api/message/' + messageId)
-                .auth(users[1].username, users[1].password)
                 .set(bothHeaders)
                 .set({ wallet: wallets[1].id })
                 .expect(204);
             await agent
                 .get('/api/message/' + messageId)
-                .auth(users[1].username, users[1].password)
                 .set(bothHeaders)
                 .set({ wallet: wallets[1].id })
                 .expect(404);
