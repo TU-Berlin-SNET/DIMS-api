@@ -8,7 +8,7 @@
 const mocha = require('mocha');
 const expect = require('chai').expect;
 
-const testCore = require('./0-test-core');
+const core = require('./0-test-core');
 const vars = require('./0-test-vars');
 const describe = mocha.describe;
 const it = mocha.it;
@@ -26,24 +26,17 @@ describe('/api/user', function() {
     beforeEach(async function() {
         this.timeout(60000);
 
-        const id = await testCore.createUser(tmpUser);
+        const id = await core.createUser(tmpUser);
         valuesToDelete.push({ id: id, auth: [tmpUser.username, tmpUser.password], path: 'user' });
 
-        const res = await testCore.login(tmpUser);
+        const res = await core.login(tmpUser);
 
         token = res.body.token;
         bothHeaders.Authorization = token;
     });
 
-    afterEach(async function() {
-        // clean up
-        valuesToDelete.reverse();
-        for (const v of valuesToDelete) {
-            await agent
-                .delete(`/api/${v.path}/${v.id}`)
-                .auth(...v.auth)
-                .set(acceptHeader);
-        }
+    after(async function() {
+        await core.cleanUp();
     });
 
     it('POST / should return 400 on missing parameter', async function() {

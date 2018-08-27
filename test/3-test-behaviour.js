@@ -10,6 +10,7 @@ const mocha = require('mocha');
 const expect = require('chai').expect;
 
 const vars = require('./0-test-vars');
+const core = require('./0-test-core');
 const describe = mocha.describe;
 const after = mocha.after;
 const it = mocha.it;
@@ -29,30 +30,38 @@ let credDefId;
 let holderIssuerDid;
 let holderRPDid;
 
-const User = require('../models/user');
-
 describe('behaviour', function() {
     before(async function() {
         this.timeout(60000);
-        for (const u of users) {
-            let username = u.username;
-            await User.remove({ username });
 
-            const res = await agent
-                .post('/api/user/')
-                .set(bothHeaders)
-                .send(u)
-                .expect(201);
-            const id = res.get('location').substring(6);
-            u.id = id;
-            valuesToDelete.push({
-                id: id,
-                auth: [u.username, u.password],
-                path: 'user'
-            });
+        users = core.generateUsers();
+        wallets = core.generateWallets();
+
+        for (let i = 0; i < users.length; i++) {
+            let user = users[i];
+
+            await core.createUser(user);
+            const res = await core.login(user);
+            user.token = res.body.token;
         }
 
-        // TODO: add cleanup for all collections
+        for (let i = 0; i < wallets.length; i++) {
+            const token = users[i].token;
+            const wallet = wallets[i];
+
+            const res = await core.createWallet(token, wallet);
+            expect(res.body).to.have.all.keys(
+                'id',
+                'created',
+                'poolName',
+                'ownDid',
+                'owner',
+                'xtype',
+                'config',
+                'credentials'
+            );
+            wallets[i] = res.body;
+        }
     });
 
     beforeEach(async function() {
@@ -65,36 +74,6 @@ describe('behaviour', function() {
 
             user.token = res.body.token;
         }
-    });
-
-    describe('prepare for tests', function() {
-        it('should create wallets', async function() {
-            this.timeout(60000);
-            for (let i = 0; i < wallets.length; i++) {
-                bothHeaders.Authorization = users[i].token;
-                const res = await agent
-                    .post('/api/wallet')
-                    .set(bothHeaders)
-                    .send(wallets[i])
-                    .expect(201);
-                expect(res.body).to.have.all.keys(
-                    'id',
-                    'created',
-                    'poolName',
-                    'ownDid',
-                    'owner',
-                    'xtype',
-                    'config',
-                    'credentials'
-                );
-                wallets[i] = res.body;
-                valuesToDelete.push({
-                    id: wallets[i].id,
-                    auth: [users[i].username, users[i].password],
-                    path: 'wallet'
-                });
-            }
-        });
     });
 
     describe('onboarding', function() {
@@ -458,19 +437,5 @@ describe('behaviour', function() {
                 expect(res.body.length).to.equal(0);
             });
         });
-    });
-
-    after(async function() {
-        // clean up
-        this.timeout(60000);
-        valuesToDelete.reverse();
-        for (const v of valuesToDelete) {
-            await agent
-                .delete(`/api/${v.path}/${v.id}`)
-                .auth(...v.auth)
-                .set(acceptHeader);
-        }
-
-        // TODO: add cleanup for other collections
     });
 });
