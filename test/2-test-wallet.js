@@ -37,6 +37,10 @@ describe('/api/wallet', function() {
         bothHeaders.Authorization = testuser.token;
     });
 
+    afterEach(async function() {
+        await core.cleanUp();
+    });
+
     it('POST / should create a wallet', async function() {
         this.timeout(60000);
 
