@@ -12,10 +12,7 @@
     "dev": "DEBUG=* nodemon --inspect -r pino-debug app.js | pino",
     "test": "NODE_ENV=testing mocha --exit",
     "pretty": "prettier --write \"*.{js,yml,yaml,json,md}\"",
-    "precommit": "lint-staged"
-  },
-  "lint-staged": {
-    "*.js": ["npm run pretty", "git add"]
+    "precommit": "pretty-quick --staged"
   },
   "dependencies": {
     "ajv": "^6.5.1",
@@ -40,12 +37,16 @@
   },
   "devDependencies": {
     "chai": "^4.1.2",
+    "eslint": "^5.4.0",
+    "eslint-config-google": "^0.9.1",
+    "eslint-config-prettier": "^3.0.1",
+    "eslint-plugin-prettier": "^2.6.2",
     "husky": "^0.14.3",
-    "lint-staged": "^7.2.0",
     "mocha": "^5.2.0",
     "nodemon": "^1.17.5",
     "pino-debug": "^1.1.1",
     "prettier": "^1.14.0",
+    "pretty-quick": "^1.6.0",
     "supertest": "^3.1.0"
   }
 }
