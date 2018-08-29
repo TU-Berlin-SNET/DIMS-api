@@ -27,6 +27,13 @@ const schema = new Mongoose.Schema({
         required: true,
         ref: 'User'
     },
+    users: [
+        {
+            type: ObjectId,
+            ref: 'User',
+            default: []
+        }
+    ],
     poolName: {
         type: String,
         required: false
@@ -77,6 +84,10 @@ schema.method('close', async function() {
         await indy.closeWallet(this.handle);
         this.handle = -1;
     }
+});
+
+schema.method('usableBy', function(user) {
+    return this.owner.equals(user._id) || this.users.some(v => v.equals(user._id));
 });
 
 schema.method('createDid', async function() {
@@ -157,6 +168,7 @@ schema.method('toMinObject', function() {
     m.id = this._id;
     m.created = this.created;
     m.owner = typeof owner === 'object' ? this.owner._id.toString() : this.owner.toString();
+    if (this.users) m.users = this.users;
     m.poolName = this.poolName;
     m.xtype = this.xtype;
     m.config = this.config;
@@ -169,6 +181,11 @@ schema.pre('remove', async function() {
     log.debug('wallet model pre-remove');
     await this.close();
     await ConnectionOffer.remove({ issuerWallet: this }).exec();
+    // Need to retrieve User model this way to prevent user object
+    // from being empty due to cyclic dependency
+    await Mongoose.model('User')
+        .update({ wallet: this }, { $unset: { wallet: 1 } }, { multi: true })
+        .exec();
     await indy.deleteWallet(this._id, this.credentials);
 });
 

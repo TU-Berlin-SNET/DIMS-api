@@ -6,7 +6,7 @@
 const SALTROUNDS = parseInt(process.env.SALTROUNDS);
 const bcrypt = require('bcrypt');
 const Mongoose = require('../db');
-const Wallet = require('./wallet');
+const WalletProvider = require('../middleware/walletProvider');
 
 const schema = new Mongoose.Schema({
     // TODO should we use email instead?
@@ -19,6 +19,10 @@ const schema = new Mongoose.Schema({
     password: {
         type: String,
         required: true
+    },
+    wallet: {
+        type: String,
+        ref: 'Wallet'
     }
 });
 
@@ -33,8 +37,12 @@ schema.pre('remove', async function() {
     // of each wallet is called and delete cascades properly
     // Per mongoose doc: Model.remove does not call the remove hook
     // only instance-level remove does
+    const Wallet = Mongoose.model('Wallet');
     let wallets = await Wallet.find({ owner: this._id }).exec();
     for (const w of wallets) {
+        if (WalletProvider.isCached(w)) {
+            await WalletProvider.provideHandle(w);
+        }
         await w.remove();
     }
 });
