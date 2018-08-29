@@ -21,7 +21,10 @@ module.exports = {
             req.body.did,
             req.body.verkey,
             req.body.alias,
-            req.body.role
+            // 'NONE' actually means nothing so catch it
+            // if 'NONE' is included in the request
+            // indy-sdk returns CommonInvalidStructure
+            req.body.role && req.body.role !== 'NONE' ? req.body.role : null
         );
         next(APIResult.success(result.result));
     })
