@@ -40,7 +40,7 @@ const users = [
 ];
 let valuesToDelete = [];
 
-describe.only('Default Wallet', function() {
+describe('Default Wallet', function() {
     before(async function() {
         this.timeout(60000);
         for (let i = 0; i < users.length; i++) {
