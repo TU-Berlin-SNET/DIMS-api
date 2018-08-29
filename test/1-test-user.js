@@ -112,5 +112,6 @@ describe('/api/user', function() {
             .delete(`/api/user/${tmpUser.id}`)
             .set(bothHeaders)
             .expect(204);
+        valuesToDelete = valuesToDelete.filter(v => v.id !== tmpUser.id);
     });
 });

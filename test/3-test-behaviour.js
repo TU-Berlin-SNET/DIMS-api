@@ -56,6 +56,7 @@ describe('behaviour', function() {
                 'poolName',
                 'ownDid',
                 'owner',
+                'users',
                 'xtype',
                 'config',
                 'credentials'
