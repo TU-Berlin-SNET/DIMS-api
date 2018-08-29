@@ -6,8 +6,10 @@
 const log = require('../log').log;
 const APIResult = require('../api-result');
 const { wrap, wrapEx } = require('../asyncwrap');
-
 const Wallet = require('../models/wallet');
+
+const RETRY_TIMEOUT = process.env.WALLETCACHE_WAIT_TIME;
+const MAX_RETRIES = process.env.WALLETCACHE_MAX_RETRIES;
 
 const cache = {};
 
@@ -64,13 +66,16 @@ module.exports = {
         })
     ],
 
-    async provideHandle(wallet) {
+    async provideHandle(wallet, retries = 0) {
         const name = wallet.id;
+        if (retries > MAX_RETRIES) {
+            throw new Error('Failed to open Wallet. Please try again.');
+        }
         if (cache[name] && cache[name].counter > 0) {
             if (cache[name].loading) {
                 log.debug('wallet cache is loading', wallet.id, cache);
-                await new Promise(resolve => setTimeout(resolve, 300));
-                return await module.exports.provideHandle(wallet);
+                await new Promise(resolve => setTimeout(resolve, RETRY_TIMEOUT));
+                return await module.exports.provideHandle(wallet, ++retries);
             }
             log.debug('wallet cache hit', wallet.id, cache);
             cache[name].counter += 1;
@@ -79,8 +84,7 @@ module.exports = {
             log.debug('wallet cache miss ', wallet.id, cache);
             cache[name] = { counter: 1, loading: true };
             try {
-                const handle = await wallet.open();
-                cache[name].handle = handle;
+                cache[name].handle = await wallet.open();
             } catch (err) {
                 delete cache[name];
                 log.warn('wallet provider failed to open wallet', wallet, err);
