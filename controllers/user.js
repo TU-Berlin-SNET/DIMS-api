@@ -24,11 +24,56 @@ async function usernameIsTaken(username) {
     return (await User.count({ username: username }).exec()) > 0;
 }
 
+/**
+ * Create a new user (and optionally a wallt)
+ * @param {string} username
+ * @param {string} password
+ * @param {object} [wallet]
+ * @return {Promise<User>} user
+ */
+async function createUser(username, password, wallet) {
+    if (await usernameIsTaken(username)) {
+        throw APIResult.badRequest('username already taken');
+    }
+    let user = await new User({
+        username: username,
+        password: password
+    });
+    if (typeof wallet === 'object') {
+        const walletItem = await WalletController.createWallet(wallet, user);
+        user.wallet = walletItem._id;
+    }
+    user = await user.save();
+    return user;
+}
+
+/**
+ * Update existing user
+ * @param {string} user
+ * @param {string} username
+ * @param {string} password
+ * @param {string} walletId
+ * @return {Promise<User>} updated User
+ */
+async function updateUser(user, username, password, walletId) {
+    if (username) user.username = username;
+    if (password) user.password = password;
+    if (walletId) {
+        const wallet = await Wallet.findById(walletId).exec();
+        if (!wallet || !wallet.usableBy(user)) {
+            throw APIResult.notFound('could not find suitable wallet with id');
+        }
+        user.wallet = wallet._id;
+    }
+    const updatedUser = await user.save();
+    return updatedUser;
+}
+
 const notFoundResult = APIResult.notFound('user not found');
 
 module.exports = {
     create: wrap(async (req, res, next) => {
-        const user = await module.exports.createUser(req.body.username, req.body.password, req.body.wallet);
+        const user = await createUser(req.body.username, req.body.password, req.body.wallet);
         res.set('location', '/user/' + user._id);
         next(APIResult.created({ id: user._id }));
     }),
@@ -53,12 +98,7 @@ module.exports = {
             return next(APIResult.badRequest('no values to update provided'));
         }
         const user = req.user;
-        const updatedUser = await module.exports.updateUser(
-            user,
-            req.body.username,
-            req.body.password,
-            req.body.wallet
-        );
+        const updatedUser = await updateUser(user, req.body.username, req.body.password, req.body.wallet);
         const result = {
             id: updatedUser.id,
             username: updatedUser.username
@@ -80,35 +120,5 @@ module.exports = {
             req.wallet.handle = -1;
         }
         next(APIResult.noContent());
-    }),
-
-    async createUser(username, password, wallet) {
-        if (await usernameIsTaken(username)) {
-            throw APIResult.badRequest('username already taken');
-        }
-        let user = await new User({
-            username: username,
-            password: password
-        });
-        if (typeof wallet === 'object') {
-            const walletItem = await WalletController.createWallet(wallet, user);
-            user.wallet = walletItem._id;
-        }
-        user = await user.save();
-        return user;
-    },
-
-    async updateUser(user, username, password, walletId) {
-        if (username) user.username = username;
-        if (password) user.password = password;
-        if (walletId) {
-            const wallet = await Wallet.findById(walletId).exec();
-            if (!wallet || !wallet.usableBy(user)) {
-                throw APIResult.notFound('could not find suitable wallet with id');
-            }
-            user.wallet = wallet._id;
-        }
-        const updatedUser = await user.save();
-        return updatedUser;
-    }
+    })
 };
