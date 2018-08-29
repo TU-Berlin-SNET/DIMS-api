@@ -15,6 +15,15 @@ function isSame(user, resource) {
     return resource === 'me' || resource === user.id;
 }
 
+/**
+ * Checks if a username is taken (async)
+ * @param {string} username
+ * @return {Promise<boolean>} true or false
+ */
+async function usernameIsTaken(username) {
+    return (await User.count({ username: username }).exec()) > 0;
+}
+
 const notFoundResult = APIResult.notFound('user not found');
 
 module.exports = {
@@ -67,20 +76,14 @@ module.exports = {
         // then it has been closed and deleted (by cascading delete)
         // and we need to set isDeleted and handle manually on this instance
         if (req.wallet && req.wallet.owner.equals(req.user._id)) {
-            req.wallet.isDeleted = function() {
-                return true;
-            };
+            req.wallet.isDeleted = () => true;
             req.wallet.handle = -1;
         }
         next(APIResult.noContent());
     }),
 
-    async usernameIsTaken(username) {
-        return (await User.count({ username: username }).exec()) > 0;
-    },
-
     async createUser(username, password, wallet) {
-        if (await module.exports.usernameIsTaken(username)) {
+        if (await usernameIsTaken(username)) {
             throw APIResult.badRequest('username already taken');
         }
         let user = await new User({
