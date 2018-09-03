@@ -30,7 +30,7 @@ services:
     container_name: idchain-api
     image: indy-api:latest
     environment:
-      - GENESIS_TXN=pool_transactions_genesis.docker-compose
+      - GENESIS_TXN=pool_transactions_genesis.azure
     ports:
       - 8000:8000
     depends_on:
@@ -51,6 +51,12 @@ services:
         ipv4_address: 172.16.0.201
 
 
+# networks:
+#   indy-network:
+#     external: true
 networks:
   indy-network:
-    external: true
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.16.0.0/24
