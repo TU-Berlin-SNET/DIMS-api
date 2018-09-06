@@ -18,15 +18,15 @@ const credential = require('./credential');
 const proof = require('./proof');
 
 const handlers = {};
-handlers[lib.message.messageTypes.CONNECTIONOFFER] = connection.offer;
-handlers[lib.message.messageTypes.CONNECTIONREQUEST] = connection.request;
-handlers[lib.message.messageTypes.CONNECTIONRESPONSE] = connection.response;
-handlers[lib.message.messageTypes.CONNECTIONACKNOWLEDGE] = connection.acknowledgement;
-handlers[lib.message.messageTypes.CREDENTIALOFFER] = credential.offer;
-handlers[lib.message.messageTypes.CREDENTIALREQUEST] = credential.request;
-handlers[lib.message.messageTypes.CREDENTIAL] = credential.credential;
-handlers[lib.message.messageTypes.PROOFREQUEST] = proof.request;
-handlers[lib.message.messageTypes.PROOF] = proof.proof;
+handlers[lib.message.messageTypes.CONNECTIONOFFER] = connection.offer.handle;
+handlers[lib.message.messageTypes.CONNECTIONREQUEST] = connection.request.handle;
+handlers[lib.message.messageTypes.CONNECTIONRESPONSE] = connection.response.handle;
+handlers[lib.message.messageTypes.CONNECTIONACKNOWLEDGE] = connection.acknowledgement.handle;
+handlers[lib.message.messageTypes.CREDENTIALOFFER] = credential.receiveOffer;
+handlers[lib.message.messageTypes.CREDENTIALREQUEST] = credential.receiveRequest;
+handlers[lib.message.messageTypes.CREDENTIAL] = credential.receiveCredential;
+handlers[lib.message.messageTypes.PROOFREQUEST] = proof.receiveRequest;
+handlers[lib.message.messageTypes.PROOF] = proof.receiveProof;
 
 /**
  * Loops through wallets trying to find an applicable one
@@ -41,7 +41,11 @@ async function tryAnonDecrypt(encryptedMessage) {
     for (let w = await cursor.next(); w != null; w = await cursor.next()) {
         await WalletProvider.provideHandle(w);
         try {
-            decryptedMessage = await lib.crypto.anonDecrypt(w.handle, w.ownDid, encryptedMessage);
+            decryptedMessage = await lib.crypto.anonDecryptJSON(
+                w.handle,
+                await indy.keyForLocalDid(w.handle, w.ownDid),
+                encryptedMessage
+            );
             wallet = w;
             break;
         } catch (err) {
@@ -152,10 +156,15 @@ module.exports = {
         const handler = handlers[message.type];
         try {
             if (handler) {
-                const result = await handler(wallet, message);
-                return result;
+                await handler(wallet, message);
+                return APIResult.accepted();
             }
-            return new APIResult(400, { message: 'unknown message type ' + message.type });
+            return APIResult.badRequest('unknown message type ' + message.type);
+        } catch (err) {
+            if (err instanceof APIResult) {
+                return err;
+            }
+            return APIResult.create(err.status || 500, err.message || null);
         } finally {
             await WalletProvider.returnHandle(wallet);
         }

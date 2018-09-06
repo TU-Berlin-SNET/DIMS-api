@@ -160,7 +160,7 @@ definitions:
         description: A unique string value identifying a wallet
         type: string
       endpoint:
-        description: 'Response endpoint for connection response'
+        description: 'Response endpoint for connection response - my endpoint'
         type: string
       role:
         description: 'Role offered to the connection invitee'
@@ -170,20 +170,50 @@ definitions:
           - TRUSTEE
           - STEWARD
           - TRUST_ANCHOR
-  connection_post:
+      data:
+        description: Additional data like name, logo, description, etc.
+        type: object
+  connectionrequest_post:
     type: object
     properties:
       wallet:
         description: A unique string value identifying a wallet
         type: string
       endpoint:
-        description: 'Endpoint for communication with accepting user'
+        description: 'Response endpoint for connection response - my endpoint'
+        type: string
+      theirDid:
+        description: Their (endpoint) did
+        type: string
+      theirVk:
+        description: Their (endpoint) did verification key, required if not on ledger.
+        type: string
+      theirEndpoint:
+        description: Their endpoint address, required if not on ledger.
         type: string
       connectionOffer:
         description: 'The connection offer object'
         type: object
+        example:
+          id: 09348295728957894752397589247589247589
+          type: 'urn:sovrin:agent:message_type:sovrin.org/connection_offer'
+          message:
+            did: endpointDid
+            verkey: endpointVk
+            endpoint: endpointAddress
+            nonce: 09348295728957894752397589247589247589
+  connectionresponse_post:
+    type: object
+    properties:
+      wallet:
+        description: A unique string value identifying a wallet
+        type: string
+      connectionRequestId:
+        description: 'The connection request _id'
+        type: string
+        example: '5b7ddce00000000000000000'
     required:
-      - connectionOffer
+      - connectionRequestId
   proofrequest_post:
     type: object
     properties:
@@ -335,6 +365,8 @@ paths:
           name: type
           description: A single message type to filter by
           type: string
+      tags:
+        - message
     post:
       summary: Send message
       description: Send message
@@ -343,6 +375,8 @@ paths:
           name: data
           schema:
             $ref: '#/definitions/message_post'
+      tags:
+        - message
   /api/message/{messageId}:
     get:
       summary: Retrieve a message
@@ -358,6 +392,8 @@ paths:
           description: A unique string value identifying a message.
           required: true
           type: string
+      tags:
+        - message
     delete:
       summary: Delete a message
       description: Delete a message
@@ -372,6 +408,8 @@ paths:
           description: A unique string value identifying a message.
           required: true
           type: string
+      tags:
+        - message
   /api/credential/:
     get:
       security:
@@ -563,6 +601,22 @@ paths:
       tags:
         - credentialrequest
   /api/connectionoffer:
+    get:
+      security:
+        - Bearer: []
+      summary: List all my connection offers
+      description: List all my connection offers
+      parameters:
+        - in: header
+          description: A unique value identifying this wallet.
+          name: wallet
+          type: string
+          required: false
+      responses:
+        '200':
+          description: ''
+      tags:
+        - connection
     post:
       security:
         - Bearer: []
@@ -578,17 +632,135 @@ paths:
           description: ''
       tags:
         - connection
-  /api/connection:
+  /api/connectionoffer/{connectionOfferId}:
+    get:
+      security:
+        - Bearer: []
+      summary: Retrieve a connection offer by _id
+      description: Retrieve a connection offer by _id
+      parameters:
+        - in: header
+          name: wallet
+          description: A unique string value identifying a wallet.
+          required: false
+          type: string
+        - in: path
+          name: connectionOfferId
+          description: connection offer _id
+          type: string
+          required: true
+      responses:
+        '200':
+          description: ''
+      tags:
+        - connection
+    delete:
+      security:
+        - Bearer: []
+      summary: Delete a connection offer by _id
+      description: Delete a connection offer by _id
+      parameters:
+        - in: header
+          name: wallet
+          description: A unique string value identifying a wallet.
+          required: false
+          type: string
+        - in: path
+          name: connectionOfferId
+          description: connection offer _id
+          type: string
+          required: true
+      responses:
+        '204':
+          description: ''
+      tags:
+        - connection
+  /api/connectionrequest:
+    get:
+      security:
+        - Bearer: []
+      summary: List all my connection requests
+      description: List all my connection requests
+      parameters:
+        - in: header
+          description: A unique value identifying this wallet.
+          name: wallet
+          type: string
+          required: false
+      responses:
+        '200':
+          description: ''
+      tags:
+        - connection
     post:
       security:
         - Bearer: []
-      summary: Accept a connection offer
-      description: Accept a connection offer
+      summary: Accept a connection offer and/or send a connection request
+      description: Accept a connection offer and/or send a connection request
       parameters:
         - in: body
           name: data
           schema:
-            $ref: '#/definitions/connection_post'
+            $ref: '#/definitions/connectionrequest_post'
+      responses:
+        '200':
+          description: 'Success'
+      tags:
+        - connection
+  /api/connectionrequest/{connectionRequestId}:
+    get:
+      security:
+        - Bearer: []
+      summary: Retrieve a connection request by _id
+      description: Retrieve a connection request by _id
+      parameters:
+        - in: header
+          name: wallet
+          description: A unique string value identifying a wallet.
+          required: false
+          type: string
+        - in: path
+          name: connectionRequestId
+          description: connection request _id
+          type: string
+          required: true
+      responses:
+        '200':
+          description: ''
+      tags:
+        - connection
+    delete:
+      security:
+        - Bearer: []
+      summary: Delete a connection request by _id
+      description: Delete a connection request by _id
+      parameters:
+        - in: header
+          name: wallet
+          description: A unique string value identifying a wallet.
+          required: false
+          type: string
+        - in: path
+          name: connectionRequestId
+          description: connection request _id
+          type: string
+          required: true
+      responses:
+        '204':
+          description: ''
+      tags:
+        - connection
+  /api/connectionresponse:
+    post:
+      security:
+        - Bearer: []
+      summary: Accept a connection request and send a connection response
+      description: Accept a connection request and send a connection response
+      parameters:
+        - in: body
+          name: data
+          schema:
+            $ref: '#/definitions/connectionresponse_post'
       responses:
         '200':
           description: 'Success'
