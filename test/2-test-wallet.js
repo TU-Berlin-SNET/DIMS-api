@@ -25,8 +25,6 @@ describe('/api/wallet', function() {
     let testwallet;
 
     beforeEach(async function() {
-        this.timeout(60000);
-
         testuser = { username: 'testuser' + Math.random(), password: 'testpassword' };
         testwallet = { name: 'testwallet' + Math.random(), credentials: { key: 'testkey' } };
 
@@ -42,8 +40,6 @@ describe('/api/wallet', function() {
     });
 
     it('POST / should create a wallet', async function() {
-        this.timeout(60000);
-
         const res = await agent
             .post('/api/wallet')
             .set(bothHeaders)
@@ -71,8 +67,6 @@ describe('/api/wallet', function() {
     });
 
     it('GET /:id should retrieve specific wallet', async function() {
-        this.timeout(60000);
-
         const resWallet = await agent
             .post('/api/wallet')
             .set(bothHeaders)
@@ -97,8 +91,6 @@ describe('/api/wallet', function() {
     });
 
     it('DELETE /:id should delete specific wallet', async function() {
-        this.timeout(60000);
-
         const resWallet = await agent
             .post('/api/wallet')
             .set(bothHeaders)
@@ -113,8 +105,6 @@ describe('/api/wallet', function() {
     });
 
     afterEach(async function() {
-        this.timeout(60000);
-
         valuesToDelete.reverse();
         for (const v of valuesToDelete) {
             await agent
