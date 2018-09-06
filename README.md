@@ -33,7 +33,7 @@ configuration here.
 
 ### With Docker Compose
 
-This will build and run 3 services: Indy-Pool, MongoDB & this project API.
+This will build and run 4 services: Indy-Pool, MongoDB,  this project API and Schema Compiler from schema-api project. Not that schema-api project must be cloned to ../schema-api (sibling) folder. 
 
 #### Requirements
 
