@@ -40,42 +40,42 @@ schema.set('toJSON', {
 
 /**
  * Find ConnectionOffer belonging to wallet by Id
- * @param {string} id
  * @param {Wallet} wallet
+ * @param {string} id
  * @return {Query} Mongoose Query Object
  */
-schema.statics.findConnectionOfferById = function findConnectionOfferById(id, wallet) {
-    return this.findTypeById(id, wallet, MessageTypes.CONNECTIONOFFER);
+schema.statics.findConnectionOfferById = function findConnectionOfferById(wallet, id) {
+    return this.findTypeById(wallet, id, MessageTypes.CONNECTIONOFFER);
 };
 
 /**
  * Find ConnectionRequest belonging to wallet by Id
- * @param {string} id
  * @param {Wallet} wallet
+ * @param {string} id
  * @return {Query} Mongoose Query Object
  */
-schema.statics.findConnectionRequestById = function findConnectionRequestById(id, wallet) {
-    return this.findTypeById(id, wallet, MessageTypes.CONNECTIONREQUEST);
+schema.statics.findConnectionRequestById = function findConnectionRequestById(wallet, id) {
+    return this.findTypeById(wallet, id, MessageTypes.CONNECTIONREQUEST);
 };
 
 /**
  * Find ConnectionResponse belonging to wallet by Id
- * @param {string} id
  * @param {Wallet} wallet
+ * @param {string} id
  * @return {Query} Mongoose Query Object
  */
-schema.statics.findConnectionResponseById = function findConnectionResponseById(id, wallet) {
-    return this.findTypeById(id, wallet, MessageTypes.CONNECTIONRESPONSE);
+schema.statics.findConnectionResponseById = function findConnectionResponseById(wallet, id) {
+    return this.findTypeById(wallet, id, MessageTypes.CONNECTIONRESPONSE);
 };
 
 /**
  * Find ConnectionOffer belonging to wallet by Id
- * @param {string} id
  * @param {Wallet} wallet
+ * @param {string} id
  * @param {string} type
  * @return {Query} Mongoose Query Object
  */
-schema.statics.findTypeById = function findTypeById(id, wallet, type) {
+schema.statics.findTypeById = function findTypeById(wallet, id, type) {
     return this.findOne({
         _id: id,
         wallet: wallet.id,

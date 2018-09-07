@@ -22,7 +22,7 @@ module.exports = {
      */
     async create(wallet, request) {
         if (typeof request === 'string') {
-            request = await Message.findConnectionRequestById(request, wallet).exec();
+            request = await Message.findConnectionRequestById(wallet, request).exec();
         }
         if (!request || request.recipientDid !== wallet.ownDid) {
             throw APIResult.badRequest('no corresponding connection request found');
