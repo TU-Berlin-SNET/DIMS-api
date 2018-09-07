@@ -22,7 +22,6 @@ const User = require('../models/user');
 
 describe('authentication layer', function() {
     before(async function() {
-        this.timeout(60000);
         for (const u of users) {
             const username = u.username;
             await User.remove({ username });
@@ -44,7 +43,6 @@ describe('authentication layer', function() {
 
     describe('check login endpoint', function() {
         it('should login', async function() {
-            this.timeout(60000);
             for (const u of users) {
                 const res = await agent
                     .post('/api/login/')
@@ -58,7 +56,6 @@ describe('authentication layer', function() {
         });
 
         it('should not login', async function() {
-            this.timeout(60000);
             await agent
                 .post('/api/login/')
                 .set(bothHeaders)
@@ -72,7 +69,6 @@ describe('authentication layer', function() {
 
     after(async function() {
         // clean up
-        this.timeout(60000);
         valuesToDelete.reverse();
         for (const v of valuesToDelete) {
             await agent
