@@ -17,7 +17,7 @@ const proof = require('../controllers/proof');
 const endpoint = require('../controllers/endpoint');
 const transactions = require('../controllers/transactions');
 const message = require('../controllers/message');
-const nym = require('../controllers/nym');
+const nym = require('./nym');
 
 router
     .route('/user')
@@ -99,8 +99,7 @@ router
     .get(message.retrieve)
     .delete(message.delete);
 
-router.route('/nym/:did').get(nym.getNym);
-router.route('/nym').post(nym.sendNym);
+router.use('/nym', nym);
 
 router.use(walletProvider.after);
 

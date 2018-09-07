@@ -61,6 +61,6 @@ COPY . .
 # RUN npm install --save indy-sdk
 RUN npm install
 
-CMD [ "npm", "run", "dev" ]
+CMD [ "npm", "start" ]
 
 EXPOSE 8000

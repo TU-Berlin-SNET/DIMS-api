@@ -4,28 +4,41 @@
  */
 
 const pool = require('../pool');
-const APIResult = require('../api-result');
-const wrap = require('../asyncwrap').wrap;
 
 module.exports = {
-    getNym: wrap(async (req, res, next) => {
-        const result = await pool.getNym(req.wallet.ownDid, req.params.did);
+    /**
+     * Retrieve a nym record for a did from the ledger
+     * @param {Wallet} wallet
+     * @param {string} did
+     * @return {Promise<Object>}
+     */
+    async get(wallet, did) {
+        const result = await pool.getNym(wallet.ownDid, did);
         result.result.data = JSON.parse(result.result.data);
-        next(APIResult.success(result.result));
-    }),
+        return result.result;
+    },
 
-    sendNym: wrap(async (req, res, next) => {
+    /**
+     * Write a nym record to the ledger
+     * @param {Wallet} wallet
+     * @param {string} did
+     * @param {string} verkey
+     * @param {string} [alias]
+     * @param {string} [role]
+     * @return {Promise<Object>}
+     */
+    async post(wallet, did, verkey, alias, role) {
         const result = await pool.nymRequest(
-            req.wallet.handle,
-            req.wallet.ownDid,
-            req.body.did,
-            req.body.verkey,
-            req.body.alias,
+            wallet.handle,
+            wallet.ownDid,
+            did,
+            verkey,
+            alias,
             // 'NONE' actually means nothing so catch it
             // if 'NONE' is included in the request
             // indy-sdk returns CommonInvalidStructure
-            req.body.role && req.body.role !== 'NONE' ? req.body.role : null
+            role === 'NONE' ? null : role
         );
-        next(APIResult.success(result.result));
-    })
+        return result.result;
+    }
 };
