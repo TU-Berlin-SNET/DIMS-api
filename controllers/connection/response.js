@@ -27,21 +27,16 @@ module.exports = {
         if (!request || request.recipientDid !== wallet.ownDid) {
             throw APIResult.badRequest('no corresponding connection request found');
         }
-        const [theirDid, theirVk] = await lib.did.ensureDidInfo(
-            wallet,
-            pool,
-            request.message.message.did,
-            request.message.message.verkey,
-            true
-        );
+        const message = request.message.message;
+        const [theirDid, theirVk] = await lib.did.ensureDidInfo(wallet, pool, message.did, message.verkey, true);
         const [theirEndpointDid, theirEndpointVk, theirEndpoint] = await lib.did.ensureDidInfo(
             wallet,
             pool,
-            request.message.message.endpointDid,
-            request.message.message.endpointVk,
-            request.message.message.endpoint
+            message.endpointDid,
+            message.endpointVk,
+            message.endpoint
         );
-        const requestNonce = request.message.message.nonce;
+        const requestNonce = message.nonce;
 
         // if we specifically added a role to our offer then this role
         // will be in the request object as this means that this method
