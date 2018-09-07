@@ -42,6 +42,7 @@ let user = {
 };
 
 let connectionOffer;
+let connectionOfferToDelete;
 let connectionRequest;
 
 describe('Connection', function() {
@@ -81,6 +82,39 @@ describe('Connection', function() {
         connectionOffer = res.body;
     });
 
+    it('POST /api/connectionoffer should return proper connection offer even with empty body', async function() {
+        const res = await agent
+            .post('/api/connectionoffer')
+            .set(bothHeaders)
+            .set({ Authorization: steward.token })
+            .send()
+            .expect(201);
+        expect(res.body).to.have.all.keys('id', 'type', 'message');
+        expect(res.body.message).to.have.all.keys('did', 'verkey', 'endpoint', 'nonce');
+        expect(res.body.id).to.equal(res.body.message.nonce);
+        connectionOfferToDelete = res.body;
+    });
+
+    it('GET /api/connectionoffer should list connection offers', async function() {
+        const res = await agent
+            .get('/api/connectionoffer')
+            .set(bothHeaders)
+            .set({ Authorization: steward.token })
+            .expect(200);
+        expect(res.body)
+            .to.be.an('Array')
+            .with.lengthOf.at.least(1);
+        connectionOfferToDelete = res.body.filter(v => v.messageId === connectionOfferToDelete.id)[0];
+    });
+
+    it('DELETE /api/connectionoffer/:id should delete connectionOffer', async function() {
+        await agent
+            .delete('/api/connectionoffer/' + connectionOfferToDelete.id)
+            .set(bothHeaders)
+            .set({ Authorization: steward.token })
+            .expect(204);
+    });
+
     it('POST /api/connectionrequest with connectionoffer should send request / establish connection', async function() {
         const postRes = await agent
             .post('/api/connectionrequest')
@@ -107,8 +141,8 @@ describe('Connection', function() {
             .with.lengthOf(1);
     });
 
-    it('POST /api/connectionrequest with no connection offer should send connection request and receiver should store it', async function() {
-        const postRes = await agent
+    it('POST /api/connectionrequest with no connection offer should send connection request', async function() {
+        const res = await agent
             .post('/api/connectionrequest')
             .set(bothHeaders)
             .set({ Authorization: user.token })
@@ -118,8 +152,8 @@ describe('Connection', function() {
                 theirEndpoint: process.env.APP_ENDPOINT
             })
             .expect(200);
-        expect(postRes.body.message).to.contain.keys('id', 'type', 'message');
-        expect(postRes.body.message.message).to.contain.keys(
+        expect(res.body.message).to.contain.keys('id', 'type', 'message');
+        expect(res.body.message.message).to.contain.keys(
             'did',
             'verkey',
             'endpointDid',
@@ -127,18 +161,29 @@ describe('Connection', function() {
             'endpoint',
             'nonce'
         );
-        connectionRequest = postRes.body.message;
+        connectionRequest = res.body.message;
+    });
 
-        const getRes = await agent
+    it('GET /api/connectionrequest should list connection requests', async function() {
+        const res = await agent
             .get('/api/connectionrequest')
             .set(bothHeaders)
             .set({ Authorization: steward.token })
             .expect(200);
-        expect(getRes.body)
+        expect(res.body)
             .to.be.an('Array')
             .with.lengthOf(1);
-        expect(getRes.body[0].message).to.eql(connectionRequest);
-        connectionRequest = getRes.body[0];
+        expect(res.body[0].message).to.eql(connectionRequest);
+        connectionRequest = res.body[0];
+    });
+
+    it('GET /api/connectionrequest/:connectionRequestId should retrieve one connection request', async function() {
+        const res = await agent
+            .get('/api/connectionrequest/' + connectionRequest.id)
+            .set(bothHeaders)
+            .set({ Authorization: steward.token })
+            .expect(200);
+        expect(res.body).to.eql(connectionRequest);
     });
 
     it('POST /api/connectionresponse should accept a connection request and establish pairwise', async function() {
