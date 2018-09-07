@@ -39,7 +39,7 @@ services:
     networks:
       indy-network:
         ipv4_address: 172.16.0.200
-  
+
   schema-compiler:
     build:
       context: ../schema-api
@@ -49,7 +49,6 @@ services:
     networks:
       indy-network:
         ipv4_address: 172.16.0.201
-
 
 networks:
   indy-network:
