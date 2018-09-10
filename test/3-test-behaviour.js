@@ -32,8 +32,6 @@ let holderRPDid;
 
 describe('behaviour', function() {
     before(async function() {
-        this.timeout(60000);
-
         users = core.generateUsers();
         wallets = core.generateWallets();
 
@@ -79,7 +77,6 @@ describe('behaviour', function() {
 
     describe('onboarding', function() {
         it('steward should create connectionoffers for issuer with role TRUST_ANCHOR', async function() {
-            this.timeout(60000);
             bothHeaders.Authorization = users[0].token;
             const res = await agent
                 .post('/api/connectionoffer')
@@ -92,7 +89,6 @@ describe('behaviour', function() {
         });
 
         it('issuer should accept connectionoffer from steward', async function() {
-            this.timeout(60000);
             bothHeaders.Authorization = users[1].token;
             const res = await agent
                 .post('/api/connection')
@@ -103,7 +99,6 @@ describe('behaviour', function() {
             wallets[1].ownDid = res.body.myDid;
         });
         it('issuer should should NOT accept connectionoffer from steward repeatedly', async function() {
-            this.timeout(60000);
             bothHeaders.Authorization = users[1].token;
             await agent
                 .post('/api/connection')
@@ -112,8 +107,6 @@ describe('behaviour', function() {
                 .expect(404);
         });
         it('steward should create connectionoffers for relyingpary with role TRUST_ANCHOR', async function() {
-            this.timeout(60000);
-
             bothHeaders.Authorization = users[0].token;
             const res = await agent
                 .post('/api/connectionoffer')
@@ -125,7 +118,6 @@ describe('behaviour', function() {
             connectionOffer = res.body;
         });
         it('relyingpary should accept connectionoffer from steward', async function() {
-            this.timeout(60000);
             bothHeaders.Authorization = users[3].token;
             const res = await agent
                 .post('/api/connection')
@@ -135,7 +127,6 @@ describe('behaviour', function() {
             expect(res.body).to.have.all.keys('myDid', 'theirDid');
         });
         it('issuer (TRUST_ANCHOR) should create connectionoffer for holder with role NONE', async function() {
-            this.timeout(60000);
             bothHeaders.Authorization = users[1].token;
             const res = await agent
                 .post('/api/connectionoffer')
@@ -147,7 +138,6 @@ describe('behaviour', function() {
             connectionOffer = res.body;
         });
         it('holder should accept connectionoffer from issuer', async function() {
-            this.timeout(60000);
             bothHeaders.Authorization = users[2].token;
 
             const res = await agent
@@ -159,7 +149,6 @@ describe('behaviour', function() {
             holderIssuerDid = res.body.myDid;
         });
         it('holder (NONE) should NOT be able to create connectionOffers', async function() {
-            this.timeout(60000);
             bothHeaders.Authorization = users[2].token;
             await agent
                 .post('/api/connectionoffer')
@@ -173,7 +162,6 @@ describe('behaviour', function() {
         let messageId;
 
         it('POST /api/message should return HTTP 202 on valid connection request', async function() {
-            this.timeout(60000);
             bothHeaders.Authorization = users[0].token;
             await agent
                 .post('/api/message')
@@ -243,14 +231,12 @@ describe('behaviour', function() {
         let credential;
         let credentialId;
         it('should prepare variables', async function() {
-            this.timeout(60000);
             issuer = Object.assign({}, users[1], { wallet: wallets[1] });
             holder = Object.assign({}, users[2], { wallet: wallets[2] });
             rp = Object.assign({}, users[3], { wallet: wallets[3] });
         });
 
         it('issuer should create a schema', async function() {
-            this.timeout(60000);
             bothHeaders.Authorization = issuer.token;
             const res = await agent
                 .post('/api/schema')
@@ -266,7 +252,6 @@ describe('behaviour', function() {
             schemaId = res.body.schemaId;
         });
         it('issuer should create a credential definition', async function() {
-            this.timeout(60000);
             bothHeaders.Authorization = issuer.token;
 
             const res = await agent
@@ -283,7 +268,6 @@ describe('behaviour', function() {
             credDefId = res.body.credDefId;
         });
         it('issuer should create a credential offer', async function() {
-            this.timeout(60000);
             bothHeaders.Authorization = issuer.token;
             const res = await agent
                 .post('/api/credentialoffer')
@@ -299,7 +283,6 @@ describe('behaviour', function() {
             credentialOffer = res.body.encryptedCredentialOffer;
         });
         it('holder should accept credential offer and create credential request', async function() {
-            this.timeout(60000);
             bothHeaders.Authorization = holder.token;
             const res = await agent
                 .post('/api/credentialrequest')
@@ -313,7 +296,6 @@ describe('behaviour', function() {
             credentialRequest = res.body.encryptedCredentialRequest;
         });
         it('issuer should accept credential request and issue credential', async function() {
-            this.timeout(60000);
             bothHeaders.Authorization = issuer.token;
             const res = await agent
                 .post('/api/credentialissue')
@@ -332,7 +314,6 @@ describe('behaviour', function() {
             credential = res.body.encryptedCredential;
         });
         it('holder should store credential', async function() {
-            this.timeout(60000);
             bothHeaders.Authorization = holder.token;
 
             const res = await agent
@@ -347,7 +328,6 @@ describe('behaviour', function() {
             credentialId = res.body.credentialId;
         });
         it('holder should be able to retrieve credential', async function() {
-            this.timeout(60000);
             bothHeaders.Authorization = holder.token;
 
             const res = await agent
@@ -364,7 +344,6 @@ describe('behaviour', function() {
         let proofRequest;
         let proof;
         it('relying party (TRUST_ANCHOR) should create connectionoffer for holder with role NONE', async function() {
-            this.timeout(60000);
             bothHeaders.Authorization = rp.token;
 
             const res = await agent
@@ -377,7 +356,6 @@ describe('behaviour', function() {
             connectionOffer = res.body;
         });
         it('holder should accept connectionoffer from relying party', async function() {
-            this.timeout(60000);
             bothHeaders.Authorization = holder.token;
             const res = await agent
                 .post('/api/connection')
@@ -388,7 +366,6 @@ describe('behaviour', function() {
             holderRPDid = res.body.myDid;
         });
         it('relying party should create proof request', async function() {
-            this.timeout(60000);
             bothHeaders.Authorization = rp.token;
             const res = await agent
                 .post('/api/proofrequest')
@@ -429,7 +406,6 @@ describe('behaviour', function() {
             proofRequest = res.body.encryptedProofRequest;
         });
         it('holder should accept proof request and create proof', async function() {
-            this.timeout(60000);
             bothHeaders.Authorization = holder.token;
             const res = await agent
                 .post('/api/proof')
@@ -446,7 +422,6 @@ describe('behaviour', function() {
             proof = res.body.encryptedProof;
         });
         it('relying party should create proof verification', async function() {
-            this.timeout(60000);
             bothHeaders.Authorization = rp.token;
             const res = await agent
                 .post('/api/proofverification')
@@ -464,7 +439,6 @@ describe('behaviour', function() {
     describe('transactions', function() {
         describe('given a valid user and wallet with a known DID in the ledger', function() {
             it('it should be able to query DOMAIN transactions', async function() {
-                this.timeout(60000);
                 const res = await agent
                     .get('/api/transactions')
                     .auth(rp.username, rp.password)
@@ -479,7 +453,6 @@ describe('behaviour', function() {
             });
 
             it('it should be able to query POOL transactions', async function() {
-                this.timeout(60000);
                 const res = await agent
                     .get('/api/transactions')
                     .auth(rp.username, rp.password)
@@ -493,7 +466,6 @@ describe('behaviour', function() {
             });
 
             it('it should be able to query CONFIG transactions', async function() {
-                this.timeout(60000);
                 const res = await agent
                     .get('/api/transactions')
                     .auth(rp.username, rp.password)

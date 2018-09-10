@@ -24,8 +24,6 @@ describe('/api/user', function() {
     let tmpUser = { username: 'willDelete', password: 'afterThis' };
 
     beforeEach(async function() {
-        this.timeout(60000);
-
         const id = await core.createUser(tmpUser);
         valuesToDelete.push({ id: id, auth: [tmpUser.username, tmpUser.password], path: 'user' });
 
