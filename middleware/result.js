@@ -173,7 +173,7 @@ module.exports = {
         res.end();
     },
     errorMiddleware: (err, req, res, next) => {
-        log.error('error: ', err);
+        log.error(err);
         if (err.indyCode && indyCodes[err.indyCode]) {
             err.status = indyCodes[err.indyCode];
         }
