@@ -35,6 +35,77 @@ async function login(user) {
         .expect(200);
 }
 
+/**
+ * Onboard/Write a did to the ledger with specified role
+ * @param {string} token Bearer token
+ * @param {string} did did to write on ledger
+ * @param {string} verkey verkey to write on ledger
+ * @param {string} role role to write on ledger
+ */
+async function onboard(token, did, verkey, role) {
+    await agent
+        .post('/api/nym')
+        .set(bothHeaders)
+        .set({ Authorization: token })
+        .send({
+            did: did,
+            verkey: verkey,
+            role: role
+        })
+        .expect(200);
+}
+
+/**
+ * Establish a pairwise connection between user1 and user2
+ * @param {object} user1
+ * @param {object} user2
+ * @return {Promise<object>} pairwise from user1
+ */
+async function connect(user1, user2) {
+    const offer = await agent
+        .post('/api/connectionoffer')
+        .set(bothHeaders)
+        .set({ Authorization: user1.token })
+        .send({
+            endpoint: process.env.APP_ENDPOINT
+        })
+        .expect(201);
+    const request = await agent
+        .post('/api/connectionrequest')
+        .set(bothHeaders)
+        .set({ Authorization: user2.token })
+        .send({
+            endpoint: process.env.APP_ENDPOINT,
+            connectionOffer: offer.body
+        })
+        .expect(200);
+    const res = await agent
+        .get('/api/wallet/default')
+        .set(bothHeaders)
+        .set({ Authorization: user1.token })
+        .expect(200);
+    const pairwise = res.body.pairwise.filter(v => v['their_did'] === request.body.senderDid);
+    return pairwise[0];
+}
+
+/**
+ * Clean up after test
+ * @param {object[]} valuesToDelete array of objects to delete with {id, token or auth {username, password}, path: 'path'}
+ */
+async function clean(valuesToDelete) {
+    valuesToDelete.reverse();
+    for (const v of valuesToDelete) {
+        if (!v.token) {
+            v.token = (await login({ username: v.user, password: v.password })).body;
+        }
+        await agent
+            .delete(`/api/${v.path}/${v.id}`)
+            .set(bothHeaders)
+            .set({ Authorization: v.token })
+            .expect(204);
+    }
+}
+
 async function createWallet(token, wallet) {
     bothHeaders.Authorization = token;
     return await agent
@@ -87,5 +158,8 @@ module.exports = {
     createWallet,
     cleanUp,
     generateUsers,
-    generateWallets
+    generateWallets,
+    onboard,
+    connect,
+    clean
 };
