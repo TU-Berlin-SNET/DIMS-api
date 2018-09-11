@@ -62,6 +62,10 @@ describe('Connection', function() {
         steward.wallet.ownDid = res.body.ownDid;
     });
 
+    after(async function() {
+        await core.clean(valuesToDelete);
+    });
+
     it('POST /api/connectionoffer should create and return proper connection offer', async function() {
         const res = await agent
             .post('/api/connectionoffer')
@@ -208,19 +212,5 @@ describe('Connection', function() {
         expect(pairwise)
             .to.be.an('Array')
             .with.lengthOf(1);
-    });
-
-    after(async function() {
-        valuesToDelete.reverse();
-        for (const v of valuesToDelete) {
-            if (!v.token) {
-                v.token = (await core.login({ username: v.user, password: v.password })).body;
-            }
-            await agent
-                .delete(`/api/${v.path}/${v.id}`)
-                .set(bothHeaders)
-                .set({ Authorization: v.token })
-                .expect(204);
-        }
     });
 });

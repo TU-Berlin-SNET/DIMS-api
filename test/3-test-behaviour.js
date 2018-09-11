@@ -11,17 +11,14 @@ const expect = require('chai').expect;
 
 const vars = require('./0-test-vars');
 const core = require('./0-test-core');
-const describe = mocha.describe;
-const after = mocha.after;
-const it = mocha.it;
+
+const { describe, before, after, it } = mocha;
 
 const agent = vars.agent;
-const acceptHeader = vars.acceptHeader;
 const bothHeaders = vars.bothHeaders;
 let users = vars.users;
 let wallets = vars.wallets;
 let valuesToDelete = [];
-let connectionOffer;
 
 let issuer;
 let holder;
@@ -36,11 +33,10 @@ describe('behaviour', function() {
         wallets = core.generateWallets();
 
         for (let i = 0; i < users.length; i++) {
-            let user = users[i];
-
-            await core.createUser(user);
-            const res = await core.login(user);
-            user.token = res.body.token;
+            const id = await core.createUser(users[i]);
+            const res = await core.login(users[i]);
+            users[i].token = res.body.token;
+            valuesToDelete.push({ id: id, token: users[i].token, path: 'user' });
         }
 
         for (let i = 0; i < wallets.length; i++) {
@@ -59,169 +55,43 @@ describe('behaviour', function() {
                 'config',
                 'credentials'
             );
-            wallets[i] = res.body;
+            const walletRes = await agent
+                .get('/api/wallet/default')
+                .set(bothHeaders)
+                .set({ Authorization: token })
+                .expect(200);
+            wallets[i] = walletRes.body;
         }
+        // set issuer ownDid as TRUST_ANCHOR
+        await core.onboard(
+            users[0].token,
+            wallets[1].ownDid,
+            wallets[1].dids.filter(v => v.did === wallets[1].ownDid)[0].verkey,
+            'TRUST_ANCHOR'
+        );
+        // set relying party ownDid as TRUST_ANCHOR
+        await core.onboard(
+            users[0].token,
+            wallets[3].ownDid,
+            wallets[3].dids.filter(v => v.did === wallets[3].ownDid)[0].verkey,
+            'TRUST_ANCHOR'
+        );
+        // pairwise connection issuer and holder
+        const issuerHolderPairwise = await core.connect(
+            users[1],
+            users[2]
+        );
+        holderIssuerDid = issuerHolderPairwise['their_did'];
+        // pairwise connection relying party and holder
+        const rpHolderPairwise = await core.connect(
+            users[3],
+            users[2]
+        );
+        holderRPDid = rpHolderPairwise['their_did'];
     });
 
-    beforeEach(async function() {
-        for (const user of users) {
-            const res = await agent
-                .post('/api/login')
-                .set(bothHeaders)
-                .send(user)
-                .expect(200);
-
-            user.token = res.body.token;
-        }
-    });
-
-    describe('onboarding', function() {
-        it('steward should create connectionoffers for issuer with role TRUST_ANCHOR', async function() {
-            bothHeaders.Authorization = users[0].token;
-            const res = await agent
-                .post('/api/connectionoffer')
-                .set(bothHeaders)
-                .send({ wallet: wallets[0].id, role: 'TRUST_ANCHOR' })
-                .expect(201);
-            expect(res.body).to.have.all.keys('did', 'nonce', 'role');
-            expect(res.body.role).to.equal('TRUST_ANCHOR');
-            connectionOffer = res.body;
-        });
-
-        it('issuer should accept connectionoffer from steward', async function() {
-            bothHeaders.Authorization = users[1].token;
-            const res = await agent
-                .post('/api/connection')
-                .set(bothHeaders)
-                .send({ wallet: wallets[1].id, connectionOffer: connectionOffer, endpoint: `${vars.serverURL}/indy` })
-                .expect(200);
-            expect(res.body).to.have.all.keys('myDid', 'theirDid');
-            wallets[1].ownDid = res.body.myDid;
-        });
-        it('issuer should should NOT accept connectionoffer from steward repeatedly', async function() {
-            bothHeaders.Authorization = users[1].token;
-            await agent
-                .post('/api/connection')
-                .set(bothHeaders)
-                .send({ wallet: wallets[1].id, connectionOffer: connectionOffer })
-                .expect(404);
-        });
-        it('steward should create connectionoffers for relyingpary with role TRUST_ANCHOR', async function() {
-            bothHeaders.Authorization = users[0].token;
-            const res = await agent
-                .post('/api/connectionoffer')
-                .set(bothHeaders)
-                .send({ wallet: wallets[0].id, role: 'TRUST_ANCHOR' })
-                .expect(201);
-            expect(res.body).to.have.all.keys('did', 'nonce', 'role');
-            expect(res.body.role).to.equal('TRUST_ANCHOR');
-            connectionOffer = res.body;
-        });
-        it('relyingpary should accept connectionoffer from steward', async function() {
-            bothHeaders.Authorization = users[3].token;
-            const res = await agent
-                .post('/api/connection')
-                .set(bothHeaders)
-                .send({ wallet: wallets[3].id, connectionOffer: connectionOffer })
-                .expect(200);
-            expect(res.body).to.have.all.keys('myDid', 'theirDid');
-        });
-        it('issuer (TRUST_ANCHOR) should create connectionoffer for holder with role NONE', async function() {
-            bothHeaders.Authorization = users[1].token;
-            const res = await agent
-                .post('/api/connectionoffer')
-                .set(bothHeaders)
-                .send({ wallet: wallets[1].id })
-                .expect(201);
-            expect(res.body).to.have.all.keys('did', 'nonce', 'role');
-            expect(res.body.role).to.equal('NONE');
-            connectionOffer = res.body;
-        });
-        it('holder should accept connectionoffer from issuer', async function() {
-            bothHeaders.Authorization = users[2].token;
-
-            const res = await agent
-                .post('/api/connection')
-                .set(bothHeaders)
-                .send({ wallet: wallets[2].id, connectionOffer: connectionOffer })
-                .expect(200);
-            expect(res.body).to.have.all.keys('myDid', 'theirDid');
-            holderIssuerDid = res.body.myDid;
-        });
-        it('holder (NONE) should NOT be able to create connectionOffers', async function() {
-            bothHeaders.Authorization = users[2].token;
-            await agent
-                .post('/api/connectionoffer')
-                .set(bothHeaders)
-                .send({ wallet: wallets[2].id })
-                .expect(400);
-        });
-    });
-
-    describe('messaging', function() {
-        let messageId;
-
-        it('POST /api/message should return HTTP 202 on valid connection request', async function() {
-            bothHeaders.Authorization = users[0].token;
-            await agent
-                .post('/api/message')
-                .set(bothHeaders)
-                .send({
-                    wallet: wallets[0].id,
-                    did: wallets[1].ownDid,
-                    message: JSON.stringify({
-                        id: 'someNonce',
-                        type: 'urn:sovrin:agent:message_type:sovrin.org/connection_request',
-                        message: {
-                            did: 'someDid',
-                            nonce: 'someNonce',
-                            verkey: 'someVerkey',
-                            endpoindDid: 'endpointDid',
-                            endpoint: 'endpoint'
-                        }
-                    })
-                })
-                .expect(202);
-        });
-
-        it('GET /api/message should return list of messages', async function() {
-            bothHeaders.Authorization = users[1].token;
-            const res = await agent
-                .get('/api/message')
-                .set(bothHeaders)
-                .set({ wallet: wallets[1].id })
-                .expect(200);
-            expect(res.body)
-                .to.be.an('array')
-                .with.lengthOf(1);
-            expect(res.body[0]).to.have.all.keys('id', 'wallet', 'messageId', 'type', 'message');
-            messageId = res.body[0].id;
-        });
-
-        it('GET /api/message/:messageId should retrieve a single message', async function() {
-            bothHeaders.Authorization = users[1].token;
-            const res = await agent
-                .get('/api/message/' + messageId)
-                .set(bothHeaders)
-                .set({ wallet: wallets[1].id })
-                .expect(200);
-            expect(res.body).to.have.all.keys('id', 'wallet', 'messageId', 'type', 'message');
-            expect(res.body.id).to.equal(messageId);
-        });
-
-        it('DELETE /api/message/:messageId should delete a single message', async function() {
-            bothHeaders.Authorization = users[1].token;
-            await agent
-                .delete('/api/message/' + messageId)
-                .set(bothHeaders)
-                .set({ wallet: wallets[1].id })
-                .expect(204);
-            await agent
-                .get('/api/message/' + messageId)
-                .set(bothHeaders)
-                .set({ wallet: wallets[1].id })
-                .expect(404);
-        });
+    after(async function() {
+        await core.clean(valuesToDelete);
     });
 
     describe('credentials', function() {
@@ -343,28 +213,6 @@ describe('behaviour', function() {
     describe('proofs', function() {
         let proofRequest;
         let proof;
-        it('relying party (TRUST_ANCHOR) should create connectionoffer for holder with role NONE', async function() {
-            bothHeaders.Authorization = rp.token;
-
-            const res = await agent
-                .post('/api/connectionoffer')
-                .set(bothHeaders)
-                .send({ wallet: rp.wallet.id })
-                .expect(201);
-            expect(res.body).to.have.all.keys('did', 'nonce', 'role');
-            expect(res.body.role).to.equal('NONE');
-            connectionOffer = res.body;
-        });
-        it('holder should accept connectionoffer from relying party', async function() {
-            bothHeaders.Authorization = holder.token;
-            const res = await agent
-                .post('/api/connection')
-                .set(bothHeaders)
-                .send({ wallet: holder.wallet.id, connectionOffer: connectionOffer })
-                .expect(200);
-            expect(res.body).to.have.all.keys('myDid', 'theirDid');
-            holderRPDid = res.body.myDid;
-        });
         it('relying party should create proof request', async function() {
             bothHeaders.Authorization = rp.token;
             const res = await agent
