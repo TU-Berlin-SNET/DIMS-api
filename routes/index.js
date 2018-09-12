@@ -8,7 +8,6 @@ const auth = require('../middleware/auth');
 const walletProvider = require('../middleware/walletProvider');
 const user = require('../controllers/user');
 const wallet = require('../controllers/wallet');
-const connection = require('../controllers/connection');
 const schema = require('../controllers/credentialschema');
 const creddef = require('../controllers/credentialdef');
 const credential = require('../controllers/credential');
@@ -18,6 +17,10 @@ const endpoint = require('../controllers/endpoint');
 const transactions = require('../controllers/transactions');
 const message = require('../controllers/message');
 const nym = require('./nym');
+
+const connectionOffer = require('./connection-offer');
+const connectionRequest = require('./connection-request');
+const connectionResponse = require('./connection-response');
 
 router
     .route('/user')
@@ -48,9 +51,11 @@ router
     .get(wallet.retrieve)
     .delete(wallet.delete);
 
-router.route('/connectionoffer').post(connection.create);
+router.use('/connectionoffer', connectionOffer);
 
-router.route('/connection').post(connection.accept);
+router.use('/connectionrequest', connectionRequest);
+
+router.use('/connectionresponse', connectionResponse);
 
 router
     .route('/schema')

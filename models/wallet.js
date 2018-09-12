@@ -86,6 +86,14 @@ schema.method('close', async function() {
     }
 });
 
+/**
+ * Retrieve Wallet ownDid and verkey
+ * @return {Promise<String[]>} [did, verkey]
+ */
+schema.methods.getPrimaryDid = async function getPrimaryDid() {
+    return [this.ownDid, await indy.keyForLocalDid(this.handle, this.ownDid)];
+};
+
 schema.method('usableBy', function(user) {
     return this.owner.equals(user._id) || this.users.some(v => v.equals(user._id));
 });
@@ -181,6 +189,9 @@ schema.pre('remove', async function() {
     log.debug('wallet model pre-remove');
     await this.close();
     await ConnectionOffer.remove({ issuerWallet: this }).exec();
+    await Mongoose.model('Message')
+        .remove({ wallet: this })
+        .exec();
     // Need to retrieve User model this way to prevent user object
     // from being empty due to cyclic dependency
     await Mongoose.model('User')
