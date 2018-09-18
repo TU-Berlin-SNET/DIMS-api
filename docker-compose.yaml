@@ -1,55 +1,60 @@
 version: '3'
+
+networks:
+  indy-network:
+    ipam:
+      driver: default
+      config:
+        - subnet: ${API_SUBNET-172.16.0.0/24}
+
 services:
   pool:
-    build:
-      context: .
-      dockerfile: indy-pool.dockerfile
-      args:
-        - pool_ip=172.16.0.100
+    image: idchain/test-pool
     ports:
-      - 9701-9708:9701-9708
+      - ${POOL_PORTS-9701-9708}:${POOL_PORTS-9701-9708}
+    environment:
+      - POOL_NAME
+      - POOL_IP
+      - PORTSTART
     networks:
       indy-network:
-        ipv4_address: 172.16.0.100
+        ipv4_address: ${POOL_IP}
 
   mongodb:
-    image: mongo:latest
+    image: mongo:4
+    command: --smallfiles
     environment:
-      - MONGO_DATA_DIR=/data/db
-      - MONGO_LOG_DIR=/dev/null
-    ports:
-      - 27017:27017
-    command: mongod --smallfiles
+      - MONGO_INITDB_ROOT_USERNAME=${DB_USER}
+      - MONGO_INITDB_ROOT_PASSWORD=${DB_PASSWORD}
     networks:
       indy-network:
-        ipv4_address: 172.16.0.150
+        ipv4_address: ${DB_HOST}
 
   api:
     build:
       context: .
+    image: idchain/api
     container_name: idchain-api
-    image: indy-api:latest
     environment:
-      - GENESIS_TXN=pool_transactions_genesis.docker-compose
+      - APP_HOST
+      - APP_PORT
+      - APP_ENDPOINT
+      - JWT_SECRET
+      - WALLETCACHE_WAIT_TIME
+      - WALLETCACHE_MAX_RETRIES
+      - DB_HOST
+      - DB_PORT
+      - DB_USER
+      - DB_PASSWORD
+      - SALTROUNDS
+      - POOL_IP
+      - POOL_NAME
+      - GENESIS_TXN
     ports:
-      - 8000:8000
+      - ${APP_PORT}:${APP_PORT}
     depends_on:
       - mongodb
       - pool
     networks:
       indy-network:
-        ipv4_address: 172.16.0.200
-
-  schema-compiler:
-    build:
-      context: ../schema-api
-    container_name: schema-compiler
-    ports:
-      - 9000:9000
-    networks:
-      indy-network:
-        ipv4_address: 172.16.0.201
-
-networks:
-  indy-network:
-    external: true
+        ipv4_address: ${APP_HOST}

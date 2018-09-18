@@ -11,8 +11,11 @@
 -   Running [MongoDB] instance which is used for persistence on top of
     Indy-DLT to support stateless REST API.
 
--   Check [Install MongoDB Community Edition] on how to install MongoDB
-    on your system.
+-   Libindy v1.6.x installed on your system.
+
+-   Configuration either through environment variables or .env
+
+-   A `pool_transactions_genesis` file for the running pool.
 
 > NOTE: libindy creates a `.indy_client` directory in your home directory
 > to store data. If API does not connect correctly to the pool, please
@@ -21,50 +24,44 @@
 #### Run
 
 ```bash
+# install dependencies
 npm install
+
+# run the api
 npm run dev
+
+# for tests
+npm test
 ```
 
 #### Config
 
-Check `.env` file for configuration of indy-pool, host and port of API
-and DB. If required add own `pool_transaction_genesis` file and change
-configuration here.
+Check `env-example` file for configuration variables of indy-pool, host and port of API
+and DB, and create your own `.env` file or set environment variables.
+If required add own `pool_transaction_genesis` file.
 
 ### With Docker Compose
 
-This will build and run 4 services: Indy-Pool, MongoDB,  this project API and Schema Compiler from schema-api project. Not that schema-api project must be cloned to ../schema-api (sibling) folder. 
+This will build and run 4 services: Indy-Pool, MongoDB, and this API.
 
 #### Requirements
 
-Please follow the instruction to install [Docker] & [Docker-Compose]
+-   [Docker](https://docker.com) and [docker-compose](https://docker.com/compose)
 
-Before run docker-compose, you need to run
+-   Configuration either through environment variables or .env
 
-```bash
-docker network create --subnet 172.16.0.0/24 indy-network
-```
+-   A `pool_transactions_genesis` file for the running pool.
 
 #### Run
 
 ```bash
+# for normal deploy
 docker-compose up
+
+# or for live-reload
+# need to specify name because container_name is ignored, see https://github.com/docker/compose/issues/2061
+docker-compose run --name idchain-api -v $PWD:/home/indy/app api npm run dev
+
+# for tests
+docker exec -it -u indy idchain-api npm test
 ```
-
-> Ports are exposed and you can also develop the API by commenting all lines
-> related to the API service from the docker-compose.yml file and running
-> `npm run dev`
-
-## Running Tests
-
-1. Run API as described in the previous section
-1. Run the test using npm script:
-    ```bash
-    npm test
-    ```
-
-[docker]: https://docs.docker.com/install/
-[docker-compose]: https://docs.docker.com/compose/install/
-[hyperledger indy node]: https://github.com/hyperledger/indy-node
-[mongodb]: https://www.mongodb.com/
-[install mongodb community edition]: https://docs.mongodb.com/manual/administration/install-community/
