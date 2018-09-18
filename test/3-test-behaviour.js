@@ -43,18 +43,7 @@ describe('behaviour', function() {
             const token = users[i].token;
             const wallet = wallets[i];
 
-            const res = await core.createWallet(token, wallet);
-            expect(res.body).to.have.all.keys(
-                'id',
-                'created',
-                'poolName',
-                'ownDid',
-                'owner',
-                'users',
-                'xtype',
-                'config',
-                'credentials'
-            );
+            await core.createWallet(token, wallet);
             const walletRes = await agent
                 .get('/api/wallet/default')
                 .set(bothHeaders)

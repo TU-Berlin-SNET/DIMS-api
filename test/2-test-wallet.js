@@ -44,22 +44,11 @@ describe('/api/wallet', function() {
         expect(res.body)
             .to.have.property('id')
             .that.equals(testwallet.name);
-        expect(res.body)
-            .to.have.property('poolName')
-            .that.equals(process.env.POOL_NAME);
         expect(res.body).to.have.property('ownDid');
         expect(res.body)
             .to.have.property('owner')
             .that.equals(testuser.id);
-        expect(res.body).to.have.property('xtype').that.is.null;
-        expect(res.body).to.have.property('config').that.is.null;
-        //expect(res.body).to.have.property('credentials').that.equals({key:'testkey'});
         testwallet = res.body;
-        valuesToDelete.push({
-            id: testwallet.id,
-            auth: [testuser.username, testuser.password],
-            path: 'wallet'
-        });
     });
 
     it('GET /:id should retrieve specific wallet', async function() {
@@ -74,7 +63,6 @@ describe('/api/wallet', function() {
             .get(`/api/wallet/${testwallet.id}`)
             .set(bothHeaders)
             .expect(200);
-        //expect(res.body).to.include(testwallet);
         expect(res.body).to.have.nested.property('credentials.key');
         expect(res.body)
             .to.have.property('dids')
@@ -98,15 +86,5 @@ describe('/api/wallet', function() {
             .delete(`/api/wallet/${testwallet.id}`)
             .set(bothHeaders)
             .expect(204);
-    });
-
-    afterEach(async function() {
-        valuesToDelete.reverse();
-        for (const v of valuesToDelete) {
-            await agent
-                .delete(`/api/${v.path}/${v.id}`)
-                .auth(...v.auth)
-                .set(acceptHeader);
-        }
     });
 });

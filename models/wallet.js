@@ -34,20 +34,6 @@ const schema = new Mongoose.Schema({
             default: []
         }
     ],
-    poolName: {
-        type: String,
-        required: false
-    },
-    xtype: {
-        type: String,
-        required: false,
-        default: null
-    },
-    config: {
-        type: String,
-        required: false,
-        default: null
-    },
     credentials: {
         key: {
             type: String,
@@ -70,10 +56,16 @@ schema
         this.__handle = value;
     });
 
+schema.virtual('config').get(function() {
+    return {
+        id: this._id
+    };
+});
+
 schema.method('open', async function() {
     log.debug('wallet model open');
     if (this.handle === -1) {
-        this.handle = await indy.openWallet(this._id, this.config, this.credentials);
+        this.handle = await indy.openWallet(this.config, this.credentials);
     }
     return this.handle;
 });
@@ -175,11 +167,8 @@ schema.method('toMinObject', function() {
     let m = {};
     m.id = this._id;
     m.created = this.created;
-    m.owner = typeof owner === 'object' ? this.owner._id.toString() : this.owner.toString();
+    m.owner = typeof this.owner === 'object' ? this.owner._id.toString() : this.owner.toString();
     if (this.users) m.users = this.users;
-    m.poolName = this.poolName;
-    m.xtype = this.xtype;
-    m.config = this.config;
     m.credentials = this.credentials;
     m.ownDid = this.ownDid;
     return m;
@@ -197,7 +186,7 @@ schema.pre('remove', async function() {
     await Mongoose.model('User')
         .update({ wallet: this }, { $unset: { wallet: 1 } }, { multi: true })
         .exec();
-    await indy.deleteWallet(this._id, this.credentials);
+    await indy.deleteWallet(this.config, this.credentials);
 });
 
 module.exports = Mongoose.model('Wallet', schema);
