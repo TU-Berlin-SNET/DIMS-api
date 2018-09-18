@@ -10,33 +10,29 @@ const expect = require('chai').expect;
 
 const vars = require('./0-test-vars');
 const core = require('./0-test-core');
-const describe = mocha.describe;
-const afterEach = mocha.afterEach;
-const beforeEach = mocha.beforeEach;
-const it = mocha.it;
+const { describe, it, before, after } = mocha;
 
 const agent = vars.agent;
 const bothHeaders = vars.bothHeaders;
-const acceptHeader = vars.acceptHeader;
 let valuesToDelete = [];
 
 describe('/api/wallet', function() {
     let testuser;
     let testwallet;
 
-    beforeEach(async function() {
+    before(async function() {
         testuser = { username: 'testuser' + Math.random(), password: 'testpassword' };
         testwallet = { name: 'testwallet' + Math.random(), credentials: { key: 'testkey' } };
 
         const id = await core.createUser(testuser);
-        valuesToDelete.push({ id: id, auth: [testuser.username, testuser.password], path: 'user' });
         const res = await core.login(testuser);
         testuser.token = res.body.token;
+        valuesToDelete.push({ id: id, token: testuser.token, path: 'user' });
         bothHeaders.Authorization = testuser.token;
     });
 
-    afterEach(async function() {
-        await core.cleanUp();
+    after(async function() {
+        await core.clean(valuesToDelete);
     });
 
     it('POST / should create a wallet', async function() {

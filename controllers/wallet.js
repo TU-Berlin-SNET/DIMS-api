@@ -1,5 +1,4 @@
-const indy = require('indy-sdk');
-
+const lib = require('../lib');
 const wrap = require('../asyncwrap').wrap;
 const APIResult = require('../api-result');
 const Wallet = require('../models/wallet');
@@ -34,8 +33,8 @@ module.exports = {
 
     retrieve: wrap(async (req, res, next) => {
         let w = req.wallet.toMinObject();
-        w.dids = await indy.listMyDidsWithMeta(req.wallet.handle);
-        w.pairwise = await indy.listPairwise(req.wallet.handle);
+        w.dids = await lib.sdk.listMyDidsWithMeta(req.wallet.handle);
+        w.pairwise = await lib.sdk.listPairwise(req.wallet.handle);
         next(APIResult.success(w));
     }),
 
