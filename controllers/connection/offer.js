@@ -25,16 +25,16 @@ module.exports = {
      * Create a connection offer
      * @param {Wallet} wallet
      * @param {object} [data] additional data to put in the offer
+     * @param {object} [meta] additional meta information to store with offer (and later in pairwise)
      * @param {string} [role] role that is offered, e.g. TRUST_ANCHOR, ..
      * @param {string} [endpoint] my endpoint, default is process.env.APP_ENDPOINT
      * @return {Promise<Message>} connection offer
      */
-    async create(wallet, data, role, endpoint = process.env.APP_ENDPOINT) {
+    async create(wallet, data, meta = {}, role, endpoint = process.env.APP_ENDPOINT) {
         const [did, vk] = await wallet.getPrimaryDid();
         const offer = await lib.connection.createConnectionOffer(did, vk, endpoint);
-        let meta = null;
         if (data && typeof data === 'object') offer.message.data = data;
-        if (role && typeof role === 'string') meta = { role: role };
+        if (role && typeof role === 'string') meta.role = role;
         await Message.store(wallet.id, offer.id, offer.type, wallet.ownDid, null, offer, meta);
         return offer;
     },

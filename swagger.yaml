@@ -170,8 +170,12 @@ definitions:
           - TRUSTEE
           - STEWARD
           - TRUST_ANCHOR
+      meta:
+        description:
+          Additional data to store in the offer (and later in the pairwise), e.g. citizen id but not send with the offer
+        type: object
       data:
-        description: Additional data like name, logo, description, etc.
+        description: Additional data like name, logo, description, to send with the connection offer
         type: object
   connectionrequest_post:
     type: object

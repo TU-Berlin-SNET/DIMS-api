@@ -37,27 +37,27 @@ module.exports = {
             message.endpoint
         );
         const requestNonce = message.nonce;
+        const meta = request.meta || {};
 
         // if we specifically added a role to our offer then this role
         // will be in the request object as this means that this method
         // was called automatically after receiving a connection request
         // through agent-to-agent communication, also see: request.js handle method
-        if (request.meta && request.meta.role) {
+        if (meta && meta.role) {
             // then write their did on the ledger with that role
             // (this might have implications for GDPR)
-            await pool.nymRequest(wallet.handle, wallet.ownDid, theirDid, theirVk, null, request.meta.role);
+            await pool.nymRequest(wallet.handle, wallet.ownDid, theirDid, theirVk, null, meta.role);
         }
+        meta.theirEndpointDid = theirEndpointDid;
+        meta.theirEndpointVk = theirEndpointVk;
+        meta.theirEndpoint = theirEndpoint;
 
         // clean up: remove the request
         await request.remove();
 
         // create my pairwise did, store their did and create a pairwise
         const [myDid, myVk] = await lib.sdk.createAndStoreMyDid(wallet.handle, {});
-        await lib.connection.createRelationship(wallet.handle, myDid, theirDid, theirVk, {
-            theirEndpointDid: theirEndpointDid,
-            theirEndpointVk: theirEndpointVk,
-            theirEndpoint: theirEndpoint
-        });
+        await lib.connection.createRelationship(wallet.handle, myDid, theirDid, theirVk, meta);
 
         // create the connection response, anoncrypt inner message for pairwise recipient
         const response = await lib.connection.createConnectionResponse(myDid, myVk, theirDid, requestNonce);
