@@ -11,7 +11,7 @@ const swaggerDoc = YAML.load('./swagger.yaml');
 
 // require all models at start so they are available
 // through Mongoose.model later on
-const models = require('./models');
+require('./models');
 const log = require('./log').log;
 const pool = require('./pool');
 const middleware = require('./middleware');
