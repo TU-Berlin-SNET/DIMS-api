@@ -11,7 +11,7 @@
 -   Running [MongoDB] instance which is used for persistence on top of
     Indy-DLT to support stateless REST API.
 
--   Libindy v1.6.x installed on your system.
+-   Libindy v1.6.1 installed on your system.
 
 -   Configuration either through environment variables or .env
 
