@@ -1,8 +1,6 @@
 # IdentityChain Agent REST API
 
-## Running locally
-
-### Without Docker
+## Run without [Docker]
 
 #### Requirements
 
@@ -12,16 +10,16 @@
 
 -   Libindy v1.6.1 installed on your system.
 
--   Configuration either through environment variables or .env
+    > NOTE: libindy creates a `.indy_client` directory in your home directory
+    > to store data. If API does not connect correctly to the pool, please
+    > remove this directory to allow for new configuration settings.
 
--   A `pool_transactions_genesis` file for the running pool. It can be generated using the tools in [idchain-commons] or, if running the `idchain/test-pool`, read from the test-pool container with
-    ```
-    docker exec api_pool_1 bash -c 'cat "/home/indy/.indy-cli/networks/$POOL_NAME/pool_transactions_genesis"' > pool_transactions_genesis
-    ```
+-   Configuration either through environment variables or .env. Environment configuration is documented in `env-example`.
 
-> NOTE: libindy creates a `.indy_client` directory in your home directory
-> to store data. If API does not connect correctly to the pool, please
-> remove this folder to allow for new configuration settings.
+-   A `pool_transactions_genesis` file for the running pool. It can be generated using the tools in [idchain-commons] or, if running the `idchain/test-pool` docker image, read from the test-pool container with
+    ```
+    docker exec <CONTAINER_NAME> bash -c 'cat "/home/indy/.indy-cli/networks/$POOL_NAME/pool_transactions_genesis"' > pool_transactions_genesis
+    ```
 
 #### Run
 
@@ -36,27 +34,21 @@ npm run dev
 npm test
 ```
 
-#### Config
+## Run with [Docker] and [Docker-Compose]
 
-Check `env-example` file for configuration variables of indy-pool, host and port of API
-and DB, and create your own `.env` file or set environment variables.
-If required add own `pool_transaction_genesis` file.
-
-### With Docker Compose
-
-This will build and run 4 services: Indy-Pool, MongoDB, and this API.
+This will build and run 3 services: Indy-Pool, MongoDB, and this API.
 
 #### Requirements
 
--   [Docker] and [docker-compose]
+-   [Docker] and [Docker-Compose]
 
--   Configuration either through environment variables or .env
+-   Configuration either through environment variables or .env. Environment configuration is documented in `env-example`.
 
--   A `pool_transactions_genesis` file for the running pool. It can be generated using the tools in [idchain-commons] or, if running the `idchain/test-pool`, read from the test-pool container with
+-   A `pool_transactions_genesis` file for the running pool. It can be generated using the tools in [idchain-commons] or, if running the `idchain/test-pool` docker image, read from the test-pool container with
 
     ```
     # start the test-pool if it is not running already
-    docker-compose run pool
+    docker-compose up pool
 
     # read and output the pool_transactions_genesis
     docker exec api_pool_1 bash -c 'cat "/home/indy/.indy-cli/networks/$POOL_NAME/pool_transactions_genesis"' > pool_transactions_genesis
@@ -65,14 +57,15 @@ This will build and run 4 services: Indy-Pool, MongoDB, and this API.
 #### Run
 
 ```bash
-# for normal deploy
+# for normal deploy:
 docker-compose up
 
-# or for live-reload
-# need to specify name because container_name is ignored, see https://github.com/docker/compose/issues/2061
-docker-compose run --name idchain-api --service-ports -v $PWD:/home/indy/app api npm run dev
+# for live-reload:
+# need to specify --name, --service-ports, and --use-aliases
+# docker-compose run not apply these from docker-compose.yaml
+docker-compose run --name idchain-api --service-ports --use-aliases -v $PWD:/home/indy/app api npm run dev
 
-# for tests
+# while container is running, for tests:
 docker exec -it -u indy idchain-api npm test
 ```
 
