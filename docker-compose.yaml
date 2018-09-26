@@ -2,6 +2,7 @@ version: '3'
 
 networks:
   indy-network:
+    driver: bridge
     ipam:
       driver: default
       config:
@@ -27,8 +28,7 @@ services:
       - MONGO_INITDB_ROOT_USERNAME=${DB_USER}
       - MONGO_INITDB_ROOT_PASSWORD=${DB_PASSWORD}
     networks:
-      indy-network:
-        ipv4_address: ${DB_HOST}
+      - indy-network
 
   api:
     build:

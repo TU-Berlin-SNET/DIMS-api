@@ -37,7 +37,7 @@ RUST_LOG=debug
 # ===============================================
 
 ## host and port at which the database is reachable
-DB_HOST=172.16.0.150
+DB_HOST=mongodb
 DB_PORT=27017
 
 ## database user username and password
