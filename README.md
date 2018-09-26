@@ -70,7 +70,7 @@ docker-compose up
 
 # or for live-reload
 # need to specify name because container_name is ignored, see https://github.com/docker/compose/issues/2061
-docker-compose run --name idchain-api -v $PWD:/home/indy/app api npm run dev
+docker-compose run --name idchain-api --service-ports -v $PWD:/home/indy/app api npm run dev
 
 # for tests
 docker exec -it -u indy idchain-api npm test
