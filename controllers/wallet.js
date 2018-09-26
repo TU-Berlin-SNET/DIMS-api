@@ -1,5 +1,4 @@
-const indy = require('indy-sdk');
-
+const lib = require('../lib');
 const wrap = require('../asyncwrap').wrap;
 const APIResult = require('../api-result');
 const Wallet = require('../models/wallet');
@@ -34,8 +33,8 @@ module.exports = {
 
     retrieve: wrap(async (req, res, next) => {
         let w = req.wallet.toMinObject();
-        w.dids = await indy.listMyDidsWithMeta(req.wallet.handle);
-        w.pairwise = await indy.listPairwise(req.wallet.handle);
+        w.dids = await lib.sdk.listMyDidsWithMeta(req.wallet.handle);
+        w.pairwise = await lib.sdk.listPairwise(req.wallet.handle);
         next(APIResult.success(w));
     }),
 
@@ -45,26 +44,22 @@ module.exports = {
     }),
 
     async createWallet(data, user) {
-        let doc = {};
-        if (data.name) doc._id = data.name;
-        if (data.xtype) doc.xtype = data.xtype;
-        if (data.config) doc.config = data.config;
-        if (data.credentials) doc.credentials = data.credentials;
-        doc.poolName = data.poolName || process.env.POOL_NAME;
-        doc.owner = user._id;
-
-        if (doc._id === 'default') {
-            throw APIResult.badRequest('sorry, the name default is reserved');
+        if (data.name === 'default') {
+            throw APIResult.badRequest('sorry, wallet name default is reserved');
         }
 
-        let w = new Wallet(doc);
+        let wallet = new Wallet({
+            _id: data.name,
+            owner: user._id,
+            credentials: data.credentials
+        });
         let handle = -1;
         try {
-            await indy.createWallet(w.poolName, w._id, w.xtype, w.config, w.credentials);
-            handle = await indy.openWallet(w._id, w.config, w.credentials);
+            await lib.sdk.createWallet(wallet.config, wallet.credentials);
+            handle = await lib.sdk.openWallet(wallet.config, wallet.credentials);
             const didJSON = data.seed ? { seed: data.seed } : {};
-            const [did] = await indy.createAndStoreMyDid(handle, didJSON);
-            w.ownDid = did;
+            const [did] = await lib.sdk.createAndStoreMyDid(handle, didJSON);
+            wallet.ownDid = did;
         } catch (err) {
             log.warn('walletController createWallet error', err);
             if (err.indyCode && err.indyCode === 203) {
@@ -73,9 +68,9 @@ module.exports = {
                 throw err;
             }
         } finally {
-            if (handle !== -1) await indy.closeWallet(handle);
+            if (handle !== -1) await lib.sdk.closeWallet(handle);
         }
-        w = await w.save();
-        return w;
+        wallet = await wallet.save();
+        return wallet;
     }
 };

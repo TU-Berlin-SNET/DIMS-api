@@ -1,0 +1,72 @@
+#
+# IDChain Agent example environment file / variables documentation
+# Rename this to .env if you want to use it or create your own.
+#
+
+# API
+# ===============================================
+
+## host and port at which the API is reachable
+APP_HOST=172.16.0.100
+APP_PORT=8000
+
+## default endpoint for indy agent to agent communication
+## e.g. https://$APP_HOST:$APP_PORT/indy
+APP_ENDPOINT=http://172.16.0.100:8000/indy
+
+## bcrypt saltOrRounds configuration
+SALTROUNDS=10
+
+## change this!
+JWT_SECRET=your_jwt_secret
+
+## wallet provider/cache time between retries of opening a wallet in ms
+WALLETCACHE_WAIT_TIME=300
+
+## wallet provider/cache max retries before it fails
+WALLETCACHE_MAX_RETRIES=3
+
+## API logger log level
+LOG_LEVEL=debug
+
+## low-level rust indy-sdk/libindy log level
+RUST_LOG=debug
+
+
+# Database
+# ===============================================
+
+## host and port at which the database is reachable
+DB_HOST=172.16.0.150
+DB_PORT=27017
+
+## database user username and password
+DB_USER=
+DB_PASSWORD=
+
+
+# Pool
+# ===============================================
+
+## ip at which the indy pool is reachable
+POOL_IP=172.16.0.200
+
+## name for the pool
+POOL_NAME=testPool
+
+## path to pool_transactions_genesis
+GENESIS_TXN=pool_transactions_genesis
+
+
+# Deployment
+# ===============================================
+
+## subnet for docker-compose network
+API_SUBNET=172.16.0.0/24
+
+## port range which indy pool nodes bind to
+POOL_PORTS=9701-9708
+
+## (exclusive) initial port of POOL_PORTS range
+## i.e. at which port to start binding
+PORTSTART=9700

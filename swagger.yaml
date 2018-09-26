@@ -63,10 +63,6 @@ definitions:
       name:
         description: '(Optional) Wallet name, must be globally unique. Automatically generated if none is provided.'
         type: string
-      config:
-        description:
-          '(Optional) Wallet Config JSON. Supported keys vary by wallet type. A default config will be used if none is provided.'
-        type: string
       credentials:
         description:
           'Wallet Credentials JSON. Supported keys vary by wallet type. A default config will be used if none is provided.'
@@ -75,15 +71,8 @@ definitions:
           key:
             description: 'Passphrase used to derive wallet master key'
             type: string
-      poolName:
-        description:
-          '(Optional) Name of the Pool to associate with this wallet. A default config will be used if none is provided.'
-        type: string
       seed:
         description: '(Optional) Seed to use for initial did creation.'
-        type: string
-      xtype:
-        description: '(Optional) Type of the wallet. A default config will be used if none is provided.'
         type: string
     required:
       - credentials

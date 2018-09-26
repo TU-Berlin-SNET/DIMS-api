@@ -96,7 +96,7 @@ async function clean(valuesToDelete) {
     valuesToDelete.reverse();
     for (const v of valuesToDelete) {
         if (!v.token) {
-            v.token = (await login({ username: v.user, password: v.password })).body;
+            v.token = (await login({ username: v.auth[0], password: v.auth[1] })).body;
         }
         await agent
             .delete(`/api/${v.path}/${v.id}`)
