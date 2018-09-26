@@ -20,7 +20,13 @@ router
     )
     .post(
         wrap(async (req, res, next) => {
-            const data = await controller.offer.create(req.wallet, req.body.data, req.body.role, req.body.endpoint);
+            const data = await controller.offer.create(
+                req.wallet,
+                req.body.data,
+                req.body.meta,
+                req.body.role,
+                req.body.endpoint
+            );
             res.locals.result = APIResult.created(data);
             next();
         })

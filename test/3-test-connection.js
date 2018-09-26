@@ -74,6 +74,9 @@ describe('Connection', function() {
             .send({
                 endpoint: process.env.APP_ENDPOINT,
                 role: 'TRUST_ANCHOR',
+                meta: {
+                    metaId: 'test'
+                },
                 data: {
                     name: 'STEWARD',
                     logo: 'https://www.snet.tu-berlin.de/fileadmin/_processed_/f/fd/csm_logo_gro__4fc44bd1db.jpg'
@@ -82,6 +85,7 @@ describe('Connection', function() {
             .expect(201);
         expect(res.body).to.have.all.keys('id', 'type', 'message');
         expect(res.body.message).to.have.all.keys('did', 'verkey', 'endpoint', 'nonce', 'data');
+        expect(res.body.message).to.not.have.key('meta');
         expect(res.body.id).to.equal(res.body.message.nonce);
         connectionOffer = res.body;
     });
@@ -133,16 +137,19 @@ describe('Connection', function() {
         const getRes = await agent
             .get('/api/wallet/default')
             .set(bothHeaders)
-            .set({ Authorization: user.token })
+            .set({ Authorization: steward.token })
             .expect(200);
         expect(getRes.body)
             .to.have.property('pairwise')
             .that.is.an('Array')
             .with.lengthOf.at.least(1);
-        const pairwise = getRes.body.pairwise.filter(v => v['my_did'] === postRes.body.senderDid);
+        const pairwise = getRes.body.pairwise.filter(v => v['their_did'] === postRes.body.senderDid);
         expect(pairwise)
             .to.be.an('Array')
             .with.lengthOf(1);
+        expect(JSON.parse(pairwise[0].metadata))
+            .to.have.property('metaId')
+            .that.equals('test');
     });
 
     it('POST /api/connectionrequest with no connection offer should send connection request', async function() {
