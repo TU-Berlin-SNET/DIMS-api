@@ -28,9 +28,9 @@ module.exports = {
             throw APIResult.badRequest('no corresponding connection request found');
         }
         const message = request.message.message;
-        const [theirDid, theirVk] = await lib.did.ensureDidInfo(wallet, pool, message.did, message.verkey, true);
+        const [theirDid, theirVk] = await lib.did.ensureDidInfo(wallet.handle, pool, message.did, message.verkey, true);
         const [theirEndpointDid, theirEndpointVk, theirEndpoint] = await lib.did.ensureDidInfo(
-            wallet,
+            wallet.handle,
             pool,
             message.endpointDid,
             message.endpointVk,
@@ -100,7 +100,13 @@ module.exports = {
         const myDid = request.senderDid;
         const myVk = await lib.sdk.keyForLocalDid(wallet.handle, myDid);
         const response = await lib.crypto.anonDecryptJSON(wallet.handle, myVk, message.message);
-        const [theirDid, theirVk] = await lib.did.ensureDidInfo(wallet, pool, response.did, response.verkey, true);
+        const [theirDid, theirVk] = await lib.did.ensureDidInfo(
+            wallet.handle,
+            pool,
+            response.did,
+            response.verkey,
+            true
+        );
 
         // create the relationship, e.g. store the pairwise
         await lib.connection.createRelationship(wallet.handle, myDid, theirDid, theirVk, request.meta);
