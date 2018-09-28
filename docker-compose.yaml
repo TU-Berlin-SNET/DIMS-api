@@ -8,9 +8,10 @@ networks:
       config:
         - subnet: ${API_SUBNET-172.16.0.0/24}
 
+
 services:
   pool:
-    image: idchain/test-pool
+    image: idchain/testpool
     ports:
       - ${POOL_PORTS-9701-9708}:${POOL_PORTS-9701-9708}
     environment:
@@ -21,14 +22,14 @@ services:
       indy-network:
         ipv4_address: ${POOL_IP}
 
+
   mongodb:
     image: mongo:4
     command: --smallfiles
     environment:
       - MONGO_INITDB_ROOT_USERNAME=${DB_USER}
       - MONGO_INITDB_ROOT_PASSWORD=${DB_PASSWORD}
-    networks:
-      - indy-network
+    network_mode : "host"
 
   api:
     build:
@@ -55,6 +56,7 @@ services:
     depends_on:
       - mongodb
       - pool
-    networks:
-      indy-network:
-        ipv4_address: ${APP_HOST}
+    network_mode: "host"
+
+
+

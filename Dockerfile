@@ -12,6 +12,7 @@ ENV NODE_VERSION=8
 RUN apt-get update -y && apt-get install -y \
     apt-transport-https \
     build-essential \
+    netcat \
     ca-certificates \
     cmake \
     curl \
@@ -25,6 +26,7 @@ RUN apt-get update -y && apt-get install -y \
     python3-pip \
     python-setuptools \
     python3-nacl
+
 
 # Add indy user
 RUN useradd -ms /bin/bash -u $uid indy
