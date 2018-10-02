@@ -1,7 +1,7 @@
 swagger: '2.0'
 info:
   description: 'IdentityChain Agent REST API'
-  title: IdentityChain API
+  title: 'IdentityChain API'
   version: '0.1.5'
 schemes:
   - http
@@ -20,22 +20,32 @@ consumes:
   - application/json
 produces:
   - application/json
+security:
+  - Bearer: []
 
 parameters:
   userParam:
     name: user
     in: path
-    description: A unique id (or 'me') value identifying this user.
+    description: 'A unique id value (or "me") identifying this user.'
     type: string
     required: true
   walletParam:
     name: wallet
     in: path
-    description: A unique id value identifying this wallet.
+    description: 'A unique id value (or "default") identifying this wallet.'
     type: string
     required: true
+  walletHeader:
+    in: header
+    name: wallet
+    description: '(Optional) A unique id value (or "default") identifying a wallet'
+    type: string
 
 definitions:
+  wallet:
+    description: '(Optional) A unique id value identifying a wallet'
+    type: string
   user_post:
     type: object
     properties:
@@ -52,11 +62,13 @@ definitions:
     type: object
     properties:
       username:
+        description: '(Optional) New username'
         type: string
       password:
+        description: '(Optional) New password'
         type: string
       wallet:
-        type: string
+        $ref: '#/definitions/wallet'
   wallet_post:
     type: object
     properties:
@@ -71,6 +83,8 @@ definitions:
           key:
             description: 'Passphrase used to derive wallet master key'
             type: string
+        required:
+          - key
       seed:
         description: '(Optional) Seed to use for initial did creation.'
         type: string
@@ -80,10 +94,9 @@ definitions:
     type: object
     properties:
       wallet:
-        description: A unique string value identifying a wallet
-        type: string
+        $ref: '#/definitions/wallet'
       encryptedCredential:
-        description: The authcrypted credential offer id
+        description: 'The authcrypted credential offer id'
         type: string
     required:
       - encryptedCredential
@@ -91,8 +104,7 @@ definitions:
     type: object
     properties:
       wallet:
-        description: A unique string value identifying a wallet
-        type: string
+        $ref: '#/definitions/wallet'
       encryptedCredentialRequest:
         description: 'The authcrypted Credential Request'
         type: string
@@ -106,13 +118,12 @@ definitions:
     type: object
     properties:
       wallet:
-        description: A unique string value identifying a wallet
-        type: string
+        $ref: '#/definitions/wallet'
       schemaId:
-        description: A unique string value identifying a schema
+        description: 'A unique string value identifying a schema'
         type: string
       supportRevocation:
-        description: States if revocation should be supported for this credential definiton
+        description: '(Optional) States if revocation should be supported for this credential definiton'
         type: boolean
     required:
       - schemaId
@@ -120,8 +131,7 @@ definitions:
     type: object
     properties:
       wallet:
-        description: A unique string value identifying a wallet
-        type: string
+        $ref: '#/definitions/wallet'
       recipientDid:
         description: 'DID for whom to create a credential offer'
         type: string
@@ -135,8 +145,7 @@ definitions:
     type: object
     properties:
       wallet:
-        description: A unique string value identifying a wallet
-        type: string
+        $ref: '#/definitions/wallet'
       encryptedCredentialOffer:
         description: 'auth crypted credential offer'
         type: string
@@ -146,13 +155,12 @@ definitions:
     type: object
     properties:
       wallet:
-        description: A unique string value identifying a wallet
-        type: string
+        $ref: '#/definitions/wallet'
       endpoint:
-        description: 'Response endpoint for connection response - my endpoint'
+        description: '(Optional) Response endpoint for connection response - my endpoint'
         type: string
       role:
-        description: 'Role offered to the connection invitee'
+        description: '(Optional) Role offered to the connection invitee'
         type: string
         enum:
           - NONE
@@ -161,31 +169,32 @@ definitions:
           - TRUST_ANCHOR
       meta:
         description:
-          Additional data to store in the offer (and later in the pairwise), e.g. citizen id but not send with the offer
+          '(Optional) Additional data to store in the offer (and later in the pairwise), e.g. citizen id but not send with the offer'
         type: object
       data:
-        description: Additional data like name, logo, description, to send with the connection offer
+        description: '(Optional) Additional data like name, logo, description, to send with the connection offer'
         type: object
   connectionrequest_post:
     type: object
     properties:
       wallet:
-        description: A unique string value identifying a wallet
-        type: string
+        $ref: '#/definitions/wallet'
       endpoint:
-        description: 'Response endpoint for connection response - my endpoint'
+        description: '(Optional) Response endpoint for connection response - my endpoint'
         type: string
       theirDid:
-        description: Their (endpoint) did
+        description: '(Optional) Their (endpoint) did, required if there is no connection offer'
         type: string
       theirVk:
-        description: Their (endpoint) did verification key, required if not on ledger.
+        description:
+          '(Optional) Their (endpoint) did verification key, required if there is no connection offer or verkey not on ledger.'
         type: string
       theirEndpoint:
-        description: Their endpoint address, required if not on ledger.
+        description:
+          '(Optional) Their endpoint address, required if no there is no connection offer or address not on ledger.'
         type: string
       connectionOffer:
-        description: 'The connection offer object'
+        description: '(Optional) A connection offer object'
         type: object
         example:
           id: 09348295728957894752397589247589247589
@@ -199,10 +208,9 @@ definitions:
     type: object
     properties:
       wallet:
-        description: A unique string value identifying a wallet
-        type: string
+        $ref: '#/definitions/wallet'
       connectionRequestId:
-        description: 'The connection request _id'
+        description: 'A unique string value identifying the connection request to respond to'
         type: string
         example: '5b7ddce00000000000000000'
     required:
@@ -211,8 +219,7 @@ definitions:
     type: object
     properties:
       wallet:
-        description: A unique string value identifying a wallet
-        type: string
+        $ref: '#/definitions/wallet'
       recipientDid:
         description: 'DID for whom to create a proof request'
         type: string
@@ -242,8 +249,7 @@ definitions:
     type: object
     properties:
       wallet:
-        description: A unique string value identifying a wallet
-        type: string
+        $ref: '#/definitions/wallet'
       encryptedProofRequest:
         description: 'Encrypted Proof Request'
         type: string
@@ -258,8 +264,7 @@ definitions:
     type: object
     properties:
       wallet:
-        description: A unique string value identifying a wallet
-        type: string
+        $ref: '#/definitions/wallet'
       encryptedProof:
         description: 'Encrypted Proof'
         type: string
@@ -269,16 +274,15 @@ definitions:
     type: object
     properties:
       wallet:
-        description: A unique string value identifying a wallet
-        type: string
+        $ref: '#/definitions/wallet'
       name:
-        description: A unique name of the schema
+        description: 'A unique name of the schema'
         type: string
       version:
-        description: version for schema
+        description: 'version for schema'
         type: string
       attrNames:
-        description: list of attribute names put into the schema
+        description: 'list of attribute names put into the schema'
         type: array
         items:
           type: string
@@ -290,13 +294,12 @@ definitions:
     type: object
     properties:
       wallet:
-        description: A unique string value identifying a wallet
-        type: string
+        $ref: '#/definitions/wallet'
       did:
-        description: Recipient DID
+        description: 'Recipient DID'
         type: string
       message:
-        description: authcrypted, base64-encoded message to send
+        description: 'authcrypted, base64-encoded message to send'
         type: string
     required:
       - did
@@ -305,7 +308,7 @@ definitions:
     type: object
     properties:
       message:
-        description: Anoncrypted-message
+        description: 'Anoncrypted-message'
         type: string
     required:
       - message
@@ -323,19 +326,18 @@ definitions:
     type: object
     properties:
       wallet:
-        description: A unique string value identifying a wallet
-        type: string
+        $ref: '#/definitions/wallet'
       did:
-        description: Did to write on the ledger
+        description: 'Did to write on the ledger'
         type: string
       verkey:
-        description: Verkey of did to write on the ledger
+        description: 'Verkey of did to write on the ledger'
         type: string
       alias:
-        description: Alias of did to write on the ledger
+        description: '(Optional) Alias of did to write on the ledger'
         type: string
       role:
-        description: role of did to write on the ledger (default = NONE)
+        description: '(Optional) role of did to write on the ledger (default = NONE)'
         type: string
         enum:
           - NONE
@@ -347,22 +349,14 @@ definitions:
       - verkey
 
 paths:
-  /indy/:
-    post:
-      summary: Agent Message Endpoint
-      description: Agent Message Endpoint
-      parameters:
-        - in: body
-          name: data
-          schema:
-            $ref: '#/definitions/indy_post'
   /api/login:
     post:
-      summary: Allow users to login, will return them a JWT valid for a specific amount of time
-      description: Allow users to login, will return them a JWT valid for a specific amount of time
+      summary: 'Allow users to login, will return them a JWT valid for a specific amount of time'
+      description: 'Allow users to login, will return them a JWT valid for a specific amount of time'
+      security: []
       parameters:
         - in: body
-          name: credentials
+          name: ''
           schema:
             $ref: '#/definitions/login_post'
       responses:
@@ -370,606 +364,82 @@ paths:
           description: ''
       tags:
         - user
-  /api/message/:
-    get:
-      summary: List messages
-      description: List messages
-      parameters:
-        - in: header
-          name: wallet
-          description: A unique string value identifying a wallet.
-          required: false
-          type: string
-        - in: query
-          name: type
-          description: A single message type to filter by
-          type: string
-      tags:
-        - message
-    post:
-      summary: Send message
-      description: Send message
-      parameters:
-        - in: body
-          name: data
-          schema:
-            $ref: '#/definitions/message_post'
-      tags:
-        - message
-  /api/message/{messageId}:
-    get:
-      summary: Retrieve a message
-      description: Retrieve a message
-      parameters:
-        - in: header
-          name: wallet
-          description: A unique string value identifying a wallet.
-          required: false
-          type: string
-        - in: path
-          name: messageId
-          description: A unique string value identifying a message.
-          required: true
-          type: string
-      tags:
-        - message
-    delete:
-      summary: Delete a message
-      description: Delete a message
-      parameters:
-        - in: header
-          name: wallet
-          description: A unique string value identifying a wallet.
-          required: false
-          type: string
-        - in: path
-          name: messageId
-          description: A unique string value identifying a message.
-          required: true
-          type: string
-      tags:
-        - message
-  /api/credential/:
-    get:
-      security:
-        - Bearer: []
-      summary: List all credentials of specific wallet (UNTESTED ENDPOINT)
-      description: List all credentials of specific wallet (UNTESTED ENDPOINT)
-      parameters:
-        - in: header
-          name: wallet
-          description: A unique string value identifying a wallet.
-          required: false
-          type: string
-        - in: query
-          name: schema
-          type: string
-          description: schemaId to filter credentials
-        - in: query
-          name: schemaIssuerDid
-          type: string
-          description: schemaIssuerDid to filter credentials
-        - in: query
-          name: schemaName
-          type: string
-          description: schemaName to filter credentials
-        - in: query
-          name: schemaVersion
-          type: string
-          description: schemaVersion to filter credentials
-        - in: query
-          name: issuerDid
-          type: string
-          description: issuerDid to filter credentials
-        - in: query
-          name: credDefId
-          type: string
-          description: credDefId to filter credentials
-      responses:
-        '200':
-          description: ''
-      tags:
-        - credential
-    post:
-      security:
-        - Bearer: []
-      summary: Store a credential
-      description: Store a credential
-      parameters:
-        - in: body
-          name: data
-          schema:
-            $ref: '#/definitions/credential_post'
-      responses:
-        '201':
-          description: ''
-      tags:
-        - credential
-  /api/credential/{id}:
-    get:
-      security:
-        - Bearer: []
-      parameters:
-        - description: A unique string value identifying this credential.
-          in: path
-          name: id
-          required: true
-          type: string
-        - in: header
-          description: A unique string value identifying a wallet.
-          name: wallet
-          required: false
-          type: string
 
-      summary: Retrieve a credential
-      description: Retrieve a credential
-      responses:
-        '200':
-          description: ''
-      tags:
-        - credential
-  /api/credentialissue:
-    post:
-      security:
-        - Bearer: []
-      summary: Issue a credential
-      description: Issue a credential
-      parameters:
-        - in: body
-          name: data
-          schema:
-            $ref: '#/definitions/credentialissue_post'
-      responses:
-        '201':
-          description: ''
-      tags:
-        - credentialissue
-  /api/credentialdef:
-    parameters:
-      - in: header
-        name: wallet
-        required: false
-        type: string
-    get:
-      security:
-        - Bearer: []
-      summary: List credential definitions of wallet
-      description: List credential definitions of wallet
-      responses:
-        '200':
-          description: ''
-      tags:
-        - credentialdef
-    post:
-      security:
-        - Bearer: []
-      summary: Create a credential definition
-      description: Create a credential definition
-      parameters:
-        - in: body
-          name: data
-          schema:
-            $ref: '#/definitions/credentialdef_post'
-      responses:
-        '201':
-          description: ''
-      tags:
-        - credentialdef
-  /api/credentialdef/{creddef}:
-    parameters:
-      - description: A unique string value identifying this credential definition.
-        in: path
-        name: creddef
-        required: true
-        type: string
-      - description: A unique string value identifying the wallet to be used.
-        in: header
-        name: wallet
-        required: false
-        type: string
-    get:
-      security:
-        - Bearer: []
-      summary: Retrieve a credential definition from the ledger
-      description: Retrieve a credential definition from the ledger
-      responses:
-        '200':
-          description: ''
-      tags:
-        - credentialdef
-    delete:
-      security:
-        - Bearer: []
-      summary: Delete a credential definition
-      description: Delete a credential definition
-      responses:
-        '204':
-          description: ''
-      tags:
-        - credentialdef
-  /api/credentialoffer:
-    post:
-      security:
-        - Bearer: []
-      summary: Create a credential offer
-      description: Create a credential offer
-      parameters:
-        - in: body
-          name: data
-          schema:
-            $ref: '#/definitions/credentialoffer_post'
-      responses:
-        '201':
-          description: ''
-      tags:
-        - credentialoffer
-  /api/credentialrequest:
-    post:
-      security:
-        - Bearer: []
-      summary: Accept credential offer and create credential request
-      description: Accept credential offer and create credential request
-      parameters:
-        - in: body
-          name: data
-          schema:
-            $ref: '#/definitions/credentialrequest_post'
-      responses:
-        '201':
-          description: ''
-      tags:
-        - credentialrequest
-  /api/connectionoffer:
-    get:
-      security:
-        - Bearer: []
-      summary: List all my connection offers
-      description: List all my connection offers
-      parameters:
-        - in: header
-          description: A unique value identifying this wallet.
-          name: wallet
-          type: string
-          required: false
-      responses:
-        '200':
-          description: ''
-      tags:
-        - connection
-    post:
-      security:
-        - Bearer: []
-      summary: Create a new connection offer
-      description: Create a new connection offer
-      parameters:
-        - in: body
-          name: data
-          schema:
-            $ref: '#/definitions/connectionoffer_post'
-      responses:
-        '201':
-          description: ''
-      tags:
-        - connection
-  /api/connectionoffer/{connectionOfferId}:
-    get:
-      security:
-        - Bearer: []
-      summary: Retrieve a connection offer by _id
-      description: Retrieve a connection offer by _id
-      parameters:
-        - in: header
-          name: wallet
-          description: A unique string value identifying a wallet.
-          required: false
-          type: string
-        - in: path
-          name: connectionOfferId
-          description: connection offer _id
-          type: string
-          required: true
-      responses:
-        '200':
-          description: ''
-      tags:
-        - connection
-    delete:
-      security:
-        - Bearer: []
-      summary: Delete a connection offer by _id
-      description: Delete a connection offer by _id
-      parameters:
-        - in: header
-          name: wallet
-          description: A unique string value identifying a wallet.
-          required: false
-          type: string
-        - in: path
-          name: connectionOfferId
-          description: connection offer _id
-          type: string
-          required: true
-      responses:
-        '204':
-          description: ''
-      tags:
-        - connection
-  /api/connectionrequest:
-    get:
-      security:
-        - Bearer: []
-      summary: List all my connection requests
-      description: List all my connection requests
-      parameters:
-        - in: header
-          description: A unique value identifying this wallet.
-          name: wallet
-          type: string
-          required: false
-      responses:
-        '200':
-          description: ''
-      tags:
-        - connection
-    post:
-      security:
-        - Bearer: []
-      summary: Accept a connection offer and/or send a connection request
-      description: Accept a connection offer and/or send a connection request
-      parameters:
-        - in: body
-          name: data
-          schema:
-            $ref: '#/definitions/connectionrequest_post'
-      responses:
-        '200':
-          description: 'Success'
-      tags:
-        - connection
-  /api/connectionrequest/{connectionRequestId}:
-    get:
-      security:
-        - Bearer: []
-      summary: Retrieve a connection request by _id
-      description: Retrieve a connection request by _id
-      parameters:
-        - in: header
-          name: wallet
-          description: A unique string value identifying a wallet.
-          required: false
-          type: string
-        - in: path
-          name: connectionRequestId
-          description: connection request _id
-          type: string
-          required: true
-      responses:
-        '200':
-          description: ''
-      tags:
-        - connection
-    delete:
-      security:
-        - Bearer: []
-      summary: Delete a connection request by _id
-      description: Delete a connection request by _id
-      parameters:
-        - in: header
-          name: wallet
-          description: A unique string value identifying a wallet.
-          required: false
-          type: string
-        - in: path
-          name: connectionRequestId
-          description: connection request _id
-          type: string
-          required: true
-      responses:
-        '204':
-          description: ''
-      tags:
-        - connection
-  /api/connectionresponse:
-    post:
-      security:
-        - Bearer: []
-      summary: Accept a connection request and send a connection response
-      description: Accept a connection request and send a connection response
-      parameters:
-        - in: body
-          name: data
-          schema:
-            $ref: '#/definitions/connectionresponse_post'
-      responses:
-        '200':
-          description: 'Success'
-      tags:
-        - connection
-  /api/proofrequest:
-    post:
-      security:
-        - Bearer: []
-      summary: Create a proof request
-      description: Create a proof request
-      parameters:
-        - in: body
-          name: data
-          type: object
-          schema:
-            $ref: '#/definitions/proofrequest_post'
-      responses:
-        '201':
-          description: ''
-      tags:
-        - proof
-  /api/proof:
-    post:
-      security:
-        - Bearer: []
-      summary: Create a Proof
-      description: Create a Proof
-      parameters:
-        - in: body
-          name: data
-          type: object
-          schema:
-            $ref: '#/definitions/proof_post'
-      responses:
-        '201':
-          description: ''
-      tags:
-        - proof
-  /api/proofverification:
-    post:
-      security:
-        - Bearer: []
-      summary: Create a proof verification
-      description: Create a proof verification
-      parameters:
-        - in: body
-          name: data
-          schema:
-            $ref: '#/definitions/proofverification_post'
-      responses:
-        '200':
-          description: ''
-      tags:
-        - proof
-  /api/schema:
-    get:
-      security:
-        - Bearer: []
-      summary: List schemas
-      description: List schemas
-      responses:
-        '200':
-          description: ''
-      tags:
-        - schema
-    post:
-      security:
-        - Bearer: []
-      summary: Create a Schema
-      description: Create a Schema
-      parameters:
-        - in: body
-          name: data
-          schema:
-            $ref: '#/definitions/schema_post'
-      responses:
-        '201':
-          description: ''
-      tags:
-        - schema
-  /api/schema/{schemaid}:
-    parameters:
-      - description: A unique string value identifying this schema.
-        in: path
-        name: schemaid
-        required: true
-        type: string
-      - description: A unique value identifying this wallet.
-        in: header
-        name: wallet
-        required: false
-        type: string
-    get:
-      security:
-        - Bearer: []
-      summary: Retrieve a schema
-      description: Retrieve a schema
-      responses:
-        '200':
-          description: ''
-      tags:
-        - schema
   /api/user:
     post:
-      summary: Register a new user
-      description: Register a new user
+      summary: 'Register a new user'
+      description: 'Register a new user'
       parameters:
         - in: body
-          name: data
+          name: ''
           schema:
             $ref: '#/definitions/user_post'
       responses:
         '201':
-          description: User successfully created
+          description: 'User successfully created'
           schema:
             type: object
             properties:
               id:
                 type: string
-                description: Id of the new user
+                description: 'Id of the new user'
           headers:
             Location:
-              description: Path to created user, e.g. /user/userId
+              description: 'Path to created user, e.g. /user/userId'
               type: string
       tags:
         - user
+
   /api/user/{user}:
     parameters:
       - $ref: '#/parameters/userParam'
     get:
-      security:
-        - Bearer: []
-      summary: Retrieve a user
-      description: Retrieve a user
+      summary: 'Retrieve a user'
+      description: 'Retrieve a user'
       responses:
         '200':
           description: 'Success'
       tags:
         - user
     put:
-      security:
-        - Bearer: []
-      summary: Update a User
-      description: Update a User (at least one of the properties must be provided)
+      summary: 'Update a User (at least one of the properties must be provided)'
+      description: 'Update a User (at least one of the properties must be provided)'
       parameters:
         - in: body
-          name: data
+          name: ''
           schema:
             $ref: '#/definitions/user_put'
       responses:
         '200':
           description: 'Success'
-        '501':
-          description: 'Not yet implemented'
       tags:
         - user
     delete:
-      security:
-        - Bearer: []
-      summary: Delete a User
-      description: Delete a User
+      summary: 'Delete a User'
+      description: 'Delete a User'
       parameters:
         - $ref: '#/parameters/userParam'
       responses:
         '204':
           description: ''
-        '501':
-          description: 'Not yet implemented'
       tags:
         - user
+
   /api/wallet:
     get:
-      security:
-        - Bearer: []
-      summary: List all wallets of user
-      description: List all wallets of user
+      summary: 'List all wallets of user'
+      description: 'List all wallets of user'
       responses:
         '200':
           description: ''
       tags:
         - wallet
     post:
-      security:
-        - Bearer: []
-      summary: Create a new Wallet (optionally with given name and settings)
-      description: Create a new Wallet (optionally with given name and settings)
+      summary: 'Create a new Wallet (optionally with given name and settings)'
+      description: 'Create a new Wallet (optionally with given name and settings)'
       parameters:
         - in: body
-          name: data
+          name: ''
           schema:
             $ref: '#/definitions/wallet_post'
       responses:
@@ -977,136 +447,513 @@ paths:
           description: ''
       tags:
         - wallet
+
   /api/wallet/{wallet}:
     parameters:
       - $ref: '#/parameters/walletParam'
     get:
-      security:
-        - Bearer: []
-      summary: Retrieve a Wallet.
-      description: Retrieve a Wallet.
+      summary: 'Retrieve a Wallet'
+      description: 'Retrieve a Wallet'
       responses:
         '200':
           description: ''
       tags:
         - wallet
     delete:
-      security:
-        - Bearer: []
-      summary: Delete a Wallet
-      description: Delete a Wallet
+      summary: 'Delete a Wallet'
+      description: 'Delete a Wallet'
       responses:
         '204':
           description: ''
       tags:
         - wallet
-  /api/endpoint:
-    post:
-      description: Agent endpoint
-      summary: Agent endpoint
+
+  /api/connectionoffer:
+    get:
+      summary: 'List all my connection offers'
+      description: 'List all my connection offers'
       parameters:
-        - in: body
-          name: data
-          schema:
-            properties:
-              type:
-                description: 'Message encryption type'
-                type: string
-                default: anon
-                enum:
-                  - anon
-                  - auth
-              target:
-                description: 'Reason for the message'
-                type: string
-                enum:
-                  - accept_connection
-              ref:
-                description: 'A reference value, e.g. nonce'
-                type: string
-              message:
-                description: 'Encrypted message string'
-                type: string
-              signature:
-                description: 'Message Signature'
-                type: string
-            required:
-              - target
-              - ref
-              - message
-              - signature
-            type: object
+        - $ref: '#/parameters/walletHeader'
       responses:
         '200':
           description: ''
       tags:
-        - endpoint
+        - connection
+    post:
+      summary: 'Create a new connection offer'
+      description: 'Create a new connection offer'
+      parameters:
+        - in: body
+          name: ''
+          schema:
+            $ref: '#/definitions/connectionoffer_post'
+      responses:
+        '201':
+          description: ''
+      tags:
+        - connection
+
+  /api/connectionoffer/{connectionOfferId}:
+    parameters:
+      - $ref: '#/parameters/walletHeader'
+      - in: path
+        name: connectionOfferId
+        description: connection offer _id
+        type: string
+        required: true
+    get:
+      summary: 'Retrieve a connection offer by _id'
+      description: 'Retrieve a connection offer by _id'
+      responses:
+        '200':
+          description: ''
+      tags:
+        - connection
+    delete:
+      summary: 'Delete a connection offer by _id'
+      description: 'Delete a connection offer by _id'
+      responses:
+        '204':
+          description: ''
+      tags:
+        - connection
+
+  /api/connectionrequest:
+    get:
+      summary: 'List all my connection requests'
+      description: 'List all my connection requests'
+      parameters:
+        - $ref: '#/parameters/walletHeader'
+      responses:
+        '200':
+          description: ''
+      tags:
+        - connection
+    post:
+      summary: 'Accept a connection offer and/or send a connection request'
+      description: 'Accept a connection offer and/or send a connection request'
+      parameters:
+        - in: body
+          name: ''
+          schema:
+            $ref: '#/definitions/connectionrequest_post'
+      responses:
+        '200':
+          description: 'Success'
+      tags:
+        - connection
+
+  /api/connectionrequest/{connectionRequestId}:
+    parameters:
+      - in: path
+        name: connectionRequestId
+        description: 'connection request _id'
+        type: string
+        required: true
+      - $ref: '#/parameters/walletHeader'
+    get:
+      summary: 'Retrieve a connection request by _id'
+      description: 'Retrieve a connection request by _id'
+      responses:
+        '200':
+          description: ''
+      tags:
+        - connection
+    delete:
+      summary: 'Delete a connection request by _id'
+      description: 'Delete a connection request by _id'
+      responses:
+        '204':
+          description: ''
+      tags:
+        - connection
+
+  /api/connectionresponse:
+    post:
+      summary: 'Accept a connection request and send a connection response'
+      description: 'Accept a connection request and send a connection response'
+      parameters:
+        - in: body
+          name: ''
+          schema:
+            $ref: '#/definitions/connectionresponse_post'
+      responses:
+        '200':
+          description: 'Success'
+      tags:
+        - connection
+
+  /api/schema:
+    get:
+      summary: 'List schemas'
+      description: 'List schemas'
+      responses:
+        '200':
+          description: ''
+      tags:
+        - schema
+    post:
+      summary: 'Create a Schema'
+      description: 'Create a Schema'
+      parameters:
+        - in: body
+          name: ''
+          schema:
+            $ref: '#/definitions/schema_post'
+      responses:
+        '201':
+          description: ''
+      tags:
+        - schema
+
+  /api/schema/{schemaid}:
+    parameters:
+      - description: 'A unique string value identifying this schema.'
+        in: path
+        name: schemaid
+        required: true
+        type: string
+      - $ref: '#/parameters/walletHeader'
+    get:
+      summary: 'Retrieve a schema'
+      description: 'Retrieve a schema'
+      responses:
+        '200':
+          description: ''
+      tags:
+        - schema
+
+  /api/credentialdef:
+    get:
+      summary: 'List credential definitions of wallet'
+      description: 'List credential definitions of wallet'
+      parameters:
+        - $ref: '#/parameters/walletHeader'
+      responses:
+        '200':
+          description: ''
+      tags:
+        - credential
+    post:
+      summary: 'Create a credential definition'
+      description: 'Create a credential definition'
+      parameters:
+        - in: body
+          name: ''
+          schema:
+            $ref: '#/definitions/credentialdef_post'
+      responses:
+        '201':
+          description: ''
+      tags:
+        - credential
+
+  /api/credentialdef/{creddef}:
+    parameters:
+      - description: A unique string value identifying this credential definition.
+        in: path
+        name: creddef
+        required: true
+        type: string
+      - $ref: '#/parameters/walletHeader'
+    get:
+      summary: 'Retrieve a credential definition from the ledger'
+      description: 'Retrieve a credential definition from the ledger'
+      responses:
+        '200':
+          description: ''
+      tags:
+        - credential
+    delete:
+      summary: 'Delete a credential definition'
+      description: 'Delete a credential definition'
+      responses:
+        '204':
+          description: ''
+      tags:
+        - credential
+
+  /api/credentialoffer:
+    post:
+      summary: 'Create a credential offer'
+      description: 'Create a credential offer'
+      parameters:
+        - in: body
+          name: ''
+          schema:
+            $ref: '#/definitions/credentialoffer_post'
+      responses:
+        '201':
+          description: ''
+      tags:
+        - credential
+
+  /api/credentialrequest:
+    post:
+      summary: 'Accept credential offer and create credential request'
+      description: 'Accept credential offer and create credential request'
+      parameters:
+        - in: body
+          name: ''
+          schema:
+            $ref: '#/definitions/credentialrequest_post'
+      responses:
+        '201':
+          description: ''
+      tags:
+        - credential
+
+  /api/credentialissue:
+    post:
+      summary: 'Issue a credential'
+      description: 'Issue a credential'
+      parameters:
+        - in: body
+          name: ''
+          schema:
+            $ref: '#/definitions/credentialissue_post'
+      responses:
+        '201':
+          description: ''
+      tags:
+        - credential
+
+  /api/credential/:
+    get:
+      summary: 'List all credentials of specific wallet (UNTESTED ENDPOINT)'
+      description: 'List all credentials of specific wallet (UNTESTED ENDPOINT)'
+      parameters:
+        - $ref: '#/parameters/walletHeader'
+        - in: query
+          name: schema
+          type: string
+          description: '(Optional) schemaId to filter credentials'
+        - in: query
+          name: schemaIssuerDid
+          type: string
+          description: '(Optional) schemaIssuerDid to filter credentials'
+        - in: query
+          name: schemaName
+          type: string
+          description: '(Optional) schemaName to filter credentials'
+        - in: query
+          name: schemaVersion
+          type: string
+          description: '(Optional) schemaVersion to filter credentials'
+        - in: query
+          name: issuerDid
+          type: string
+          description: '(Optional) issuerDid to filter credentials'
+        - in: query
+          name: credDefId
+          type: string
+          description: '(Optional) credDefId to filter credentials'
+      responses:
+        '200':
+          description: ''
+      tags:
+        - credential
+    post:
+      summary: 'Store a credential'
+      description: 'Store a credential'
+      parameters:
+        - in: body
+          name: ''
+          schema:
+            $ref: '#/definitions/credential_post'
+      responses:
+        '201':
+          description: ''
+      tags:
+        - credential
+
+  /api/credential/{id}:
+    parameters:
+      - description: 'A unique string value identifying this credential.'
+        in: path
+        name: id
+        required: true
+        type: string
+      - $ref: '#/parameters/walletHeader'
+    get:
+      summary: 'Retrieve a credential'
+      description: 'Retrieve a credential'
+      responses:
+        '200':
+          description: ''
+      tags:
+        - credential
+
+  /api/proofrequest:
+    post:
+      summary: 'Create a proof request'
+      description: 'Create a proof request'
+      parameters:
+        - in: body
+          name: ''
+          schema:
+            $ref: '#/definitions/proofrequest_post'
+      responses:
+        '201':
+          description: ''
+      tags:
+        - proof
+
+  /api/proof:
+    post:
+      summary: 'Create a Proof'
+      description: 'Create a Proof'
+      parameters:
+        - in: body
+          name: ''
+          schema:
+            $ref: '#/definitions/proof_post'
+      responses:
+        '201':
+          description: ''
+      tags:
+        - proof
+
+  /api/proofverification:
+    post:
+      summary: 'Create a proof verification'
+      description: 'Create a proof verification'
+      parameters:
+        - in: body
+          name: ''
+          schema:
+            $ref: '#/definitions/proofverification_post'
+      responses:
+        '200':
+          description: ''
+      tags:
+        - proof
+
   /api/transactions:
     get:
-      security:
-        - Bearer: []
       description: 'Get ledger transactions from-to indexes'
       parameters:
-        - in: header
-          name: wallet
-          description: A unique string value identifying a wallet.
-          required: false
-          type: string
+        - $ref: '#/parameters/walletHeader'
         - in: query
           name: from
           type: number
-          description: Sequence Number of first transaction to query (greater than 0)
+          description: 'Sequence Number of first transaction to query (greater than 0)'
+          required: true
         - in: query
           name: to
           type: number
-          description: Sequence Number of last transaction to query (greater than from index)
+          description: 'Sequence Number of last transaction to query (greater than from index)'
+          required: true
         - in: query
           name: type
           type: string
           description: 'Ledger Type: pool, domain, config. By default is DOMAIN'
-      required:
-        - from
-        - to
       responses:
         '200':
           description: 'Returns list of transactions'
       tags:
-        - transactions
+        - transaction
+
   /api/nym:
     post:
-      security:
-        - Bearer: []
-      description: Send Nym request to the ledger
-      summary: Send Nym request to the ledger
+      description: 'Send Nym request to the ledger'
+      summary: 'Send Nym request to the ledger'
       parameters:
         - in: body
-          type: object
-          name: data
+          name: ''
           schema:
             $ref: '#/definitions/nym_post'
       responses:
         '200':
           description: ''
       tags:
-        - nym
+        - transaction
+
   /api/nym/{did}:
     get:
-      security:
-        - Bearer: []
-      description: Retrieve Nym from ledger
-      summary: Retrieve Nym from ledger
+      description: 'Retrieve Nym from ledger'
+      summary: 'Retrieve Nym from ledger'
       parameters:
-        - in: header
-          name: wallet
-          description: A unique string value identifying a wallet.
-          required: false
-          type: string
+        - $ref: '#/parameters/walletHeader'
         - in: path
           name: did
+          description: 'Did of NYM record to retrieve'
           type: string
           required: true
       responses:
         '200':
           description: ''
       tags:
-        - nym
+        - transaction
+
+  /indy/:
+    post:
+      summary: 'Agent Message Endpoint'
+      description: 'Agent Message Endpoint'
+      security: []
+      parameters:
+        - in: body
+          name: ''
+          schema:
+            $ref: '#/definitions/indy_post'
+      responses:
+        '202':
+          description: ''
+      tags:
+        - message
+
+  /api/message/:
+    get:
+      summary: 'List messages'
+      description: 'List messages'
+      parameters:
+        - $ref: '#/parameters/walletHeader'
+        - in: query
+          name: type
+          description: '(Optional) A single message type to filter by'
+          type: string
+      responses:
+        '200':
+          description: ''
+      tags:
+        - message
+    post:
+      summary: 'Send message'
+      description: 'Send message'
+      parameters:
+        - in: body
+          name: ''
+          schema:
+            $ref: '#/definitions/message_post'
+      responses:
+        '200':
+          description: ''
+        '202':
+          description: ''
+      tags:
+        - message
+
+  /api/message/{messageId}:
+    parameters:
+      - $ref: '#/parameters/walletHeader'
+      - in: path
+        name: messageId
+        description: 'A unique string value identifying a message.'
+        required: true
+        type: string
+    get:
+      summary: 'Retrieve a message'
+      description: 'Retrieve a message'
+      responses:
+        '200':
+          description: ''
+      tags:
+        - message
+    delete:
+      summary: 'Delete a message'
+      description: 'Delete a message'
+      responses:
+        '204':
+          description: ''
+      tags:
+        - message
