@@ -1,0 +1,63 @@
+version: '3'
+
+networks:
+  indy-network:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: ${API_SUBNET-172.16.0.0/24}
+
+
+services:
+  pool:
+    image: idchain/testpool
+    ports:
+      - ${POOL_PORTS-9701-9708}:${POOL_PORTS-9701-9708}
+    environment:
+      - POOL_NAME
+      - POOL_IP
+      - PORTSTART
+    networks:
+      indy-network:
+        ipv4_address: ${POOL_IP}
+
+
+  mongodb:
+    image: mongo:4
+    command: --smallfiles
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${DB_USER}
+      - MONGO_INITDB_ROOT_PASSWORD=${DB_PASSWORD}
+    network_mode : "host"
+
+  api:
+    build:
+      context: .
+    image: idchain/api
+    container_name: idchain-api
+    environment:
+      - APP_HOST
+      - APP_PORT
+      - APP_ENDPOINT
+      - JWT_SECRET
+      - WALLETCACHE_WAIT_TIME
+      - WALLETCACHE_MAX_RETRIES
+      - DB_HOST
+      - DB_PORT
+      - DB_USER
+      - DB_PASSWORD
+      - SALTROUNDS
+      - POOL_IP
+      - POOL_NAME
+      - GENESIS_TXN
+    ports:
+      - ${APP_PORT}:${APP_PORT}
+    depends_on:
+      - mongodb
+      - pool
+    network_mode: "host"
+
+
+
+
