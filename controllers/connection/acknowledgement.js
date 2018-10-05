@@ -44,7 +44,8 @@ module.exports = {
         const pairwise = await lib.sdk.getPairwise(wallet.handle, message.id);
         const myVk = await lib.sdk.keyForLocalDid(wallet.handle, pairwise['my_did']);
         const ackMessage = await lib.crypto.authDecrypt(wallet.handle, myVk, message.message);
-        if (ackMessage !== 'success') {
+        const compareMessage = ackMessage.toLowerCase();
+        if (compareMessage !== 'success') {
             log.warn('invalid message string in connection acknowledgement %s', ackMessage);
             throw APIResult.badRequest('invalid message string in connection acknowledgement');
         }
