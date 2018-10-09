@@ -1,6 +1,38 @@
+const lib = require('../../lib');
+
 module.exports = {
     offer: require('./offer'),
     request: require('./request'),
     response: require('./response'),
-    acknowledgement: require('./acknowledgement')
+    acknowledgement: require('./acknowledgement'),
+
+    /**
+     * Retrieve connection record + status from pairwise if available,
+     * which together represent connection state
+     * @param {Wallet} wallet
+     * @param {string} myDid
+     * @return {Promise<object>} meta
+     */
+    async retrieve(wallet, myDid) {
+        const record = await lib.record.getWalletRecordJSON(wallet.handle, lib.record.types.connection, myDid);
+        let result = null;
+
+        if (record) {
+            if (record.theirDid && (await lib.sdk.isPairwiseExists(wallet.handle, record.theirDid))) {
+                const pairwise = await lib.sdk.getPairwise(wallet.handle, record.theirDid);
+                const meta = JSON.parse(pairwise.metadata);
+                result = {
+                    theirDid: record.theirDid,
+                    acknowledged: meta.acknowledged
+                };
+            } else {
+                result = {
+                    theirDid: record.theirDid || '',
+                    acknowledged: false
+                };
+            }
+        }
+
+        return result;
+    }
 };

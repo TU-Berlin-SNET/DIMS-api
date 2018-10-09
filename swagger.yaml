@@ -468,6 +468,25 @@ paths:
       tags:
         - wallet
 
+  /api/connection/{myDid}:
+    get:
+      summary: 'Retrieve a (pending) connection'
+      description: 'Retrieve a (pending) connection'
+      parameters:
+        - $ref: '#/parameters/walletHeader'
+      responses:
+        '200':
+          description: ''
+          schema:
+            type: object
+            properties:
+              theirDid:
+                type: string
+                description: 'their pairwise did for this connection, may be empty'
+              acknowledged:
+                type: boolean
+                description: 'boolean value indicating if connection is acknowledged'
+
   /api/connectionoffer:
     get:
       summary: 'List all my connection offers'

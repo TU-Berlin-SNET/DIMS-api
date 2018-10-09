@@ -51,12 +51,30 @@ module.exports = {
         meta.theirEndpointDid = theirEndpointDid;
         meta.theirEndpointVk = theirEndpointVk;
         meta.theirEndpoint = theirEndpoint;
+        meta.acknowledged = false;
 
-        // clean up: remove the request
-        await request.remove();
+        let myDid;
+        let myVk;
+        // if there is no connection record (and myDid)
+        if (!meta.myDid) {
+            // create did, vk, and record
+            [myDid, myVk] = await lib.sdk.createAndStoreMyDid(wallet.handle, {});
+            await lib.record.addWalletRecord(wallet.handle, lib.record.types.connection, myDid, { theirDid: theirDid });
+        } else {
+            // else retrieve did and vk
+            myDid = meta.myDid;
+            myVk = await lib.sdk.keyForLocalDid(wallet.handle, myDid);
 
-        // create my pairwise did, store their did and create a pairwise
-        const [myDid, myVk] = await lib.sdk.createAndStoreMyDid(wallet.handle, {});
+            // delete meta.myDid so we do not store redundant information in pairwise meta
+            delete meta.myDid;
+
+            // update the record value
+            await lib.record.updateWalletRecordValue(wallet.handle, lib.record.types.connection, myDid, {
+                theirDid: theirDid
+            });
+        }
+
+        // store their did and create pairwise
         await lib.connection.createRelationship(wallet.handle, myDid, theirDid, theirVk, meta);
 
         // create the connection response, anoncrypt inner message for pairwise recipient
@@ -69,7 +87,10 @@ module.exports = {
             Object.assign({}, response, { message: encryptedMessage })
         );
 
-        // return unencrypted connection response to called
+        // clean up: remove the request
+        await request.remove();
+
+        // return unencrypted connection response to caller
         // connection response is not stored in the database
         // because now there is a pairwise
         return response;
@@ -87,6 +108,8 @@ module.exports = {
             type: lib.message.messageTypes.CONNECTIONREQUEST,
             wallet: wallet.id
         }).exec();
+        // nonce is already checked through query
+
         // we can not accept a response to a request whose recipient we are
         if (!request || request.recipientDid === wallet.ownDid) {
             throw APIResult.badRequest('no applicable connection request found');
@@ -105,10 +128,17 @@ module.exports = {
             pool,
             response.did,
             response.verkey,
-            true
+            request.meta.theirEndpoint
         );
 
-        // create the relationship, e.g. store the pairwise
+        // update the record value
+        await lib.record.updateWalletRecordValue(wallet.handle, lib.record.types.connection, myDid, {
+            theirDid: theirDid
+        });
+
+        // create the relationship, e.g. store their did and create a pairwise
+        delete request.meta.myDid;
+        request.meta.acknowledged = true;
         await lib.connection.createRelationship(wallet.handle, myDid, theirDid, theirVk, request.meta);
 
         return await ConnectionAcknowledgement.create(

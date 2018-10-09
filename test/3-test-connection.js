@@ -83,11 +83,39 @@ describe('Connection', function() {
                 }
             })
             .expect(201);
-        expect(res.body).to.have.all.keys('id', 'type', 'message');
-        expect(res.body.message).to.have.all.keys('did', 'verkey', 'endpoint', 'nonce', 'data');
-        expect(res.body.message).to.not.have.key('meta');
-        expect(res.body.id).to.equal(res.body.message.nonce);
+        expect(res.body).to.contain.keys(
+            'id',
+            'wallet',
+            'messageId',
+            'type',
+            'senderDid',
+            'recipientDid',
+            'message',
+            'meta'
+        );
+        expect(res.body.message).to.contain.keys('id', 'type', 'message');
+        expect(res.body.message.message).to.contain.keys('did', 'verkey', 'endpoint', 'nonce', 'data');
+        expect(res.body.meta).to.have.property('myDid');
+        expect(res.body.messageId).to.equal(res.body.message.message.nonce);
         connectionOffer = res.body;
+    });
+
+    it('GET /api/connection/:myDid should return proper status for created connectionOffer', async function() {
+        const res = await agent
+            .get('/api/connection/' + connectionOffer.meta.myDid)
+            .set(bothHeaders)
+            .set({ Authorization: steward.token })
+            .expect(200);
+        expect(res.body).to.have.property('theirDid', '');
+        expect(res.body).to.have.property('acknowledged', false);
+    });
+
+    it('GET /api/connection/:myDid should return 404 if did does not exist', async function() {
+        await agent
+            .get('/api/connection/0000DoesNotExist')
+            .set(bothHeaders)
+            .set({ Authorization: steward.token })
+            .expect(404);
     });
 
     it('POST /api/connectionoffer should return proper connection offer even with empty body', async function() {
@@ -97,10 +125,10 @@ describe('Connection', function() {
             .set({ Authorization: steward.token })
             .send()
             .expect(201);
-        expect(res.body).to.have.all.keys('id', 'type', 'message');
-        expect(res.body.message).to.have.all.keys('did', 'verkey', 'endpoint', 'nonce');
-        expect(res.body.id).to.equal(res.body.message.nonce);
-        connectionOfferToDelete = res.body;
+        expect(res.body.message).to.contain.keys('id', 'type', 'message');
+        expect(res.body.message.message).to.contain.keys('did', 'verkey', 'endpoint', 'nonce');
+        expect(res.body.messageId).to.equal(res.body.message.message.nonce);
+        connectionOfferToDelete = res.body.message;
     });
 
     it('GET /api/connectionoffer should list connection offers', async function() {
@@ -130,7 +158,7 @@ describe('Connection', function() {
             .set({ Authorization: user.token })
             .send({
                 endpoint: process.env.APP_ENDPOINT,
-                connectionOffer: connectionOffer
+                connectionOffer: connectionOffer.message
             })
             .expect(200);
 
@@ -150,6 +178,16 @@ describe('Connection', function() {
         expect(JSON.parse(pairwise[0].metadata))
             .to.have.property('metaId')
             .that.equals('test');
+    });
+
+    it('GET /api/connection/:myDid should return proper status for accepted connectionOffer / established connection', async function() {
+        const res = await agent
+            .get('/api/connection/' + connectionOffer.meta.myDid)
+            .set(bothHeaders)
+            .set({ Authorization: steward.token })
+            .expect(200);
+        expect(res.body).to.have.property('theirDid').that.is.not.empty;
+        expect(res.body).to.have.property('acknowledged', true);
     });
 
     it('POST /api/connectionrequest with no connection offer should send connection request', async function() {

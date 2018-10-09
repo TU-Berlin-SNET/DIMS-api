@@ -76,7 +76,7 @@ async function connect(user1, user2) {
         .set({ Authorization: user2.token })
         .send({
             endpoint: process.env.APP_ENDPOINT,
-            connectionOffer: offer.body
+            connectionOffer: offer.body.message
         })
         .expect(200);
     const res = await agent

@@ -47,11 +47,6 @@ module.exports = {
             (connectionOffer && connectionOffer.message.endpoint) || theirEndpoint
         );
         const offerNonce = (connectionOffer && connectionOffer.message.nonce) || null;
-        const meta = {
-            theirEndpointDid: theirEndpointDid,
-            theirEndpointVk: theirEndpointVk,
-            theirEndpoint: theirEndpointAddress
-        };
         // create my pairwise did and the connection request
         const [myDid, myVk] = await lib.sdk.createAndStoreMyDid(wallet.handle, {});
         const [ownDid, ownVk] = await wallet.getPrimaryDid();
@@ -63,6 +58,12 @@ module.exports = {
             myEndpoint,
             offerNonce
         );
+        const meta = {
+            myDid: myDid,
+            theirEndpointDid: theirEndpointDid,
+            theirEndpointVk: theirEndpointVk,
+            theirEndpoint: theirEndpointAddress
+        };
         const message = await Message.store(
             wallet.id,
             connectionRequest.message.nonce,
@@ -72,6 +73,7 @@ module.exports = {
             connectionRequest,
             meta
         );
+        await lib.record.addWalletRecord(wallet.handle, lib.record.types.connection, myDid, { theirDid: '' });
         await lib.message.sendAnoncryptMessage(theirEndpointVk, theirEndpointAddress, connectionRequest);
         return message;
     },
@@ -112,6 +114,7 @@ module.exports = {
             type: lib.message.messageTypes.CONNECTIONOFFER,
             wallet: wallet.id
         }).exec();
+        // the nonce is used to query, so no additional check is needed
 
         // we must be the sender of the connection request
         if (offer && offer.senderDid !== wallet.ownDid) {
@@ -125,14 +128,13 @@ module.exports = {
             message.type,
             message.message.did,
             wallet.ownDid,
-            message
+            message,
+            offer ? offer.meta : {}
         );
 
         // and if there is a corresponding connection offer
         // automatically accept it
         if (offer) {
-            request.meta = offer.meta;
-            await request.save();
             await ConnectionResponse.create(wallet, request);
             await offer.remove();
         }
