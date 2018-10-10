@@ -19,11 +19,10 @@ module.exports = {
 
         if (record) {
             if (record.theirDid && (await lib.sdk.isPairwiseExists(wallet.handle, record.theirDid))) {
-                const pairwise = await lib.sdk.getPairwise(wallet.handle, record.theirDid);
-                const meta = JSON.parse(pairwise.metadata);
+                const pairwise = await lib.pairwise.getPairwise(wallet.handle, record.theirDid);
                 result = {
                     theirDid: record.theirDid,
-                    acknowledged: meta.acknowledged
+                    acknowledged: pairwise.metadata.acknowledged
                 };
             } else {
                 result = {
