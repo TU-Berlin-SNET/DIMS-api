@@ -100,14 +100,12 @@ describe('Connection', function() {
         connectionOffer = res.body;
     });
 
-    it('GET /api/connection/:myDid should return proper status for created connectionOffer', async function() {
-        const res = await agent
+    it('GET /api/connection/:myDid should return 404 if pairwise does not exist yet', async function() {
+        await agent
             .get('/api/connection/' + connectionOffer.meta.myDid)
             .set(bothHeaders)
             .set({ Authorization: steward.token })
-            .expect(200);
-        expect(res.body).to.have.property('theirDid', '');
-        expect(res.body).to.have.property('acknowledged', false);
+            .expect(404);
     });
 
     it('GET /api/connection/:myDid should return 404 if did does not exist', async function() {

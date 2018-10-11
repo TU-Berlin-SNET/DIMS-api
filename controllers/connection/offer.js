@@ -38,7 +38,6 @@ module.exports = {
         if (role && typeof role === 'string') meta.role = role;
         meta.myDid = myDid;
         const message = await Message.store(wallet.id, offer.id, offer.type, wallet.ownDid, null, offer, meta);
-        await lib.record.addWalletRecord(wallet.handle, lib.record.types.connection, myDid, { theirDid: '' });
         return message;
     },
 

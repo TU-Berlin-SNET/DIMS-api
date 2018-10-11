@@ -7,31 +7,18 @@ module.exports = {
     acknowledgement: require('./acknowledgement'),
 
     /**
-     * Retrieve connection record + status from pairwise if available,
-     * which together represent connection state
+     * Filter pairwises with myDid and return first object
      * @param {Wallet} wallet
      * @param {string} myDid
-     * @return {Promise<object>} meta
+     * @return {Promise<object>} pairwise or null
      */
     async retrieve(wallet, myDid) {
-        const record = await lib.record.getWalletRecordJSON(wallet.handle, lib.record.types.connection, myDid);
-        let result = null;
-
-        if (record) {
-            if (record.theirDid && (await lib.sdk.isPairwiseExists(wallet.handle, record.theirDid))) {
-                const pairwise = await lib.pairwise.getPairwise(wallet.handle, record.theirDid);
-                result = {
-                    theirDid: record.theirDid,
-                    acknowledged: pairwise.metadata.acknowledged
-                };
-            } else {
-                result = {
-                    theirDid: record.theirDid || '',
-                    acknowledged: false
-                };
-            }
+        const pairwises = (await lib.sdk.listPairwise(wallet.handle)).filter(v => v['my_did'] === myDid);
+        if (pairwises.length === 0) {
+            return null;
         }
-
-        return result;
+        const pairwise = pairwises[0];
+        pairwise.metadata = pairwise.metadata ? JSON.parse(pairwise.metadata) : {};
+        return pairwise;
     }
 };

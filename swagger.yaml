@@ -480,12 +480,19 @@ paths:
           schema:
             type: object
             properties:
+              myDid:
+                type: string
+                description: 'my pairwise did for this connection'
               theirDid:
                 type: string
-                description: 'their pairwise did for this connection, may be empty'
+                description: 'their pairwise did for this connection'
               acknowledged:
                 type: boolean
                 description: 'boolean value indicating if connection is acknowledged'
+        '404':
+          description: 'no matching connection found'
+      tags:
+        - connection
 
   /api/connectionoffer:
     get:

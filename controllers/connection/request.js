@@ -73,7 +73,6 @@ module.exports = {
             connectionRequest,
             meta
         );
-        await lib.record.addWalletRecord(wallet.handle, lib.record.types.connection, myDid, { theirDid: '' });
         await lib.message.sendAnoncryptMessage(theirEndpointVk, theirEndpointAddress, connectionRequest);
         return message;
     },

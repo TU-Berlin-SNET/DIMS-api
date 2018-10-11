@@ -53,26 +53,13 @@ module.exports = {
         meta.theirEndpoint = theirEndpoint;
         meta.acknowledged = false;
 
-        let myDid;
-        let myVk;
-        // if there is no connection record (and myDid)
-        if (!meta.myDid) {
-            // create did, vk, and record
-            [myDid, myVk] = await lib.sdk.createAndStoreMyDid(wallet.handle, {});
-            await lib.record.addWalletRecord(wallet.handle, lib.record.types.connection, myDid, { theirDid: theirDid });
-        } else {
-            // else retrieve did and vk
-            myDid = meta.myDid;
-            myVk = await lib.sdk.keyForLocalDid(wallet.handle, myDid);
+        // create or retrieve myDid and myVk
+        const [myDid, myVk] = !meta.myDid
+            ? await lib.sdk.createAndStoreMyDid(wallet.handle, {})
+            : [meta.myDid, await lib.sdk.keyForLocalDid(wallet.handle, meta.myDid)];
 
-            // delete meta.myDid so we do not store redundant information in pairwise meta
-            delete meta.myDid;
-
-            // update the record value
-            await lib.record.updateWalletRecordValue(wallet.handle, lib.record.types.connection, myDid, {
-                theirDid: theirDid
-            });
-        }
+        // delete meta.myDid so we do not store redundant information in pairwise meta
+        delete meta.myDid;
 
         // store their did and create pairwise
         await lib.connection.createRelationship(wallet.handle, myDid, theirDid, theirVk, meta);
@@ -80,6 +67,7 @@ module.exports = {
         // create the connection response, anoncrypt inner message for pairwise recipient
         const response = await lib.connection.createConnectionResponse(myDid, myVk, theirDid, requestNonce);
         const encryptedMessage = await lib.crypto.anonCryptJSON(theirVk, response.message);
+
         // anoncrypt whole message for endpoint and send it
         await lib.message.sendAnoncryptMessage(
             theirEndpointVk,
@@ -130,11 +118,6 @@ module.exports = {
             response.verkey,
             request.meta.theirEndpoint
         );
-
-        // update the record value
-        await lib.record.updateWalletRecordValue(wallet.handle, lib.record.types.connection, myDid, {
-            theirDid: theirDid
-        });
 
         // create the relationship, e.g. store their did and create a pairwise
         delete request.meta.myDid;

@@ -12,8 +12,17 @@ const APIResult = require('../api-result');
 router.route('/:myDid').get(
     wrap(async (req, res, next) => {
         const data = await controller.retrieve(req.wallet, req.params.myDid);
-        res.locals.result = data ? APIResult.success(data) : APIResult.notFound();
-        next(res.locals.result);
+        if (data) {
+            next(
+                APIResult.success({
+                    myDid: data['my_did'],
+                    theirDid: data['their_did'],
+                    acknowledged: data.metadata.acknowledged
+                })
+            );
+        } else {
+            next(APIResult.notFound('no matching connection found'));
+        }
     })
 );
 
