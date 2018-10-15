@@ -51,17 +51,23 @@ module.exports = {
         meta.theirEndpointDid = theirEndpointDid;
         meta.theirEndpointVk = theirEndpointVk;
         meta.theirEndpoint = theirEndpoint;
+        meta.acknowledged = false;
 
-        // clean up: remove the request
-        await request.remove();
+        // create or retrieve myDid and myVk
+        const [myDid, myVk] = !meta.myDid
+            ? await lib.sdk.createAndStoreMyDid(wallet.handle, {})
+            : [meta.myDid, await lib.sdk.keyForLocalDid(wallet.handle, meta.myDid)];
 
-        // create my pairwise did, store their did and create a pairwise
-        const [myDid, myVk] = await lib.sdk.createAndStoreMyDid(wallet.handle, {});
+        // delete meta.myDid so we do not store redundant information in pairwise meta
+        delete meta.myDid;
+
+        // store their did and create pairwise
         await lib.connection.createRelationship(wallet.handle, myDid, theirDid, theirVk, meta);
 
         // create the connection response, anoncrypt inner message for pairwise recipient
         const response = await lib.connection.createConnectionResponse(myDid, myVk, theirDid, requestNonce);
         const encryptedMessage = await lib.crypto.anonCryptJSON(theirVk, response.message);
+
         // anoncrypt whole message for endpoint and send it
         await lib.message.sendAnoncryptMessage(
             theirEndpointVk,
@@ -69,7 +75,10 @@ module.exports = {
             Object.assign({}, response, { message: encryptedMessage })
         );
 
-        // return unencrypted connection response to called
+        // clean up: remove the request
+        await request.remove();
+
+        // return unencrypted connection response to caller
         // connection response is not stored in the database
         // because now there is a pairwise
         return response;
@@ -87,6 +96,8 @@ module.exports = {
             type: lib.message.messageTypes.CONNECTIONREQUEST,
             wallet: wallet.id
         }).exec();
+        // nonce is already checked through query
+
         // we can not accept a response to a request whose recipient we are
         if (!request || request.recipientDid === wallet.ownDid) {
             throw APIResult.badRequest('no applicable connection request found');
@@ -105,10 +116,12 @@ module.exports = {
             pool,
             response.did,
             response.verkey,
-            true
+            request.meta.theirEndpoint
         );
 
-        // create the relationship, e.g. store the pairwise
+        // create the relationship, e.g. store their did and create a pairwise
+        delete request.meta.myDid;
+        request.meta.acknowledged = true;
         await lib.connection.createRelationship(wallet.handle, myDid, theirDid, theirVk, request.meta);
 
         return await ConnectionAcknowledgement.create(

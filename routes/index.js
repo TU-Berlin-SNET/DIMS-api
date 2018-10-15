@@ -21,6 +21,7 @@ const nym = require('./nym');
 const connectionOffer = require('./connection-offer');
 const connectionRequest = require('./connection-request');
 const connectionResponse = require('./connection-response');
+const connection = require('./connection');
 
 router
     .route('/user')
@@ -56,6 +57,8 @@ router.use('/connectionoffer', connectionOffer);
 router.use('/connectionrequest', connectionRequest);
 
 router.use('/connectionresponse', connectionResponse);
+
+router.use('/connection', connection);
 
 router
     .route('/schema')

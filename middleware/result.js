@@ -6,6 +6,7 @@
 const log = require('../log').log;
 
 const internalServerError = 500;
+const notFound = 404;
 const badRequest = 400;
 const indyCodes = {
     // Caller passed invalid value as param 1 (null, invalid json and etc..)
@@ -91,7 +92,7 @@ const indyCodes = {
     211: internalServerError,
 
     // Requested wallet item not found
-    212: badRequest,
+    212: notFound,
 
     // Returned if wallet's add_record operation is used with record name that already exists
     213: badRequest,
@@ -174,8 +175,8 @@ module.exports = {
     },
     errorMiddleware: (err, req, res, next) => {
         log.error(err);
-        if (err.indyCode && indyCodes[err.indyCode]) {
-            err.status = indyCodes[err.indyCode];
+        if (err.name === 'IndyError' && err.message) {
+            err.status = indyCodes[Number(err.message)];
         }
         return res.status(err.status || 500).json({ message: err.message });
     }

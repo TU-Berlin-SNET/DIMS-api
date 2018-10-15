@@ -38,10 +38,11 @@ module.exports = {
      * @param {object} message connection acknowledgement
      */
     async handle(wallet, message) {
-        if (!(await lib.sdk.isPairwiseExists(wallet.handle, message.id))) {
+        const theirDid = message.id;
+        if (!(await lib.sdk.isPairwiseExists(wallet.handle, theirDid))) {
             throw APIResult.badRequest('unknown sender did');
         }
-        const pairwise = await lib.sdk.getPairwise(wallet.handle, message.id);
+        const pairwise = await lib.pairwise.getPairwise(wallet.handle, theirDid);
         const myVk = await lib.sdk.keyForLocalDid(wallet.handle, pairwise['my_did']);
         const ackMessage = await lib.crypto.authDecrypt(wallet.handle, myVk, message.message);
         const compareMessage = ackMessage.toLowerCase();
@@ -49,5 +50,7 @@ module.exports = {
             log.warn('invalid message string in connection acknowledgement %s', ackMessage);
             throw APIResult.badRequest('invalid message string in connection acknowledgement');
         }
+        pairwise.metadata.acknowledged = true;
+        await lib.pairwise.setPairwiseMetadata(wallet.handle, theirDid, pairwise.metadata);
     }
 };

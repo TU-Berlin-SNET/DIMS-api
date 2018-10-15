@@ -468,6 +468,38 @@ paths:
       tags:
         - wallet
 
+  /api/connection/{myDid}:
+    parameters:
+      - name: myDid
+        in: path
+        description: 'A unique did used in a pairwise'
+        type: string
+        required: true
+    get:
+      summary: 'Retrieve a (pending) connection'
+      description: 'Retrieve a (pending) connection'
+      parameters:
+        - $ref: '#/parameters/walletHeader'
+      responses:
+        '200':
+          description: ''
+          schema:
+            type: object
+            properties:
+              myDid:
+                type: string
+                description: 'my pairwise did for this connection'
+              theirDid:
+                type: string
+                description: 'their pairwise did for this connection'
+              acknowledged:
+                type: boolean
+                description: 'boolean value indicating if connection is acknowledged'
+        '404':
+          description: 'no matching connection found'
+      tags:
+        - connection
+
   /api/connectionoffer:
     get:
       summary: 'List all my connection offers'
