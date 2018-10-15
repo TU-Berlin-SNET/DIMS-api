@@ -10,7 +10,7 @@ networks:
 
 services:
   pool:
-    image: idchain/test-pool
+    image: idchain/testpool
     ports:
       - ${POOL_PORTS-9701-9708}:${POOL_PORTS-9701-9708}
     environment:
@@ -58,3 +58,4 @@ services:
     networks:
       indy-network:
         ipv4_address: ${APP_HOST}
+
