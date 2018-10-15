@@ -469,6 +469,12 @@ paths:
         - wallet
 
   /api/connection/{myDid}:
+    parameters:
+      - name: myDid
+        in: path
+        description: 'A unique did used in a pairwise'
+        type: string
+        required: true
     get:
       summary: 'Retrieve a (pending) connection'
       description: 'Retrieve a (pending) connection'
