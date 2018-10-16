@@ -356,7 +356,7 @@ paths:
       security: []
       parameters:
         - in: body
-          name: ''
+          name: data
           schema:
             $ref: '#/definitions/login_post'
       responses:
@@ -369,9 +369,10 @@ paths:
     post:
       summary: 'Register a new user'
       description: 'Register a new user'
+      security: []
       parameters:
         - in: body
-          name: ''
+          name: data
           schema:
             $ref: '#/definitions/user_post'
       responses:
@@ -406,7 +407,7 @@ paths:
       description: 'Update a User (at least one of the properties must be provided)'
       parameters:
         - in: body
-          name: ''
+          name: data
           schema:
             $ref: '#/definitions/user_put'
       responses:
@@ -439,7 +440,7 @@ paths:
       description: 'Create a new Wallet (optionally with given name and settings)'
       parameters:
         - in: body
-          name: ''
+          name: data
           schema:
             $ref: '#/definitions/wallet_post'
       responses:
@@ -516,7 +517,7 @@ paths:
       description: 'Create a new connection offer'
       parameters:
         - in: body
-          name: ''
+          name: data
           schema:
             $ref: '#/definitions/connectionoffer_post'
       responses:
@@ -566,7 +567,7 @@ paths:
       description: 'Accept a connection offer and/or send a connection request'
       parameters:
         - in: body
-          name: ''
+          name: data
           schema:
             $ref: '#/definitions/connectionrequest_post'
       responses:
@@ -606,7 +607,7 @@ paths:
       description: 'Accept a connection request and send a connection response'
       parameters:
         - in: body
-          name: ''
+          name: data
           schema:
             $ref: '#/definitions/connectionresponse_post'
       responses:
@@ -629,7 +630,7 @@ paths:
       description: 'Create a Schema'
       parameters:
         - in: body
-          name: ''
+          name: data
           schema:
             $ref: '#/definitions/schema_post'
       responses:
@@ -671,7 +672,7 @@ paths:
       description: 'Create a credential definition'
       parameters:
         - in: body
-          name: ''
+          name: data
           schema:
             $ref: '#/definitions/credentialdef_post'
       responses:
@@ -711,7 +712,7 @@ paths:
       description: 'Create a credential offer'
       parameters:
         - in: body
-          name: ''
+          name: data
           schema:
             $ref: '#/definitions/credentialoffer_post'
       responses:
@@ -726,7 +727,7 @@ paths:
       description: 'Accept credential offer and create credential request'
       parameters:
         - in: body
-          name: ''
+          name: data
           schema:
             $ref: '#/definitions/credentialrequest_post'
       responses:
@@ -741,7 +742,7 @@ paths:
       description: 'Issue a credential'
       parameters:
         - in: body
-          name: ''
+          name: data
           schema:
             $ref: '#/definitions/credentialissue_post'
       responses:
@@ -790,7 +791,7 @@ paths:
       description: 'Store a credential'
       parameters:
         - in: body
-          name: ''
+          name: data
           schema:
             $ref: '#/definitions/credential_post'
       responses:
@@ -822,7 +823,7 @@ paths:
       description: 'Create a proof request'
       parameters:
         - in: body
-          name: ''
+          name: data
           schema:
             $ref: '#/definitions/proofrequest_post'
       responses:
@@ -837,7 +838,7 @@ paths:
       description: 'Create a Proof'
       parameters:
         - in: body
-          name: ''
+          name: data
           schema:
             $ref: '#/definitions/proof_post'
       responses:
@@ -852,7 +853,7 @@ paths:
       description: 'Create a proof verification'
       parameters:
         - in: body
-          name: ''
+          name: data
           schema:
             $ref: '#/definitions/proofverification_post'
       responses:
@@ -892,7 +893,7 @@ paths:
       summary: 'Send Nym request to the ledger'
       parameters:
         - in: body
-          name: ''
+          name: data
           schema:
             $ref: '#/definitions/nym_post'
       responses:
@@ -925,7 +926,7 @@ paths:
       security: []
       parameters:
         - in: body
-          name: ''
+          name: data
           schema:
             $ref: '#/definitions/indy_post'
       responses:
@@ -954,7 +955,7 @@ paths:
       description: 'Send message'
       parameters:
         - in: body
-          name: ''
+          name: data
           schema:
             $ref: '#/definitions/message_post'
       responses:
