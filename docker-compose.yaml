@@ -50,6 +50,8 @@ services:
       - POOL_IP
       - POOL_NAME
       - GENESIS_TXN
+      - LOG_LEVEL
+      - RUST_LOG
     ports:
       - ${APP_PORT}:${APP_PORT}
     depends_on:
@@ -58,4 +60,3 @@ services:
     networks:
       indy-network:
         ipv4_address: ${APP_HOST}
-
