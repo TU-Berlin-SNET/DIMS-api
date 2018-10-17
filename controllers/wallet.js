@@ -17,7 +17,7 @@ module.exports = {
             ]
         }).exec();
         // FIXME replace with mongoose select call
-        next(APIResult.created(w.map(v => v.toMinObject())));
+        next(APIResult.success(w.map(v => v.toMinObject())));
     }),
 
     create: wrap(async (req, res, next) => {
@@ -53,26 +53,26 @@ module.exports = {
             owner: user._id,
             credentials: data.credentials
         });
-        let handle = -1;
 
         try {
             await lib.sdk.createWallet(wallet.config, wallet.credentials);
-            handle = await lib.sdk.openWallet(wallet.config, wallet.credentials);
+            await wallet.open();
             const didJSON = data.seed ? { seed: data.seed } : {};
-            const [did] = await lib.sdk.createAndStoreMyDid(handle, didJSON);
+            const [did] = await lib.sdk.createAndStoreMyDid(wallet.handle, didJSON);
             wallet.ownDid = did;
+            wallet = await wallet.save();
         } catch (err) {
             log.warn('walletController createWallet error');
             log.warn(err);
-            if (err.indyCode && err.indyCode === 203) {
-                throw APIResult.badRequest('wallet already exists');
-            } else {
-                throw err;
+            // 11000 = duplicate key error
+            if (err.name === 'MongoError' && err.code === 11000) {
+                await wallet.remove();
+                throw APIResult.badRequest(err.message);
             }
+            throw err;
         } finally {
-            if (handle !== -1) await lib.sdk.closeWallet(handle);
+            await wallet.close();
         }
-        wallet = await wallet.save();
         return wallet;
     }
 };

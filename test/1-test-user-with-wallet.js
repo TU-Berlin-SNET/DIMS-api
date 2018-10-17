@@ -11,7 +11,7 @@ const expect = require('chai').expect;
 const core = require('./0-test-core');
 const vars = require('./0-test-vars');
 
-const nonce = require('../nonce').uuidv4hex();
+const nonce = require('uuid/v4')();
 const { before, after, describe, it } = mocha;
 const agent = vars.agent;
 const bothHeaders = vars.bothHeaders;
