@@ -54,6 +54,7 @@ module.exports = {
             credentials: data.credentials
         });
         let handle = -1;
+
         try {
             await lib.sdk.createWallet(wallet.config, wallet.credentials);
             handle = await lib.sdk.openWallet(wallet.config, wallet.credentials);
@@ -61,7 +62,8 @@ module.exports = {
             const [did] = await lib.sdk.createAndStoreMyDid(handle, didJSON);
             wallet.ownDid = did;
         } catch (err) {
-            log.warn('walletController createWallet error', err);
+            log.warn('walletController createWallet error');
+            log.warn(err);
             if (err.indyCode && err.indyCode === 203) {
                 throw APIResult.badRequest('wallet already exists');
             } else {

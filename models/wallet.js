@@ -12,8 +12,6 @@ const ObjectId = Mongoose.Schema.Types.ObjectId;
 const APIResult = require('../api-result');
 
 const schema = new Mongoose.Schema({
-    // TODO does this make sense or should we revert to ObjectId for _id
-    // and use a separate name for the wallet?
     _id: {
         type: String,
         default: uuidv4
@@ -41,9 +39,14 @@ const schema = new Mongoose.Schema({
             default: null
         }
     },
+    // it doesn't make sense for multiple wallets to have the same ownDid
+    // as this would allow multiple wallets to decrypt an incoming message
+    // and confuse message handling
     ownDid: {
         type: String,
-        required: false
+        required: false,
+        unique: true,
+        sparse: true
     }
 });
 
