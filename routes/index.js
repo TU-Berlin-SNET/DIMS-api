@@ -13,7 +13,6 @@ const creddef = require('../controllers/credentialdef');
 const credential = require('../controllers/credential');
 const credoffer = require('../controllers/credentialoffer');
 const proof = require('../controllers/proof');
-const endpoint = require('../controllers/endpoint');
 const transactions = require('../controllers/transactions');
 const message = require('../controllers/message');
 const nym = require('./nym');
@@ -29,8 +28,6 @@ router
     .post(user.create);
 
 router.post('/login', auth.login);
-
-router.route('/endpoint').post(endpoint.handle);
 
 router.use(auth);
 router.use(walletProvider.before);
