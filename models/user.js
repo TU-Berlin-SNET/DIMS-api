@@ -38,13 +38,15 @@ schema.pre('remove', async function() {
     // Per mongoose doc: Model.remove does not call the remove hook
     // only instance-level remove does
     const Wallet = Mongoose.model('Wallet');
-    let wallets = await Wallet.find({ owner: this._id }).exec();
-    for (const w of wallets) {
-        if (WalletProvider.isCached(w)) {
-            await WalletProvider.provideHandle(w);
-        }
-        await w.remove();
-    }
+    const wallets = await Wallet.find({ owner: this._id }).exec();
+    await Promise.all(
+        wallets.map(
+            w =>
+                WalletProvider.isCached(w)
+                    ? WalletProvider.provideHandle(w).then(loadedWallet => loadedWallet.remove())
+                    : w.remove()
+        )
+    );
 });
 
 schema.methods.checkPassword = async function(password) {
