@@ -42,7 +42,6 @@ let valuesToDelete = [];
 
 describe('Default Wallet', function() {
     before(async function() {
-        this.timeout(60000);
         for (let i = 0; i < users.length; i++) {
             const id = await core.createUser(users[i]);
             const token = (await core.login({ username: users[i].username, password: users[i].password })).body.token;
@@ -58,7 +57,6 @@ describe('Default Wallet', function() {
     });
 
     it('POST /user/ with wallet-name "default" should fail', async function() {
-        this.timeout(60000);
         await agent
             .post('/api/user')
             .set(bothHeaders)
@@ -74,7 +72,6 @@ describe('Default Wallet', function() {
     });
 
     it('GET /user/:id should return user and its default wallet', async function() {
-        this.timeout(60000);
         const user = users[0];
         const res = await agent
             .get('/api/user/' + user.id)
@@ -86,7 +83,6 @@ describe('Default Wallet', function() {
     });
 
     it('GET /wallet/default should return default wallet', async function() {
-        this.timeout(60000);
         const user = users[0];
         const res = await agent
             .get('/api/wallet/default')
@@ -101,7 +97,6 @@ describe('Default Wallet', function() {
     });
 
     it('PUT /user/:id should NOT be able to set other users wallet as default', async function() {
-        this.timeout(60000);
         const user = users[1];
         await agent
             .put('/api/user/me')
@@ -114,7 +109,6 @@ describe('Default Wallet', function() {
     });
 
     after(async function() {
-        this.timeout(60000);
         valuesToDelete.reverse();
         for (const v of valuesToDelete) {
             try {

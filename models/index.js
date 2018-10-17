@@ -3,7 +3,6 @@
  * Models
  */
 
-const db = require('../db');
 const User = require('./user');
 const Wallet = require('./wallet');
 const Message = require('./message');
