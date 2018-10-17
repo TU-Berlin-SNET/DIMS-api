@@ -40,8 +40,6 @@ services:
       - APP_PORT
       - APP_ENDPOINT
       - JWT_SECRET
-      - WALLETCACHE_WAIT_TIME
-      - WALLETCACHE_MAX_RETRIES
       - DB_HOST
       - DB_PORT
       - DB_USER

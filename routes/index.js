@@ -34,7 +34,6 @@ router.route('/endpoint').post(endpoint.handle);
 
 router.use(auth);
 router.use(walletProvider.before);
-router.param('wallet', walletProvider.param);
 
 router
     .route('/user/:user')

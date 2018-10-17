@@ -20,12 +20,6 @@ SALTROUNDS=10
 ## change this!
 JWT_SECRET=your_jwt_secret
 
-## wallet provider/cache time between retries of opening a wallet in ms
-WALLETCACHE_WAIT_TIME=300
-
-## wallet provider/cache max retries before it fails
-WALLETCACHE_MAX_RETRIES=3
-
 ## API logger log level
 LOG_LEVEL=debug
 
