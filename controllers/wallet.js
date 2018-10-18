@@ -60,11 +60,18 @@ module.exports = {
             const didJSON = data.seed ? { seed: data.seed } : {};
             const [did] = await lib.sdk.createAndStoreMyDid(wallet.handle, didJSON);
             wallet.ownDid = did;
+            const masterSecretId = await lib.sdk.proverCreateMasterSecret(wallet.handle);
+            await lib.did.setDidMetaJSON(wallet.handle, wallet.ownDid, {
+                primary: true,
+                masterSecretId: masterSecretId
+            });
             wallet = await wallet.save();
         } catch (err) {
             log.warn('walletController createWallet error');
             log.warn(err);
-            // 11000 = duplicate key error
+            // 11000 = duplicate key error, i.e. generated ownDid is already in use
+            // if the wallet-name was already taken then indy-sdk would have thrown
+            // so it is safe to remove the wallet here
             if (err.name === 'MongoError' && err.code === 11000) {
                 await wallet.remove();
                 throw APIResult.badRequest(err.message);

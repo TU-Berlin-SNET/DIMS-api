@@ -14,7 +14,7 @@ const Message = require('../models/message');
 
 const WalletProvider = require('../middleware/walletProvider');
 const connection = require('./connection');
-const credential = require('./credential');
+const credential = require('./credential/index');
 const proof = require('./proof');
 
 const handlers = {};
@@ -22,9 +22,9 @@ handlers[lib.message.messageTypes.CONNECTIONOFFER] = connection.offer.handle;
 handlers[lib.message.messageTypes.CONNECTIONREQUEST] = connection.request.handle;
 handlers[lib.message.messageTypes.CONNECTIONRESPONSE] = connection.response.handle;
 handlers[lib.message.messageTypes.CONNECTIONACKNOWLEDGE] = connection.acknowledgement.handle;
-handlers[lib.message.messageTypes.CREDENTIALOFFER] = credential.receiveOffer;
-handlers[lib.message.messageTypes.CREDENTIALREQUEST] = credential.receiveRequest;
-handlers[lib.message.messageTypes.CREDENTIAL] = credential.receiveCredential;
+handlers[lib.message.messageTypes.CREDENTIALOFFER] = credential.offer.handle;
+handlers[lib.message.messageTypes.CREDENTIALREQUEST] = credential.request.handle;
+handlers[lib.message.messageTypes.CREDENTIAL] = credential.credential.handle;
 handlers[lib.message.messageTypes.PROOFREQUEST] = proof.receiveRequest;
 handlers[lib.message.messageTypes.PROOF] = proof.receiveProof;
 
@@ -53,6 +53,7 @@ async function tryAnonDecrypt(encryptedMessage) {
             log.warn(err);
         }
     }
+    cursor.close();
     return [wallet, decryptedMessage];
 }
 

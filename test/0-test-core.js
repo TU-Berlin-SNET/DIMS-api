@@ -4,35 +4,49 @@ const vars = require('./0-test-vars');
 const agent = vars.agent;
 const bothHeaders = vars.bothHeaders;
 
-const User = require('../models/user');
-const ConnectionOffer = require('../models/connectionoffer');
-const Credential = require('../models/credential');
-const CredentialDef = require('../models/credentialdef');
-const CredentialReq = require('../models/credentialreq');
-const CredentialSchema = require('../models/credentialschema');
-const ProofReq = require('../models/proofreq');
-const Wallet = require('../models/wallet');
-
+/**
+ * Create a user (optionally with wallet)
+ * @param {object} user post body payload for user creation
+ * @return {Promise<string>} user id
+ */
 async function createUser(user) {
-    let username = user.username;
-    await User.remove({ username });
-
     const res = await agent
         .post('/api/user')
         .set(bothHeaders)
         .send(user)
         .expect(201);
-    const id = res.get('location').substring(6);
-    user.id = id;
-    return id;
+    return res.body.id;
 }
 
-async function login(user) {
-    return await agent
+/**
+ * Create a wallet
+ * @param {string} token Authorization header bearer token
+ * @param {object} wallet post body payload for wallet creation
+ * @return {Promise<object>} response body
+ */
+async function createWallet(token, wallet) {
+    const res = await agent
+        .post('/api/wallet')
+        .set(bothHeaders)
+        .set({ Authorization: token })
+        .send(wallet)
+        .expect(201);
+    return res.body;
+}
+
+/**
+ * Login with username and password, and return token
+ * @param {string} username
+ * @param {string} password
+ * @return {Promise<string>} jwt
+ */
+async function login(username, password) {
+    const res = await agent
         .post('/api/login')
         .set(bothHeaders)
-        .send(user)
+        .send({ username: username, password: password })
         .expect(200);
+    return res.body.token;
 }
 
 /**
@@ -57,15 +71,15 @@ async function onboard(token, did, verkey, role) {
 
 /**
  * Establish a pairwise connection between user1 and user2
- * @param {object} user1
- * @param {object} user2
+ * @param {object} user1token jwt for user 1
+ * @param {object} user2token jwt for user 22
  * @return {Promise<object>} pairwise from user1
  */
-async function connect(user1, user2) {
+async function connect(user1token, user2token) {
     const offer = await agent
         .post('/api/connectionoffer')
         .set(bothHeaders)
-        .set({ Authorization: user1.token })
+        .set({ Authorization: user1token })
         .send({
             endpoint: process.env.APP_ENDPOINT
         })
@@ -73,7 +87,7 @@ async function connect(user1, user2) {
     const request = await agent
         .post('/api/connectionrequest')
         .set(bothHeaders)
-        .set({ Authorization: user2.token })
+        .set({ Authorization: user2token })
         .send({
             endpoint: process.env.APP_ENDPOINT,
             connectionOffer: offer.body.message
@@ -82,7 +96,7 @@ async function connect(user1, user2) {
     const res = await agent
         .get('/api/wallet/default')
         .set(bothHeaders)
-        .set({ Authorization: user1.token })
+        .set({ Authorization: user1token })
         .expect(200);
     const pairwise = res.body.pairwise.filter(v => v['their_did'] === request.body.senderDid);
     return pairwise[0];
@@ -96,7 +110,7 @@ async function clean(valuesToDelete) {
     valuesToDelete.reverse();
     for (const v of valuesToDelete) {
         if (!v.token) {
-            v.token = (await login({ username: v.auth[0], password: v.auth[1] })).body;
+            v.token = await login(v.auth[0], v.auth[1]);
         }
         await agent
             .delete(`/api/${v.path}/${v.id}`)
@@ -106,59 +120,10 @@ async function clean(valuesToDelete) {
     }
 }
 
-async function createWallet(token, wallet) {
-    bothHeaders.Authorization = token;
-    return await agent
-        .post('/api/wallet')
-        .set(bothHeaders)
-        .send(wallet)
-        .expect(201);
-}
-
-async function cleanUp() {
-    await User.remove({});
-    await ConnectionOffer.remove({});
-    await Credential.remove({});
-    await CredentialDef.remove({});
-    await CredentialReq.remove({});
-    await CredentialSchema.remove({});
-    await ProofReq.remove({});
-    await Wallet.remove({});
-}
-
-function generateUsers() {
-    const randomNumber = Math.round(Math.random() * 100);
-
-    return [
-        { username: 'teststeward' + randomNumber, password: 'steward' },
-        { username: 'testissuer' + randomNumber, password: 'issuer' },
-        { username: 'testholder' + randomNumber, password: 'holder' },
-        { username: 'testrelyingpary' + randomNumber, password: 'relyingpary' }
-    ];
-}
-
-function generateWallets() {
-    const randomNumber = new Date().getTime();
-
-    return [
-        {
-            name: 'teststewardWallet' + randomNumber,
-            seed: '000000000000000000000000Steward1',
-            credentials: { key: 'teststewardkey' }
-        },
-        { name: 'testissuerWallet' + randomNumber, credentials: { key: 'testissuerKey' } },
-        { name: 'testholderWallet' + randomNumber, credentials: { key: 'testholderKey' } },
-        { name: 'testrelyingparywallet' + randomNumber, credentials: { key: 'testrelyingparyKey' } }
-    ];
-}
-
 module.exports = {
     createUser,
-    login,
     createWallet,
-    cleanUp,
-    generateUsers,
-    generateWallets,
+    login,
     onboard,
     connect,
     clean

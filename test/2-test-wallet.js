@@ -40,11 +40,9 @@ const testwalletFail = {
 
 describe('/api/wallet', function() {
     before(async function() {
-        const id = await core.createUser(testuser);
-        const res = await core.login(testuser);
-        testuser.token = res.body.token;
-        valuesToDelete.push({ id: id, token: testuser.token, path: 'user' });
-        bothHeaders.Authorization = testuser.token;
+        testuser.id = await core.createUser(testuser);
+        testuser.token = await core.login(testuser.username, testuser.password);
+        valuesToDelete.push({ id: testuser.id, token: testuser.token, path: 'user' });
     });
 
     after(async function() {
@@ -55,6 +53,7 @@ describe('/api/wallet', function() {
         const res = await agent
             .post('/api/wallet')
             .set(bothHeaders)
+            .set({ Authorization: testuser.token })
             .send(testwallet)
             .expect(201);
         expect(res.body)
@@ -70,6 +69,7 @@ describe('/api/wallet', function() {
         await agent
             .post('/api/wallet')
             .set(bothHeaders)
+            .set({ Authorization: testuser.token })
             .send(testwalletFail)
             .expect(400);
     });
@@ -78,6 +78,7 @@ describe('/api/wallet', function() {
         await agent
             .post('/api/wallet')
             .set(bothHeaders)
+            .set({ Authorization: testuser.token })
             .send(testwallet)
             .expect(400);
     });
@@ -86,6 +87,7 @@ describe('/api/wallet', function() {
         const res = await agent
             .get('/api/wallet')
             .set(bothHeaders)
+            .set({ Authorization: testuser.token })
             .expect(200);
         expect(res.body)
             .to.be.an('Array')
@@ -97,6 +99,7 @@ describe('/api/wallet', function() {
         const res = await agent
             .get(`/api/wallet/${testwallet.name}`)
             .set(bothHeaders)
+            .set({ Authorization: testuser.token })
             .expect(200);
         expect(res.body).to.have.nested.property('credentials.key');
         expect(res.body)
@@ -113,6 +116,7 @@ describe('/api/wallet', function() {
         await agent
             .delete(`/api/wallet/${testwallet.name}`)
             .set(bothHeaders)
+            .set({ Authorization: testuser.token })
             .expect(204);
     });
 });

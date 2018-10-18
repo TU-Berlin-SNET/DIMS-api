@@ -10,8 +10,6 @@ const user = require('../controllers/user');
 const wallet = require('../controllers/wallet');
 const schema = require('../controllers/credentialschema');
 const creddef = require('../controllers/credentialdef');
-const credential = require('../controllers/credential');
-const credoffer = require('../controllers/credentialoffer');
 const proof = require('../controllers/proof');
 const transactions = require('../controllers/transactions');
 const message = require('../controllers/message');
@@ -21,6 +19,9 @@ const connectionOffer = require('./connection-offer');
 const connectionRequest = require('./connection-request');
 const connectionResponse = require('./connection-response');
 const connection = require('./connection');
+const credentialOffer = require('./credential-offer');
+const credentialRequest = require('./credential-request');
+const credential = require('./credential');
 
 router
     .route('/user')
@@ -63,25 +64,18 @@ router
 
 router.route('/schema/:schema/').get(schema.retrieve);
 
+router.use('/credentialoffer', credentialOffer);
+
+router.use('/credentialrequest', credentialRequest);
+
+router.use('/credential', credential);
+
 router
     .route('/credentialdef/')
     .get(creddef.list)
     .post(creddef.create);
 
 router.route('/credentialdef/:credDefId/').get(creddef.retrieve);
-
-router.route('/credentialoffer/').post(credoffer.create);
-
-router.route('/credentialrequest/').post(credoffer.accept);
-
-router.route('/credentialissue/').post(credential.issue);
-
-router
-    .route('/credential/')
-    .get(credential.list)
-    .post(credential.store);
-
-router.route('/credential/:credId').get(credential.retrieve);
 
 router.route('/proofrequest').post(proof.createProofRequest);
 

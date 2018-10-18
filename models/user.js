@@ -9,7 +9,6 @@ const Mongoose = require('../db');
 const WalletProvider = require('../middleware/walletProvider');
 
 const schema = new Mongoose.Schema({
-    // TODO should we use email instead?
     username: {
         type: String,
         index: true,

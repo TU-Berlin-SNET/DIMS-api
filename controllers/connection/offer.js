@@ -71,6 +71,6 @@ module.exports = {
      * @param {object} message connection offer
      */
     async handle(wallet, message) {
-        await Message.store(wallet.id, message.id, message.type, message.message.did, wallet.ownDid, message.message);
+        await Message.store(wallet.id, message.id, message.type, message.message.did, wallet.ownDid, message);
     }
 };

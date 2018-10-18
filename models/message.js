@@ -1,34 +1,50 @@
 const Mongoose = require('../db');
 const MessageTypes = require('../lib').message.messageTypes;
 
-const schema = new Mongoose.Schema({
-    wallet: {
-        type: String,
-        ref: 'Wallet',
-        required: true,
-        index: true
+const schema = new Mongoose.Schema(
+    {
+        wallet: {
+            type: String,
+            ref: 'Wallet',
+            required: true,
+            index: true
+        },
+        messageId: {
+            type: String,
+            required: true,
+            index: true
+        },
+        type: {
+            type: String,
+            required: true
+        },
+        senderDid: {
+            type: String
+        },
+        recipientDid: {
+            type: String
+        },
+        message: {
+            type: Mongoose.Schema.Types.Mixed,
+            required: true
+        },
+        // optionally allow for an expire time to be set
+        expireAt: {
+            type: Date,
+            default: undefined
+        },
+        meta: {}
     },
-    messageId: {
-        type: String,
-        required: true,
-        index: true
-    },
-    type: {
-        type: String,
-        required: true
-    },
-    senderDid: {
-        type: String
-    },
-    recipientDid: {
-        type: String
-    },
-    message: {
-        type: Mongoose.Schema.Types.Mixed,
-        required: true
-    },
-    meta: {}
-});
+    // timestamps: true prompt mongoose to automatically handle
+    // createdAt and updatedAt timestamp fields
+    // minimize: false is necessary to prevent mongoose/mongodb
+    // from unexpectedly removing data in certain fields (like mixed data fields)
+    // and preventing certain bugs e.g. missing "committed_attributes" in credential request
+    { timestamps: true, minimize: false }
+);
+// index expireAt to allow automatic handling of expiration
+// note: mongoDB runs expire tasks once every 60 seconds
+schema.index({ expireAt: 1 }, { expireAfterSeconds: 0 });
 
 schema.set('toJSON', {
     versionKey: false,
@@ -41,44 +57,59 @@ schema.set('toJSON', {
 /**
  * Find ConnectionOffer belonging to wallet by Id
  * @param {Wallet} wallet
- * @param {string} id
+ * @param {string} _id
  * @return {Query} Mongoose Query Object
  */
-schema.statics.findConnectionOfferById = function findConnectionOfferById(wallet, id) {
-    return this.findTypeById(wallet, id, MessageTypes.CONNECTIONOFFER);
+schema.statics.findConnectionOfferById = function findConnectionOfferById(wallet, _id) {
+    return this.findTypeById(wallet, _id, MessageTypes.CONNECTIONOFFER);
 };
 
 /**
  * Find ConnectionRequest belonging to wallet by Id
  * @param {Wallet} wallet
- * @param {string} id
+ * @param {string} _id
  * @return {Query} Mongoose Query Object
  */
-schema.statics.findConnectionRequestById = function findConnectionRequestById(wallet, id) {
-    return this.findTypeById(wallet, id, MessageTypes.CONNECTIONREQUEST);
+schema.statics.findConnectionRequestById = function findConnectionRequestById(wallet, _id) {
+    return this.findTypeById(wallet, _id, MessageTypes.CONNECTIONREQUEST);
 };
 
 /**
  * Find ConnectionResponse belonging to wallet by Id
  * @param {Wallet} wallet
- * @param {string} id
+ * @param {string} _id
  * @return {Query} Mongoose Query Object
  */
-schema.statics.findConnectionResponseById = function findConnectionResponseById(wallet, id) {
-    return this.findTypeById(wallet, id, MessageTypes.CONNECTIONRESPONSE);
+schema.statics.findConnectionResponseById = function findConnectionResponseById(wallet, _id) {
+    return this.findTypeById(wallet, _id, MessageTypes.CONNECTIONRESPONSE);
 };
 
 /**
- * Find ConnectionOffer belonging to wallet by Id
+ * Find Message with type belonging to wallet by Id
  * @param {Wallet} wallet
- * @param {string} id
+ * @param {string} _id
  * @param {string} type
  * @return {Query} Mongoose Query Object
  */
-schema.statics.findTypeById = function findTypeById(wallet, id, type) {
+schema.statics.findTypeById = function findTypeById(wallet, _id, type) {
     return this.findOne({
-        _id: id,
+        _id: _id,
         wallet: wallet.id,
+        type: type
+    });
+};
+
+/**
+ * Find Message with type belonging to wallet by messageId
+ * @param {Wallet} wallet
+ * @param {string} messageId
+ * @param {string} type
+ * @return {Query} Mongoose Query Object
+ */
+schema.statics.findTypeByMessageId = function findTypeByMessageId(wallet, messageId, type) {
+    return this.findOne({
+        wallet: wallet.id,
+        messageId: messageId,
         type: type
     });
 };
