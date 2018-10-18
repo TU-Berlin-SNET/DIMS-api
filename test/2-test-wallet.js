@@ -15,15 +15,31 @@ const { describe, it, before, after } = mocha;
 const agent = vars.agent;
 const bothHeaders = vars.bothHeaders;
 let valuesToDelete = [];
+const testId = require('uuid/v4')();
+// seed must be 32 characters long
+const testSeed = 'testseed' + testId.substring(0, 24);
+
+const testuser = {
+    username: 'testuser' + testId,
+    password: 'testpassword'
+};
+const testwallet = {
+    name: 'testWallet' + testId,
+    seed: testSeed,
+    credentials: {
+        key: 'testkey'
+    }
+};
+const testwalletFail = {
+    name: 'testWalletFail' + testId,
+    seed: testSeed,
+    credentials: {
+        key: 'testkey'
+    }
+};
 
 describe('/api/wallet', function() {
-    let testuser;
-    let testwallet;
-
     before(async function() {
-        testuser = { username: 'testuser' + Math.random(), password: 'testpassword' };
-        testwallet = { name: 'testwallet' + Math.random(), credentials: { key: 'testkey' } };
-
         const id = await core.createUser(testuser);
         const res = await core.login(testuser);
         testuser.token = res.body.token;
@@ -48,19 +64,38 @@ describe('/api/wallet', function() {
         expect(res.body)
             .to.have.property('owner')
             .that.equals(testuser.id);
-        testwallet = res.body;
     });
 
-    it('GET /:id should retrieve specific wallet', async function() {
-        const resWallet = await agent
+    it('POST / should fail when using same seed and creating same ownDid', async function() {
+        await agent
+            .post('/api/wallet')
+            .set(bothHeaders)
+            .send(testwalletFail)
+            .expect(400);
+    });
+
+    it('POST / should fail when using same wallet name', async function() {
+        await agent
             .post('/api/wallet')
             .set(bothHeaders)
             .send(testwallet)
-            .expect(201);
-        testwallet = resWallet.body;
+            .expect(400);
+    });
 
+    it('GET / should list wallets', async function() {
         const res = await agent
-            .get(`/api/wallet/${testwallet.id}`)
+            .get('/api/wallet')
+            .set(bothHeaders)
+            .expect(200);
+        expect(res.body)
+            .to.be.an('Array')
+            .with.lengthOf(1);
+        expect(res.body[0]).to.contain.keys('id', 'owner', 'users', 'credentials', 'ownDid');
+    });
+
+    it('GET /:id should retrieve specific wallet', async function() {
+        const res = await agent
+            .get(`/api/wallet/${testwallet.name}`)
             .set(bothHeaders)
             .expect(200);
         expect(res.body).to.have.nested.property('credentials.key');
@@ -75,15 +110,8 @@ describe('/api/wallet', function() {
     });
 
     it('DELETE /:id should delete specific wallet', async function() {
-        const resWallet = await agent
-            .post('/api/wallet')
-            .set(bothHeaders)
-            .send(testwallet)
-            .expect(201);
-        testwallet = resWallet.body;
-
         await agent
-            .delete(`/api/wallet/${testwallet.id}`)
+            .delete(`/api/wallet/${testwallet.name}`)
             .set(bothHeaders)
             .expect(204);
     });

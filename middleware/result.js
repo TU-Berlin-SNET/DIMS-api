@@ -175,8 +175,8 @@ module.exports = {
     },
     errorMiddleware: (err, req, res, next) => {
         log.error(err);
-        if (err.name === 'IndyError' && err.message) {
-            err.status = indyCodes[Number(err.message)];
+        if (err.indyCode) {
+            err.status = indyCodes[err.indyCode];
         }
         return res.status(err.status || 500).json({ message: err.message });
     }
