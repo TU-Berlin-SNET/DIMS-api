@@ -13,11 +13,12 @@ module.exports = {
      * @return {Promise<object>} pairwise or null
      */
     async retrieve(wallet, myDid) {
-        const pairwises = (await lib.sdk.listPairwise(wallet.handle)).filter(v => v['my_did'] === myDid);
-        if (pairwises.length === 0) {
+        const pairwises = await lib.sdk.listPairwise(wallet.handle);
+        const index = pairwises.findIndex(v => v && v['my_did'] === myDid);
+        if (index === -1) {
             return null;
         }
-        const pairwise = pairwises[0];
+        const pairwise = pairwises[index];
         pairwise.metadata = pairwise.metadata ? JSON.parse(pairwise.metadata) : {};
         return pairwise;
     }
