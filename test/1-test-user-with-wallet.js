@@ -44,7 +44,7 @@ describe('Default Wallet', function() {
     before(async function() {
         for (let i = 0; i < users.length; i++) {
             const id = await core.createUser(users[i]);
-            const token = (await core.login({ username: users[i].username, password: users[i].password })).body.token;
+            const token = await core.login(users[i].username, users[i].password);
             users[i].id = id;
             users[i].token = token;
             valuesToDelete.push({
@@ -54,6 +54,10 @@ describe('Default Wallet', function() {
                 path: 'user'
             });
         }
+    });
+
+    after(async function() {
+        await core.clean(valuesToDelete);
     });
 
     it('POST /user/ with wallet-name "default" should fail', async function() {
@@ -106,23 +110,5 @@ describe('Default Wallet', function() {
                 wallet: users[0].wallet.name
             })
             .expect(404);
-    });
-
-    after(async function() {
-        valuesToDelete.reverse();
-        for (const v of valuesToDelete) {
-            try {
-                if (!v.token) {
-                    v.token = (await core.login(v.auth)).body.token;
-                }
-                await agent
-                    .delete(`/api/${v.path}/${v.id}`)
-                    .set(bothHeaders)
-                    .set({ Authorization: v.token })
-                    .expect(204);
-            } catch (err) {
-                console.warn('error during after test cleanup %j', err);
-            }
-        }
     });
 });

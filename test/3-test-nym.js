@@ -28,10 +28,9 @@ const steward = {
 
 describe('/api/nym', function() {
     before(async function() {
-        const user = { username: steward.username, password: steward.password };
-        steward.id = await core.createUser(user);
-        steward.token = (await core.login(user)).body.token;
-        steward.wallet.ownDid = (await core.createWallet(steward.token, steward.wallet)).body.ownDid;
+        steward.id = await core.createUser({ username: steward.username, password: steward.password });
+        steward.token = await core.login(steward.username, steward.password);
+        steward.wallet.ownDid = (await core.createWallet(steward.token, steward.wallet)).ownDid;
     });
 
     it('GET /api/nym/:did should retrieve did nym record', async function() {

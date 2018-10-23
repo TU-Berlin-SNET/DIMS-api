@@ -95,25 +95,16 @@ definitions:
     properties:
       wallet:
         $ref: '#/definitions/wallet'
-      encryptedCredential:
-        description: 'The authcrypted credential offer id'
-        type: string
-    required:
-      - encryptedCredential
-  credentialissue_post:
-    type: object
-    properties:
-      wallet:
-        $ref: '#/definitions/wallet'
-      encryptedCredentialRequest:
-        description: 'The authcrypted Credential Request'
+      credentialRequestId:
+        description: 'Credential Request _id as stored in API'
         type: string
       values:
         description:
           'Object containing attributes defined in schema as key-value pairs (e.g. {"attrName":"attrValue", "attrName1":"attrValue1"})'
         type: object
     required:
-      - encryptedCredentialRequest
+      - credentialRequestId
+      - values
   credentialdef_post:
     type: object
     properties:
@@ -138,6 +129,10 @@ definitions:
       credDefId:
         description: 'Credential definition id'
         type: string
+      credentialLocation:
+        description:
+          '(Optional) URL at which key-value object containing credential values can be fetched using HTTP GET'
+        type: string
     required:
       - recipientDid
       - credDefId
@@ -146,11 +141,11 @@ definitions:
     properties:
       wallet:
         $ref: '#/definitions/wallet'
-      encryptedCredentialOffer:
-        description: 'auth crypted credential offer'
+      credentialOfferId:
+        description: 'credentialoffer _id as stored in API'
         type: string
     required:
-      - encryptedCredentialOffer
+      - credentialOfferId
   connectionoffer_post:
     type: object
     properties:
@@ -753,42 +748,42 @@ paths:
 
   /api/credential/:
     get:
-      summary: 'List all credentials of specific wallet (UNTESTED ENDPOINT)'
-      description: 'List all credentials of specific wallet (UNTESTED ENDPOINT)'
+      summary: 'List all credentials of specific wallet'
+      description: 'List all credentials of specific wallet'
       parameters:
         - $ref: '#/parameters/walletHeader'
         - in: query
-          name: schema
+          name: schema_id
           type: string
-          description: '(Optional) schemaId to filter credentials'
+          description: '(Optional) schema_id to filter credentials'
         - in: query
-          name: schemaIssuerDid
+          name: schema_issuer_did
           type: string
-          description: '(Optional) schemaIssuerDid to filter credentials'
+          description: '(Optional) schema_issuer_did to filter credentials'
         - in: query
-          name: schemaName
+          name: schema_name
           type: string
-          description: '(Optional) schemaName to filter credentials'
+          description: '(Optional) schema_name to filter credentials'
         - in: query
-          name: schemaVersion
+          name: schema_version
           type: string
-          description: '(Optional) schemaVersion to filter credentials'
+          description: '(Optional) schema_version to filter credentials'
         - in: query
-          name: issuerDid
+          name: issuer_did
           type: string
-          description: '(Optional) issuerDid to filter credentials'
+          description: '(Optional) issuer_did to filter credentials'
         - in: query
-          name: credDefId
+          name: cred_def_id
           type: string
-          description: '(Optional) credDefId to filter credentials'
+          description: '(Optional) cred_def_id to filter credentials'
       responses:
         '200':
           description: ''
       tags:
         - credential
     post:
-      summary: 'Store a credential'
-      description: 'Store a credential'
+      summary: 'Issue/Create a credential and send to recipient'
+      description: 'Issue/Create a credential and send to recipient'
       parameters:
         - in: body
           name: data

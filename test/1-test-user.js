@@ -7,52 +7,51 @@
 
 const mocha = require('mocha');
 const expect = require('chai').expect;
+const uuidv4 = require('uuid/v4');
 
 const core = require('./0-test-core');
 const vars = require('./0-test-vars');
-const describe = mocha.describe;
-const it = mocha.it;
+const { describe, before, it, after } = mocha;
 
 const agent = vars.agent;
-const acceptHeader = vars.acceptHeader;
 const bothHeaders = vars.bothHeaders;
+const testId = uuidv4();
 
-let valuesToDelete = [];
-let token = '';
+const valuesToDelete = [];
+const user = {
+    username: 'willDelete' + testId,
+    password: 'afterThis'
+};
 
 describe('/api/user', function() {
-    let tmpUser = { username: 'willDelete', password: 'afterThis' };
-
-    beforeEach(async function() {
-        const id = await core.createUser(tmpUser);
-        valuesToDelete.push({ id: id, auth: [tmpUser.username, tmpUser.password], path: 'user' });
-
-        const res = await core.login(tmpUser);
-
-        token = res.body.token;
-        bothHeaders.Authorization = token;
+    before(async function() {
+        user.id = await core.createUser(user);
+        user.token = await core.login(user.username, user.password);
+        valuesToDelete.push({ id: user.id, token: user.token, path: 'user' });
     });
 
     after(async function() {
-        await core.cleanUp();
+        await core.clean(valuesToDelete);
     });
 
     it('POST / should return 400 on missing parameter', async function() {
         await agent
             .post('/api/user')
             .set(bothHeaders)
+            .set({ Authorization: user.token })
             .send({ username: 'something' })
             .expect(400);
     });
 
     it('GET /:id should retrieve specific user', async function() {
         const res = await agent
-            .get(`/api/user/${tmpUser.id}`)
+            .get(`/api/user/${user.id}`)
             .set(bothHeaders)
+            .set({ Authorization: user.token })
             .expect(200);
         expect(res.body).to.eql({
-            id: tmpUser.id,
-            username: tmpUser.username
+            id: user.id,
+            username: user.username
         });
     });
 
@@ -60,10 +59,11 @@ describe('/api/user', function() {
         const res = await agent
             .get('/api/user/me')
             .set(bothHeaders)
+            .set({ Authorization: user.token })
             .expect(200);
         expect(res.body).to.eql({
-            id: tmpUser.id,
-            username: tmpUser.username
+            id: user.id,
+            username: user.username
         });
     });
 
@@ -71,45 +71,34 @@ describe('/api/user', function() {
         await agent
             .get('/api/user/otheruser')
             .set(bothHeaders)
+            .set({ Authorization: user.token })
             .expect(404);
     });
 
     it('PUT /:id should update specific user', async function() {
         await agent
-            .put(`/api/user/${tmpUser.id}`)
+            .put(`/api/user/${user.id}`)
             .set(bothHeaders)
+            .set({ Authorization: user.token })
             .send({ username: 'newName', password: 'newPass' })
             .expect(200);
-        const res2 = await agent
-            .get(`/api/user/${tmpUser.id}`)
-            .auth('newName', 'newPass')
-            .set(bothHeaders)
-            .expect(200);
-        expect(res2.body).to.eql({ id: tmpUser.id, username: 'newName' });
-        tmpUser.username = res2.body.username;
-        tmpUser.password = 'newPass';
-    });
 
-    it('PUT /me with only username should succeed', async function() {
-        await agent
-            .put(`/api/user/${tmpUser.id}`)
+        const res = await agent
+            .get(`/api/user/${user.id}`)
             .set(bothHeaders)
-            .send({ username: 'willDelete' })
+            .set({ Authorization: user.token })
             .expect(200);
-        const res2 = await agent
-            .get(`/api/user/${tmpUser.id}`)
-            .auth('willDelete', tmpUser.password)
-            .set(bothHeaders)
-            .expect(200);
-        expect(res2.body).to.eql({ id: tmpUser.id, username: 'willDelete' });
-        tmpUser.username = res2.body.username;
+        expect(res.body).to.eql({ id: user.id, username: 'newName' });
+        user.username = res.body.username;
+        user.password = 'newPass';
     });
 
     it('DELETE /user/:id should delete specific user', async function() {
         await agent
-            .delete(`/api/user/${tmpUser.id}`)
+            .delete(`/api/user/${user.id}`)
             .set(bothHeaders)
+            .set({ Authorization: user.token })
             .expect(204);
-        valuesToDelete = valuesToDelete.filter(v => v.id !== tmpUser.id);
+        valuesToDelete.splice(valuesToDelete.findIndex(v => v.id === user.id), 1);
     });
 });

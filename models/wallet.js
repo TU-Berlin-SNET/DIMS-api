@@ -7,7 +7,6 @@ const indy = require('indy-sdk');
 const uuidv4 = require('uuid/v4');
 const log = require('../log').log;
 const Mongoose = require('../db');
-const ConnectionOffer = require('./connectionoffer');
 const ObjectId = Mongoose.Schema.Types.ObjectId;
 const APIResult = require('../api-result');
 
@@ -93,38 +92,6 @@ schema.method('usableBy', function(user) {
     return this.owner.equals(user._id) || this.users.some(v => v.equals(user._id));
 });
 
-schema.method('createDid', async function() {
-    log.debug('wallet model createDid');
-    return indy.createAndStoreMyDid(this.handle, {});
-});
-
-schema.method('cryptoSign', async function(signKey, messageBuf) {
-    const signature = await indy.cryptoSign(this.handle, signKey, messageBuf);
-    return signature.toString('base64');
-});
-
-schema.method('cryptoVerify', async function(signerVk, messageBuf, signBuf) {
-    return await indy.cryptoVerify(signerVk, messageBuf, signBuf);
-});
-
-schema.method('signAndAnonCrypt', async function(signKey, anonCryptKey, messageJson) {
-    const messageBuf = Buffer.from(JSON.stringify(messageJson), 'utf-8');
-    const signature = await this.cryptoSign(signKey, messageBuf);
-    const anonCryptedMessage = await indy.cryptoAnonCrypt(anonCryptKey, messageBuf);
-    return [signature, anonCryptedMessage.toString('base64')];
-});
-
-schema.method('anonDecryptAndVerify', async function(recipientVk, messageString, signature) {
-    const cryptMessageBuf = Buffer.from(messageString, 'base64');
-    const messageBuf = await indy.cryptoAnonDecrypt(this.handle, recipientVk, cryptMessageBuf);
-    const signBuf = Buffer.from(signature, 'base64');
-    const connRes = JSON.parse(messageBuf.toString('utf-8'));
-    if (!connRes.verkey) throw new APIResult(400, { message: 'missing signature' });
-    const signValid = this.cryptoVerify(connRes.verkey, messageBuf, signBuf);
-    if (!signValid) throw new APIResult(400, { message: 'signature mismatch' });
-    return connRes;
-});
-
 schema.method('authCrypt', async function(senderVk, recipientVk, messageJson) {
     const messageBuf = Buffer.from(JSON.stringify(messageJson), 'utf-8');
     const authCryptedMessage = await indy.cryptoAuthCrypt(this.handle, senderVk, recipientVk, messageBuf);
@@ -155,12 +122,6 @@ schema.method('tryAuthDecrypt', async function(message) {
     throw new APIResult(400, { message: 'decryption failed, no fitting decryption key found' });
 });
 
-schema.method('getTheirDid', async function(wallet, myDid) {
-    const listPairwise = await indy.listPairwise(wallet);
-    const theirDid = listPairwise.filter(e => e.my_did === myDid).pop().their_did;
-    return theirDid;
-});
-
 schema.method('getMyPairwiseDid', async function(theirDid) {
     const pairwiseInfo = await indy.getPairwise(this.handle, theirDid);
     return pairwiseInfo['my_did'];
@@ -180,7 +141,6 @@ schema.method('toMinObject', function() {
 schema.pre('remove', async function() {
     log.debug('wallet model pre-remove');
     await this.close();
-    await ConnectionOffer.remove({ issuerWallet: this }).exec();
     await Mongoose.model('Message')
         .remove({ wallet: this })
         .exec();

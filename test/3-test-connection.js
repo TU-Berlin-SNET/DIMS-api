@@ -48,9 +48,9 @@ let connectionRequest;
 describe('Connection', function() {
     before(async function() {
         steward.id = await core.createUser(steward);
-        steward.token = (await core.login({ username: steward.username, password: steward.password })).body.token;
+        steward.token = await core.login(steward.username, steward.password);
         user.id = await core.createUser(user);
-        user.token = (await core.login({ username: user.username, password: user.password })).body.token;
+        user.token = await core.login(user.username, user.password);
         valuesToDelete.push({ id: steward.id, token: steward.token, path: 'user' });
         valuesToDelete.push({ id: user.id, token: user.token, path: 'user' });
 
