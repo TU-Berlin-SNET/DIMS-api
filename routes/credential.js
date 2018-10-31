@@ -26,22 +26,13 @@ router
         })
     );
 
-router
-    .route('/:credentialId')
-    .get(
-        wrap(async (req, res, next) => {
-            const data = await controller.credential.retrieve(req.wallet, req.params.credentialId);
-            res.locals.result = data ? APIResult.success(data) : APIResult.notFound();
-            next();
-        })
-    )
-    .delete(
-        wrap(async (req, res, next) => {
-            const data = await controller.credential.remove(req.wallet, req.params.credentialId);
-            res.locals.result = data ? APIResult.noContent() : APIResult.notFound();
-            next();
-        })
-    );
+router.route('/:credentialId').get(
+    wrap(async (req, res, next) => {
+        const data = await controller.credential.retrieve(req.wallet, req.params.credentialId);
+        res.locals.result = data ? APIResult.success(data) : APIResult.notFound();
+        next();
+    })
+);
 
 router.use(['/', '/:credentialId'], (req, res, next) => {
     // FIXME eventually we should move away from misusing the

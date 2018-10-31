@@ -10,7 +10,6 @@ const user = require('../controllers/user');
 const wallet = require('../controllers/wallet');
 const schema = require('../controllers/credentialschema');
 const creddef = require('../controllers/credentialdef');
-const proof = require('../controllers/proof');
 const transactions = require('../controllers/transactions');
 const message = require('../controllers/message');
 const nym = require('./nym');
@@ -22,6 +21,8 @@ const connection = require('./connection');
 const credentialOffer = require('./credential-offer');
 const credentialRequest = require('./credential-request');
 const credential = require('./credential');
+const proofRequestTemplate = require('./proof-request-template');
+const proofRequest = require('./proof-request');
 
 router
     .route('/user')
@@ -77,13 +78,13 @@ router
 
 router.route('/credentialdef/:credDefId/').get(creddef.retrieve);
 
-router.route('/proofrequest').post(proof.createProofRequest);
+router.use('/proofrequesttemplate', proofRequestTemplate);
 
-router.route('/proofrequest/:proofReq').get(proof.getProofRequest);
+router.use('/proofrequest', proofRequest);
 
-router.route('/proof').post(proof.createProof);
-
-router.route('/proofverification').post(proof.verifyProof);
+// router.route('/proof').post(proof.createProof);
+//
+// router.route('/proofverification').post(proof.verifyProof);
 
 router.route('/transactions').get(transactions.list);
 

@@ -1,11 +1,11 @@
 /**
  * IDChain Agent REST API Routes
- * Credential Request Routes
+ * Proof Request Routes
  */
 'use strict';
 
 const router = require('express').Router();
-const controller = require('../controllers/credential/index');
+const controller = require('../controllers/proof/index');
 const wrap = require('../asyncwrap').wrap;
 const APIResult = require('../api-result');
 
@@ -20,30 +20,35 @@ router
     )
     .post(
         wrap(async (req, res, next) => {
-            const data = await controller.request.create(req.wallet, req.body.credentialOfferId);
+            const data = await controller.request.create(
+                req.wallet,
+                req.body.recipientDid,
+                req.body.proofRequest,
+                req.body.templateValues
+            );
             res.locals.result = APIResult.created(data);
             next();
         })
     );
 
 router
-    .route('/:credentialRequestId')
+    .route('/:proofRequestId')
     .get(
         wrap(async (req, res, next) => {
-            const data = await controller.request.retrieve(req.wallet, req.params.credentialRequestId);
+            const data = await controller.request.retrieve(req.wallet, req.params.proofRequestId);
             res.locals.result = data ? APIResult.success(data) : APIResult.notFound();
             next();
         })
     )
     .delete(
         wrap(async (req, res, next) => {
-            const data = await controller.request.remove(req.wallet, req.params.credentialRequestId);
+            const data = await controller.request.remove(req.wallet, req.params.proofRequestId);
             res.locals.result = data ? APIResult.noContent() : APIResult.notFound();
             next();
         })
     );
 
-router.use(['/', '/:credentialRequestId'], (req, res, next) => {
+router.use(['/', '/:proofRequestId'], (req, res, next) => {
     // FIXME eventually we should move away from misusing the
     // error handler and instead pass results through res.locals
     if (res.locals.result) {

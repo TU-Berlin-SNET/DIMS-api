@@ -9,7 +9,8 @@ const Message = require('./message');
 const Schema = require('./credentialschema');
 const CredentialDefinition = require('./credentialdef');
 const Credential = require('./credential');
-const ProofRequest = require('./proofreq');
+const Proof = require('./proof');
+const ProofRequestTemplate = require('./proof-request-template');
 
 module.exports = {
     User,
@@ -18,5 +19,6 @@ module.exports = {
     Schema,
     CredentialDefinition,
     Credential,
-    ProofRequest
+    Proof,
+    ProofRequestTemplate
 };

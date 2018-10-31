@@ -210,6 +210,18 @@ definitions:
         example: '5b7ddce00000000000000000'
     required:
       - connectionRequestId
+  proofrequest_template_post:
+    type: object
+    properties:
+      wallet:
+        $ref: '#/definitions/wallet'
+      template:
+        description: 'proof request template (optionally with mustache placeholders)'
+        type: string
+        example:
+          '{ "name": "Ticket", "version": "0.1", "requested_attributes": { "attr1_referent": { "name": "firstname", "restrictions": [ { "cred_def_id": "{{ cred_def_id }}" }] }, "attr2_referent": { "name": "phone" } }, "requested_predicates": {} }'
+    required:
+      - template
   proofrequest_post:
     type: object
     properties:
@@ -220,23 +232,19 @@ definitions:
         type: string
       proofRequest:
         description:
-          'proof request object (see https://github.com/hyperledger/indy-sdk/blob/master/doc/getting-started/getting-started.md#apply-for-a-job)'
+          'proof request template _id or proof request object (see https://github.com/hyperledger/indy-sdk/blob/master/doc/getting-started/getting-started.md#apply-for-a-job)'
+        # technically this is not supported by OAS 2 but ajv should handle this anyway since it is supported by json-schema
+        oneOf:
+          - type: string
+          - type: object
+        example: '507f191e810c19729de860ea'
+      templateValues:
+        description: 'values to use for rendering the proof request template as key-value object'
         type: object
         example:
-          name: Ticket
-          version: '0.1'
-          requested_attributes:
-            attr1_referent:
-              name: firstname
-              restrictions:
-                - cred_def_id: XsjEewC463EYaXeQZcsWND:3:CL:19
-            attr2_referent:
-              name: lastname
-              restrictions:
-                - cred_def_id: XsjEewC463EYaXeQZcsWND:3:CL:19
-            attr3_referent:
-              name: phone
-          requested_predicates: {}
+          cred_def_id: 'VPKnyQy9yo4oy344YtAUcb:3:CL:485'
+          age: 18
+          citizen: true
     required:
       - recipientDid
       - proofRequest
@@ -702,6 +710,16 @@ paths:
         - credential
 
   /api/credentialoffer:
+    get:
+      summary: 'List credential offers'
+      description: 'List credential offers'
+      parameters:
+        - $ref: '#/parameters/walletHeader'
+      responses:
+        '200':
+          description: ''
+      tags:
+        - credential
     post:
       summary: 'Create a credential offer'
       description: 'Create a credential offer'
@@ -716,7 +734,42 @@ paths:
       tags:
         - credential
 
+  /api/credentialoffer/{id}:
+    parameters:
+      - description: 'A unique string value identifying a credential offer.'
+        in: path
+        name: id
+        required: true
+        type: string
+      - $ref: '#/parameters/walletHeader'
+    get:
+      summary: 'Retrieve a credential offer'
+      description: 'Retrieve a credential offer'
+      responses:
+        '200':
+          description: ''
+      tags:
+        - credential
+    delete:
+      summary: 'Delete a credential offer'
+      description: 'Delete a credential offer'
+      responses:
+        '204':
+          description: ''
+      tags:
+        - credential
+
   /api/credentialrequest:
+    get:
+      summary: 'List credential requests'
+      description: 'List credential requests'
+      parameters:
+        - $ref: '#/parameters/walletHeader'
+      responses:
+        '200':
+          description: ''
+      tags:
+        - credential
     post:
       summary: 'Accept credential offer and create credential request'
       description: 'Accept credential offer and create credential request'
@@ -731,17 +784,27 @@ paths:
       tags:
         - credential
 
-  /api/credentialissue:
-    post:
-      summary: 'Issue a credential'
-      description: 'Issue a credential'
-      parameters:
-        - in: body
-          name: data
-          schema:
-            $ref: '#/definitions/credentialissue_post'
+  /api/credentialrequest/{id}:
+    parameters:
+      - description: 'A unique string value identifying a credential request.'
+        in: path
+        name: id
+        required: true
+        type: string
+      - $ref: '#/parameters/walletHeader'
+    get:
+      summary: 'Retrieve a credential request'
+      description: 'Retrieve a credential request'
       responses:
-        '201':
+        '200':
+          description: ''
+      tags:
+        - credential
+    delete:
+      summary: 'Delete a credential request'
+      description: 'Delete a credential request'
+      responses:
+        '204':
           description: ''
       tags:
         - credential
@@ -812,7 +875,67 @@ paths:
       tags:
         - credential
 
+  /api/proofrequesttemplate:
+    get:
+      summary: 'List proof request templates'
+      description: 'List proof request templates'
+      parameters:
+        - $ref: '#/parameters/walletHeader'
+      responses:
+        '200':
+          description: ''
+      tags:
+        - proof
+    post:
+      summary: 'Create a proof request templates'
+      description: 'Create a proof request templates'
+      parameters:
+        - in: body
+          name: data
+          schema:
+            $ref: '#/definitions/proofrequest_template_post'
+      responses:
+        '201':
+          description: ''
+      tags:
+        - proof
+
+  /api/proofrequesttemplate/{id}:
+    parameters:
+      - description: 'A unique string value identifying a proof request template.'
+        in: path
+        name: id
+        required: true
+        type: string
+      - $ref: '#/parameters/walletHeader'
+    get:
+      summary: 'Retrieve a proof request template'
+      description: 'Retrieve a proof request template'
+      responses:
+        '200':
+          description: ''
+      tags:
+        - proof
+    delete:
+      summary: 'Delete a proof request template'
+      description: 'Delete a proof request template'
+      responses:
+        '204':
+          description: ''
+      tags:
+        - proof
+
   /api/proofrequest:
+    get:
+      summary: 'List proof requests'
+      description: 'List proof requests'
+      parameters:
+        - $ref: '#/parameters/walletHeader'
+      responses:
+        '200':
+          description: ''
+      tags:
+        - proof
     post:
       summary: 'Create a proof request'
       description: 'Create a proof request'
@@ -823,6 +946,31 @@ paths:
             $ref: '#/definitions/proofrequest_post'
       responses:
         '201':
+          description: ''
+      tags:
+        - proof
+
+  /api/proofrequest/{id}:
+    parameters:
+      - description: 'A unique string value identifying a proof request.'
+        in: path
+        name: id
+        required: true
+        type: string
+      - $ref: '#/parameters/walletHeader'
+    get:
+      summary: 'Retrieve a proof request'
+      description: 'Retrieve a proof request'
+      responses:
+        '200':
+          description: ''
+      tags:
+        - proof
+    delete:
+      summary: 'Delete a proof request'
+      description: 'Delete a proof request'
+      responses:
+        '204':
           description: ''
       tags:
         - proof
