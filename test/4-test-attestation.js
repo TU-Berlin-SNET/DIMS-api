@@ -1,7 +1,8 @@
 /**
  * IDChain Agent REST API
  * API Tests
- * Tests Credentials and Proofs
+ * Tests Attestation
+ * (Schemas, Credential Definitions, Credentials, and Proofs)
  */
 'use strict';
 
@@ -372,49 +373,47 @@ describe('attestation (schemas, credentials, and proofs)', function() {
                 .expect(204);
         });
 
-        it.skip('relying party should query proof status using proofId', async function() {
+        it('relying party should query proof status using proofId and it should be pending', async function() {
             const res = await agent
                 .get('/api/proof/' + proof.id)
                 .set(bothHeaders)
                 .set({ Authorization: rp.token })
                 .expect(200);
-            expect(res.body).to.contain.keys('id', 'wallet', 'theirDid', 'proof', 'status', 'isValid');
-            expect(res.body.theirDid).to.equal(holderRPDid);
+            expect(res.body).to.contain.keys('id', 'wallet', 'did', 'proof', 'status', 'isValid');
+            expect(res.body.did).to.equal(holderRPDid);
             expect(res.body.proof).to.be.null;
             expect(res.body.status).to.equal('pending');
             expect(res.body.isValid).to.be.false;
         });
 
-        it.skip('holder should accept proof request and create/send proof', async function() {
+        it('holder should accept proof request and create/send proof', async function() {
             const res = await agent
                 .post('/api/proof')
                 .set(bothHeaders)
                 .set({ Authorization: holder.token })
                 .send({
-                    proofRequest: proofRequest.id,
-                    selfAttestedAttributes: {
+                    proofRequestId: proofRequest.id,
+                    values: {
                         phone: '11110000'
                     }
                 })
                 .expect(201);
             expect(res.body).to.contain.keys('id', 'type', 'messageId', 'message');
             expect(res.body.message).to.contain.keys('id', 'type', 'origin', 'message');
-            expect(res.body.message.message).to.contain.keys('requested', 'proof', 'identifiers');
+            expect(res.body.message.message).to.contain.keys('requested_proof', 'proof', 'identifiers');
         });
 
-        it.skip('relying party should retrieve proof (which includes verification)', async function() {
-            // TODO retrieve proof as relying party
-            // const res = await agent
-            //     .post('/api/proofverification')
-            //     .set(bothHeaders)
-            //     .set({ Authorization: rp.token })
-            //     .send({
-            //         wallet: rp.wallet.id,
-            //         encryptedProof: proof
-            //     })
-            //     .expect(200);
-            // expect(res.body).to.have.property('isValid');
-            // expect(res.body.isValid).to.be.true;
+        it('relying party should query proof status and it should be received and the proof should be valid', async function() {
+            const res = await agent
+                .get('/api/proof/' + proof.id)
+                .set(bothHeaders)
+                .set({ Authorization: rp.token })
+                .expect(200);
+            expect(res.body).to.contain.keys('id', 'wallet', 'did', 'proof', 'status', 'isValid');
+            expect(res.body.did).to.equal(holderRPDid);
+            expect(res.body.proof).to.not.be.null;
+            expect(res.body.status).to.equal('received');
+            expect(res.body.isValid).to.be.true;
         });
     });
 });
