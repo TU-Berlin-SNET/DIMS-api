@@ -48,7 +48,7 @@ schema.index({ expireAt: 1 }, { expireAfterSeconds: 0 });
 
 schema.set('toJSON', {
     versionKey: false,
-    transform: (doc, ret, game) => {
+    transform: (doc, ret, options) => {
         ret.id = String(ret._id);
         delete ret._id;
     }

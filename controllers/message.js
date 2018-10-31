@@ -13,9 +13,9 @@ const Wallet = require('../models/wallet');
 const Message = require('../models/message');
 
 const WalletProvider = require('../middleware/walletProvider');
-const connection = require('./connection');
+const connection = require('./connection/index');
 const credential = require('./credential/index');
-const proof = require('./proof');
+const proof = require('./proof/index');
 
 const handlers = {};
 handlers[lib.message.messageTypes.CONNECTIONOFFER] = connection.offer.handle;
@@ -25,8 +25,8 @@ handlers[lib.message.messageTypes.CONNECTIONACKNOWLEDGE] = connection.acknowledg
 handlers[lib.message.messageTypes.CREDENTIALOFFER] = credential.offer.handle;
 handlers[lib.message.messageTypes.CREDENTIALREQUEST] = credential.request.handle;
 handlers[lib.message.messageTypes.CREDENTIAL] = credential.credential.handle;
-handlers[lib.message.messageTypes.PROOFREQUEST] = proof.receiveRequest;
-handlers[lib.message.messageTypes.PROOF] = proof.receiveProof;
+handlers[lib.message.messageTypes.PROOFREQUEST] = proof.request.handle;
+handlers[lib.message.messageTypes.PROOF] = proof.proof.handle;
 
 /**
  * Loops through wallets trying to find an applicable one

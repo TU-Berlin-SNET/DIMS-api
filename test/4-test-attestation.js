@@ -19,13 +19,6 @@ const bothHeaders = vars.bothHeaders;
 const testId = uuidv4();
 const valuesToDelete = [];
 
-let issuer;
-let holder;
-let rp;
-let credDefId;
-let holderIssuerDid;
-let holderRPDid;
-
 const users = {
     steward: {
         username: 'teststeward' + testId,
@@ -53,7 +46,21 @@ const users = {
     }
 };
 
-describe('credentials and proofs', function() {
+const schema = {
+    name: 'Passport-' + uuidv4(),
+    version: '0.1',
+    attrNames: ['firstname', 'lastname', 'age']
+};
+
+// testcase-global variables
+let issuer;
+let holder;
+let rp;
+let credDefId;
+let holderIssuerDid;
+let holderRPDid;
+
+describe('attestation (schemas, credentials, and proofs)', function() {
     before(async function() {
         // create users and wallets
         await Promise.all(
@@ -109,35 +116,27 @@ describe('credentials and proofs', function() {
         await core.clean(valuesToDelete);
     });
 
-    describe('credentials', function() {
-        let schemaId;
-        let credentialOffer;
-        let credentialRequest;
-        let credential;
-        let credentialId;
-
+    describe('schemas', function() {
         it('issuer should create a schema', async function() {
             const res = await agent
                 .post('/api/schema')
                 .set(bothHeaders)
                 .set({ Authorization: issuer.token })
-                .send({
-                    name: 'Passport-' + uuidv4(),
-                    version: '0.1',
-                    attrNames: ['firstname', 'lastname', 'yearOfBirth']
-                })
+                .send(schema)
                 .expect(201);
             expect(res.body).to.have.property('schemaId');
-            schemaId = res.body.schemaId;
+            schema.id = res.body.schemaId;
         });
+    });
 
-        it('issuer should create a credential definition', async function() {
+    describe('credential definitions', function() {
+        it('issuer should create a credential definition which does NOT support revocation', async function() {
             const res = await agent
                 .post('/api/credentialdef')
                 .set(bothHeaders)
                 .set({ Authorization: issuer.token })
                 .send({
-                    schemaId: schemaId,
+                    schemaId: schema.id,
                     // FIXME add another test WITH revocation as soon as revocation is supported by proofs
                     supportRevocation: false
                 })
@@ -145,6 +144,12 @@ describe('credentials and proofs', function() {
             expect(res.body).to.have.property('credDefId');
             credDefId = res.body.credDefId;
         });
+    });
+
+    describe('credentials', function() {
+        // testcase-local variables
+        let credentialOffer;
+        let credentialRequest;
 
         it('issuer should send credential offer and holder should receive it', async function() {
             const res = await agent
@@ -220,7 +225,7 @@ describe('credentials and proofs', function() {
                     values: {
                         firstname: 'Alice',
                         lastname: 'Doe',
-                        yearOfBirth: '1999'
+                        age: '32'
                     }
                 })
                 .expect(201);
@@ -243,85 +248,173 @@ describe('credentials and proofs', function() {
                 .to.have.property('lastname')
                 .that.equals('Doe');
             expect(res2.body[0].attrs)
-                .to.have.property('yearOfBirth')
-                .that.equals('1999');
+                .to.have.property('age')
+                .that.equals('32');
         });
     });
 
-    // FIXME put this back in once proofs are done
-    // with new message formats and agent-to-agent comm
-    // maybe even split into its own test file
-    describe.skip('proofs', function() {
+    describe('proofs', function() {
+        // testcase-local variables
+        let template;
         let proofRequest;
         let proof;
-        it('relying party should create proof request', async function() {
-            bothHeaders.Authorization = rp.token;
+
+        it('relying party should create proof request template', async function() {
+            const payload = `{
+                "name": "Ticket",
+                "version": "0.1",
+                "requested_attributes": {
+                    "attr1_referent": {
+                        "name": "firstname",
+                        "restrictions": [{ "cred_def_id": "${credDefId}" }]
+                    },
+                    "attr2_referent": {
+                        "name": "lastname",
+                        "restrictions": [{ "cred_def_id": "${credDefId}" }]
+                    },
+                    "attr3_referent": {
+                        "name": "phone"
+                    }
+                },
+                "requested_predicates": {
+                    "predicate1_referent": {
+                        "name": "age",
+                        "p_type": ">=",
+                        "p_value": {{ age }},
+                        "restrictions": [{ "cred_def_id": "${credDefId}" }]
+                    }
+                }
+            }`;
+            const res = await agent
+                .post('/api/proofrequesttemplate')
+                .set(bothHeaders)
+                .set({ Authorization: rp.token })
+                .send({ template: payload })
+                .expect(201);
+            expect(res.body).to.contain.keys('id', 'wallet', 'template');
+            expect(res.body.template).to.eql(payload);
+            template = res.body;
+        });
+
+        it('relying party should list proof request template', async function() {
+            const res = await agent
+                .get('/api/proofrequesttemplate')
+                .set(bothHeaders)
+                .set({ Authorization: rp.token })
+                .expect(200);
+            expect(res.body)
+                .to.be.an('Array')
+                .with.lengthOf(1);
+            expect(res.body[0]).to.eql(template);
+        });
+
+        it('relying party should retrieve proof request template', async function() {
+            const res = await agent
+                .get('/api/proofrequesttemplate/' + template.id)
+                .set(bothHeaders)
+                .set({ Authorization: rp.token })
+                .expect(200);
+            expect(res.body).to.eql(template);
+        });
+
+        it('relying party should create/send proof request using template and holder should receive it', async function() {
             const res = await agent
                 .post('/api/proofrequest')
-                .auth(rp.username, rp.password)
                 .set(bothHeaders)
+                .set({ Authorization: rp.token })
                 .send({
-                    wallet: rp.wallet.id,
                     recipientDid: holderRPDid,
-                    proofRequest: {
-                        name: 'Ticket',
-                        version: '0.1',
-                        requested_attributes: {
-                            attr1_referent: {
-                                name: 'firstname',
-                                restrictions: [{ cred_def_id: `${credDefId}` }]
-                            },
-                            attr2_referent: {
-                                name: 'lastname',
-                                restrictions: [{ cred_def_id: `${credDefId}` }]
-                            },
-                            attr3_referent: {
-                                name: 'phone'
-                            }
-                        },
-                        requested_predicates: {
-                            // FIXME predicates do not work at the moment, add me back in or add another test
-                            //  'predicate1_referent': {
-                            //    'name': 'yearOfBirth',
-                            //    'p_type': '<',
-                            //    'p_value': 2000,
-                            //    'restrictions': [{'cred_def_id': credDefId}],
-                            //  },
-                        }
+                    proofRequest: template.id,
+                    templateValues: {
+                        age: 18
                     }
                 })
                 .expect(201);
-            expect(res.body).to.have.property('encryptedProofRequest');
-            proofRequest = res.body.encryptedProofRequest;
+            expect(res.body).to.contain.keys('id', 'type', 'messageId', 'message', 'meta');
+            expect(res.body.meta).to.have.property('proofId');
+            expect(res.body.message.message).to.contain.keys(
+                'name',
+                'version',
+                'nonce',
+                'requested_attributes',
+                'requested_predicates'
+            );
+            proof = { id: res.body.meta.proofId };
+
+            const res2 = await agent
+                .get('/api/proofrequest')
+                .set(bothHeaders)
+                .set({ Authorization: holder.token })
+                .expect(200);
+            expect(res2.body)
+                .to.be.an('Array')
+                .with.lengthOf(1);
+            // check that nonces match
+            expect(res2.body[0]).to.have.property('messageId', res.body.messageId);
+            proofRequest = res2.body[0];
+            expect(proofRequest)
+                .to.have.property('message')
+                .that.is.an('Object');
+            expect(proofRequest.message).to.contain.keys('id', 'type', 'origin', 'message');
+            expect(proofRequest.message.message).to.contain.keys(
+                'name',
+                'version',
+                'requested_attributes',
+                'requested_predicates'
+            );
         });
-        it('holder should accept proof request and create proof', async function() {
-            bothHeaders.Authorization = holder.token;
+
+        it('relying party should delete proof request template', async function() {
+            await agent
+                .delete('/api/proofrequesttemplate/' + template.id)
+                .set(bothHeaders)
+                .set({ Authorization: rp.token })
+                .expect(204);
+        });
+
+        it.skip('relying party should query proof status using proofId', async function() {
+            const res = await agent
+                .get('/api/proof/' + proof.id)
+                .set(bothHeaders)
+                .set({ Authorization: rp.token })
+                .expect(200);
+            expect(res.body).to.contain.keys('id', 'wallet', 'theirDid', 'proof', 'status', 'isValid');
+            expect(res.body.theirDid).to.equal(holderRPDid);
+            expect(res.body.proof).to.be.null;
+            expect(res.body.status).to.equal('pending');
+            expect(res.body.isValid).to.be.false;
+        });
+
+        it.skip('holder should accept proof request and create/send proof', async function() {
             const res = await agent
                 .post('/api/proof')
                 .set(bothHeaders)
+                .set({ Authorization: holder.token })
                 .send({
-                    wallet: holder.wallet.id,
-                    encryptedProofRequest: proofRequest,
+                    proofRequest: proofRequest.id,
                     selfAttestedAttributes: {
                         phone: '11110000'
                     }
                 })
                 .expect(201);
-            expect(res.body).to.have.property('encryptedProof');
-            proof = res.body.encryptedProof;
+            expect(res.body).to.contain.keys('id', 'type', 'messageId', 'message');
+            expect(res.body.message).to.contain.keys('id', 'type', 'origin', 'message');
+            expect(res.body.message.message).to.contain.keys('requested', 'proof', 'identifiers');
         });
-        it('relying party should create proof verification', async function() {
-            bothHeaders.Authorization = rp.token;
-            const res = await agent
-                .post('/api/proofverification')
-                .set(bothHeaders)
-                .send({
-                    wallet: rp.wallet.id,
-                    encryptedProof: proof
-                })
-                .expect(200);
-            expect(res.body).to.have.property('isValid');
-            expect(res.body.isValid).to.be.true;
+
+        it.skip('relying party should retrieve proof (which includes verification)', async function() {
+            // TODO retrieve proof as relying party
+            // const res = await agent
+            //     .post('/api/proofverification')
+            //     .set(bothHeaders)
+            //     .set({ Authorization: rp.token })
+            //     .send({
+            //         wallet: rp.wallet.id,
+            //         encryptedProof: proof
+            //     })
+            //     .expect(200);
+            // expect(res.body).to.have.property('isValid');
+            // expect(res.body.isValid).to.be.true;
         });
     });
 });

@@ -4,6 +4,7 @@
  */
 
 const indy = require('indy-sdk');
+const lib = require('../lib');
 const uuidv4 = require('uuid/v4');
 const log = require('../log').log;
 const Mongoose = require('../db');
@@ -67,7 +68,7 @@ schema.virtual('config').get(function() {
 schema.method('open', async function() {
     log.debug('wallet model open');
     if (this.handle === -1) {
-        this.handle = await indy.openWallet(this.config, this.credentials);
+        this.handle = await lib.sdk.openWallet(this.config, this.credentials);
     }
     return this.handle;
 });
@@ -75,7 +76,7 @@ schema.method('open', async function() {
 schema.method('close', async function() {
     log.debug('wallet model close');
     if (this.handle !== -1) {
-        await indy.closeWallet(this.handle);
+        await lib.sdk.closeWallet(this.handle);
         this.handle = -1;
     }
 });
@@ -85,7 +86,15 @@ schema.method('close', async function() {
  * @return {Promise<String[]>} [did, verkey]
  */
 schema.methods.getPrimaryDid = async function getPrimaryDid() {
-    return [this.ownDid, await indy.keyForLocalDid(this.handle, this.ownDid)];
+    return [this.ownDid, await lib.sdk.keyForLocalDid(this.handle, this.ownDid)];
+};
+
+/**
+ * Retrieve masterSecretId
+ * @return {Promise<String>} masterSecretId
+ */
+schema.methods.getMasterSecretId = async function getMasterSecretId() {
+    return lib.did.getDidMetaAttribute(this.handle, this.ownDid, 'masterSecretId');
 };
 
 schema.method('usableBy', function(user) {
@@ -142,6 +151,12 @@ schema.pre('remove', async function() {
     log.debug('wallet model pre-remove');
     await this.close();
     await Mongoose.model('Message')
+        .remove({ wallet: this })
+        .exec();
+    await Mongoose.model('ProofRequestTemplate')
+        .remove({ wallet: this })
+        .exec();
+    await Mongoose.model('Proof')
         .remove({ wallet: this })
         .exec();
     // Need to retrieve User model this way to prevent user object
