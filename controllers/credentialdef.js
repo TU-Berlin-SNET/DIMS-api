@@ -5,32 +5,31 @@
 
 const indy = require('indy-sdk');
 
-const CredDef = require('../models/credentialdef');
+const lib = require('../lib');
 const wrap = require('../asyncwrap').wrap;
 const pool = require('../pool');
 const APIResult = require('../api-result');
+const CredDef = require('../models/credentialdef');
 
 module.exports = {
     create: wrap(async (req, res, next) => {
-        const submitterDid = req.wallet.ownDid;
         const schemaId = req.body.schemaId;
         const supportRevocation = req.body.supportRevocation || false;
-        const [, schema] = await pool.getSchema(submitterDid, schemaId);
-        const [credDefId, credDef] = await indy.issuerCreateAndStoreCredentialDef(
+        const [credDefId, credDef] = await lib.credentialdefinition.create(
             req.wallet.handle,
+            pool,
             req.wallet.ownDid,
-            schema,
+            schemaId,
             'TAG1',
             'CL',
-            { support_revocation: supportRevocation }
+            supportRevocation
         );
-        const response = await pool.credDefRequest(req.wallet.handle, req.wallet.ownDid, credDef);
-
         let doc = {
             credDefId: credDefId,
             wallet: req.wallet.id,
-            data: response['result']
+            data: credDef
         };
+
         if (supportRevocation) {
             const blobStorageWriter = await pool.openBlobStorageWriter();
             // supported config keys depend on credential type
@@ -70,9 +69,7 @@ module.exports = {
     }),
 
     retrieve: wrap(async (req, res, next) => {
-        const credDefId = req.params.credDefId;
-        const submitterDid = req.wallet.ownDid;
-        const [, credDef] = await pool.getCredDef(submitterDid, credDefId);
-        next(new APIResult(200, credDef));
+        const [, credDef] = await pool.getCredDef(req.wallet.ownDid, req.params.credDefId);
+        next(APIResult.success(credDef));
     })
 };

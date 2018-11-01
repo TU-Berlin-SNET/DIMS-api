@@ -8,7 +8,7 @@ const auth = require('../middleware/auth');
 const walletProvider = require('../middleware/walletProvider');
 const user = require('../controllers/user');
 const wallet = require('../controllers/wallet');
-const schema = require('../controllers/credentialschema');
+const schema = require('../controllers/indy-schema');
 const creddef = require('../controllers/credentialdef');
 const transactions = require('../controllers/transactions');
 const message = require('../controllers/message');
@@ -18,6 +18,7 @@ const connectionOffer = require('./connection-offer');
 const connectionRequest = require('./connection-request');
 const connectionResponse = require('./connection-response');
 const connection = require('./connection');
+const indySchema = require('./indy-schema');
 const credentialOffer = require('./credential-offer');
 const credentialRequest = require('./credential-request');
 const credential = require('./credential');
@@ -59,12 +60,7 @@ router.use('/connectionresponse', connectionResponse);
 
 router.use('/connection', connection);
 
-router
-    .route('/schema')
-    .get(schema.list)
-    .post(schema.create);
-
-router.route('/schema/:schema/').get(schema.retrieve);
+router.use('/indyschema', indySchema);
 
 router.use('/credentialoffer', credentialOffer);
 
