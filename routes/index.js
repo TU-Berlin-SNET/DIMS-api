@@ -23,6 +23,7 @@ const credentialRequest = require('./credential-request');
 const credential = require('./credential');
 const proofRequestTemplate = require('./proof-request-template');
 const proofRequest = require('./proof-request');
+const proof = require('./proof');
 
 router
     .route('/user')
@@ -82,9 +83,7 @@ router.use('/proofrequesttemplate', proofRequestTemplate);
 
 router.use('/proofrequest', proofRequest);
 
-// router.route('/proof').post(proof.createProof);
-//
-// router.route('/proofverification').post(proof.verifyProof);
+router.use('/proof', proof);
 
 router.route('/transactions').get(transactions.list);
 

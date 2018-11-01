@@ -253,16 +253,16 @@ definitions:
     properties:
       wallet:
         $ref: '#/definitions/wallet'
-      encryptedProofRequest:
-        description: 'Encrypted Proof Request'
+      proofRequestId:
+        description: 'proof request _id'
         type: string
-      selfAttestedAttributes:
+      values:
         description: (Optional) Object containing self-attested-attributes as key-value pairs
         type: object
         example:
           phone: '00001111'
     required:
-      - encryptedProofRequest
+      - proofRequestId
   proofverification_post:
     type: object
     properties:
@@ -976,6 +976,16 @@ paths:
         - proof
 
   /api/proof:
+    get:
+      summary: 'List received proofs'
+      description: 'List received proofs'
+      parameters:
+        - $ref: '#/parameters/walletHeader'
+      responses:
+        '200':
+          description: ''
+      tags:
+        - proof
     post:
       summary: 'Create a Proof'
       description: 'Create a Proof'
@@ -986,6 +996,31 @@ paths:
             $ref: '#/definitions/proof_post'
       responses:
         '201':
+          description: ''
+      tags:
+        - proof
+
+  /api/proof/{id}:
+    parameters:
+      - description: 'A unique string value identifying a proof.'
+        in: path
+        name: id
+        required: true
+        type: string
+      - $ref: '#/parameters/walletHeader'
+    get:
+      summary: 'Retrieve a proof'
+      description: 'Retrieve a proof'
+      responses:
+        '200':
+          description: ''
+      tags:
+        - proof
+    delete:
+      summary: 'Delete a proof'
+      description: 'Delete a proof'
+      responses:
+        '204':
           description: ''
       tags:
         - proof
