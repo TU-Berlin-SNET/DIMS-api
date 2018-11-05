@@ -273,7 +273,7 @@ definitions:
         type: string
     required:
       - encryptedProof
-  schema_post:
+  indyschema_post:
     type: object
     properties:
       wallet:
@@ -619,7 +619,7 @@ paths:
       tags:
         - connection
 
-  /api/schema:
+  /api/indyschema:
     get:
       summary: 'List schemas'
       description: 'List schemas'
@@ -635,14 +635,14 @@ paths:
         - in: body
           name: data
           schema:
-            $ref: '#/definitions/schema_post'
+            $ref: '#/definitions/indyschema_post'
       responses:
         '201':
           description: ''
       tags:
         - schema
 
-  /api/schema/{schemaid}:
+  /api/indyschema/{schemaid}:
     parameters:
       - description: 'A unique string value identifying this schema.'
         in: path

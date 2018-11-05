@@ -118,9 +118,9 @@ describe('attestation (schemas, credentials, and proofs)', function() {
     });
 
     describe('schemas', function() {
-        it('issuer should create a schema', async function() {
+        it('issuer should create a indy-schema', async function() {
             const res = await agent
-                .post('/api/schema')
+                .post('/api/indyschema')
                 .set(bothHeaders)
                 .set({ Authorization: issuer.token })
                 .send(schema)
