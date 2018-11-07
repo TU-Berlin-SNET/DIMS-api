@@ -80,13 +80,19 @@ module.exports = {
         }
         if (proof.proof) {
             log.debug('verifying proof');
+            // fetch verification-related information from ledger
+            const [schemas, credentialDefinitions, revRegDefs, revRegs] = await pool.verifierGetEntitiesFromLedger(
+                wallet.ownDid,
+                proof.proof.identifiers
+            );
+            // verify proof
             proof.isValid = await lib.sdk.verifierVerifyProof(
                 proof.meta.proofRequest,
                 proof.proof,
-                proof.meta.schemas,
-                proof.meta.credentialDefinitions,
-                proof.meta.revRegDefs,
-                proof.meta.revRegs
+                schemas,
+                credentialDefinitions,
+                revRegDefs,
+                revRegs
             );
         }
         log.debug('retrieved proof');
@@ -127,14 +133,10 @@ module.exports = {
         }
         // ok, proof was requested so continue
 
-        const [schemas, credDefs, revRegDefs, revRegs] = await pool.verifierGetEntitiesFromLedger(
-            wallet.ownDid,
-            message.message.identifiers
-        );
-
         const proofDoc = await Proof.findById(requestDoc.meta.proofId).exec();
         if (!proofDoc) {
             // if there is no proof doc then it was deleted by the user
+            // e.g. recipient has no interest in it anymore
             // so do not store it and return
             return;
         }
@@ -143,11 +145,7 @@ module.exports = {
         proofDoc.status = 'received';
         proofDoc.proof = message.message;
         proofDoc.meta = {
-            proofRequest: requestDoc.message.message,
-            schemas: schemas,
-            credentialDefinitions: credDefs,
-            revRegDefs: revRegDefs,
-            revRegs: revRegs
+            proofRequest: requestDoc.message.message
         };
         await proofDoc.save();
     }
