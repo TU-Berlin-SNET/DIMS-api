@@ -20,6 +20,7 @@
     ```
     docker exec <CONTAINER_NAME> bash -c 'cat "/home/indy/.indy-cli/networks/$POOL_NAME/pool_transactions_genesis"' > pool_transactions_genesis
     ```
+-   The high-level schema compiler situated at [idchain-schema-api]. Follow the instructions on the `README.md` of that repository on how to build and run the schema compiler HTTP api.
 
 #### Run
 
@@ -36,7 +37,7 @@ npm test
 
 ## Run with [Docker] and [Docker-Compose]
 
-This will build and run 3 services: Indy-Pool, MongoDB, and this API.
+This will build and run 4 services: Indy-Pool, MongoDB, Schema-Compiler, and this API.
 
 #### Requirements
 
@@ -53,6 +54,8 @@ This will build and run 3 services: Indy-Pool, MongoDB, and this API.
     # read and output the pool_transactions_genesis
     docker exec api_pool_1 bash -c 'cat "/home/indy/.indy-cli/networks/$POOL_NAME/pool_transactions_genesis"' > pool_transactions_genesis
     ```
+
+-   The docker image built using the [idchain-commons] repository.
 
 #### Run
 
