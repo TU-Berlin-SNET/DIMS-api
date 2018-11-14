@@ -37,9 +37,24 @@ parameters:
     type: string
     required: true
   walletHeader:
-    in: header
     name: wallet
+    in: header
     description: '(Optional) A unique id value (or "default") identifying a wallet'
+    type: string
+  theirDidParam:
+    name: theirDid
+    in: path
+    description: 'Their pairwise connection did'
+    type: string
+  credentialParam:
+    name: credential
+    in: path
+    description: 'A unique id value identifying a credential'
+    type: string
+  credentialMessageParam:
+    name: credentialMessage
+    in: path
+    description: 'A unique id value identifying a sent/issued credential message'
     type: string
 
 definitions:
@@ -476,6 +491,80 @@ paths:
       tags:
         - wallet
 
+  /api/wallet/{wallet}/connection/:
+    get:
+      summary: 'List connections/pairwises stored in wallet'
+      description: 'List connections/pairwises stored in wallet'
+      parameters:
+        - $ref: '#/parameters/walletParam'
+      responses:
+        '200':
+          description: ''
+      tags:
+        - wallet
+
+  /api/wallet/{wallet}/connection/{theirDid}:
+    get:
+      summary: 'Retrieve connection/pairwise stored in wallet'
+      description: 'Retrieve connection/pairwise stored in wallet'
+      parameters:
+        - $ref: '#/parameters/walletParam'
+        - $ref: '#/parameters/theirDidParam'
+      responses:
+        '200':
+          description: ''
+      tags:
+        - wallet
+
+  /api/wallet/{wallet}/credential/:
+    get:
+      summary: 'List credentials stored in wallet'
+      description: 'List credentials stored in wallet'
+      parameters:
+        - $ref: '#/parameters/walletParam'
+        - in: query
+          name: schema_id
+          type: string
+          description: '(Optional) schema_id to filter credentials'
+        - in: query
+          name: schema_issuer_did
+          type: string
+          description: '(Optional) schema_issuer_did to filter credentials'
+        - in: query
+          name: schema_name
+          type: string
+          description: '(Optional) schema_name to filter credentials'
+        - in: query
+          name: schema_version
+          type: string
+          description: '(Optional) schema_version to filter credentials'
+        - in: query
+          name: issuer_did
+          type: string
+          description: '(Optional) issuer_did to filter credentials'
+        - in: query
+          name: cred_def_id
+          type: string
+          description: '(Optional) cred_def_id to filter credentials'
+      responses:
+        '200':
+          description: ''
+      tags:
+        - wallet
+
+  /api/wallet/{wallet}/credential/{credential}:
+    get:
+      summary: 'Retrieve credential stored in wallet'
+      description: 'Retrieve credential stored in wallet'
+    parameters:
+      - $ref: '#/parameters/walletParam'
+      - $ref: '#/parameters/credentialParam'
+    responses:
+      '200':
+        description: ''
+    tags:
+      - wallet
+
   /api/connection/{myDid}:
     parameters:
       - name: myDid
@@ -815,34 +904,14 @@ paths:
 
   /api/credential/:
     get:
-      summary: 'List all credentials of specific wallet'
-      description: 'List all credentials of specific wallet'
+      summary: 'List credentials issued by a wallet'
+      description: 'List credentials issued by a wallet'
       parameters:
         - $ref: '#/parameters/walletHeader'
         - in: query
-          name: schema_id
+          name: recipientDid
           type: string
-          description: '(Optional) schema_id to filter credentials'
-        - in: query
-          name: schema_issuer_did
-          type: string
-          description: '(Optional) schema_issuer_did to filter credentials'
-        - in: query
-          name: schema_name
-          type: string
-          description: '(Optional) schema_name to filter credentials'
-        - in: query
-          name: schema_version
-          type: string
-          description: '(Optional) schema_version to filter credentials'
-        - in: query
-          name: issuer_did
-          type: string
-          description: '(Optional) issuer_did to filter credentials'
-        - in: query
-          name: cred_def_id
-          type: string
-          description: '(Optional) cred_def_id to filter credentials'
+          description: '(Optional) recipientDid to filter by'
       responses:
         '200':
           description: ''
@@ -871,8 +940,8 @@ paths:
         type: string
       - $ref: '#/parameters/walletHeader'
     get:
-      summary: 'Retrieve a credential'
-      description: 'Retrieve a credential'
+      summary: 'Retrieve a credential message issued/sent by a wallet'
+      description: 'Retrieve a credential message issued/sent by a wallet'
       responses:
         '200':
           description: ''
