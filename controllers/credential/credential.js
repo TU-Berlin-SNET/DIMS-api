@@ -15,6 +15,9 @@ const APIResult = require('../../api-result');
 const Message = Mongoose.model('Message');
 const messageTypes = lib.message.messageTypes;
 
+const CredDef = require('../../models/credentialdef');
+const RevReg = require('../../models/revocation-registry');
+
 module.exports = {
     /**
      * List credentials in wallet
@@ -67,16 +70,33 @@ module.exports = {
         }, {});
 
         const pairwise = await lib.pairwise.getPairwise(wallet.handle, credentialRequest.message.origin);
-        const [credential, credRevocId, revocRegDelta] = await lib.sdk.issuerCreateCredential(
-            wallet.handle,
-            credentialRequest.meta.offer,
-            credentialRequest.message.message,
+
+        // find credential definition
+        const credDefId = credentialRequest.message.message['cred_def_id'];
+        const credDef = await CredDef.findOne({ credDefId: credDefId }).exec();
+        if (!credDef) {
+            throw Error(credDefId + ' : credential definition not found');
+        }
+
+        // optionally: find revocation registry
+        const revocRegId = credDef.revocRegId;
+        let revocReg = null;
+        if (revocRegId) {
+            revocReg = await RevReg.findOne({ revocRegId: revocRegId }).exec();
+            if (!revocReg) {
+                throw Error('Revocation registry not found for ' + revocRegId);
+            }
+        }
+
+        const [credential, credRevocId, revocRegDelta] = await lib.credential.issuerCreateCredential(
+            wallet,
+            credentialRequest,
             credentialValues,
-            null,
-            null
+            revocReg
         );
 
         const meta = {
+            revocRegId: revocRegId,
             credRevocId: credRevocId,
             revocRegDelta: revocRegDelta
         };
@@ -112,6 +132,26 @@ module.exports = {
     },
 
     /**
+     * Revoke a credential
+     * @param {Wallet} wallet
+     * @param {String} id credential message id as stored in db
+     * @return {Promise<Message>}
+     */
+    async revoke(wallet, id) {
+        const message = await Message.findTypeById(wallet, id, messageTypes.credentialRequest).exec();
+        if (!message) {
+            return message;
+        }
+        // TODO blobStorageReaderHandle
+        // await lib.sdk.issuerRevokeCredential(
+        //     wallet.handle,
+        //     blobStorageReaderHandle,
+        //     message.meta.revocRegId,
+        //     message.meta.credRevocId
+        // );
+    },
+
+    /**
      * Handle reception of credential through agent to agent communication
      * @param {Wallet} wallet
      * @param {object} message
@@ -132,13 +172,18 @@ module.exports = {
         const pairwise = await lib.pairwise.getPairwise(wallet.handle, message.origin);
         const [, credentialDefinition] = await pool.getCredDef(pairwise['my_did'], message.message.cred_def_id);
 
+        let revocRegDefinition = null;
+
+        if (credentialDefinition.revocRegId)
+            [, revocRegDefinition] = await pool.getRevocRegDef(pairwise['my_did'], credentialDefinition.revocRegId);
+
         await lib.sdk.proverStoreCredential(
             wallet.handle,
             null, // credId
             credentialRequest.meta,
             message.message,
             credentialDefinition,
-            null // revRegDef
+            revocRegDefinition
         );
     }
 };

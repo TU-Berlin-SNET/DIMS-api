@@ -20,6 +20,7 @@ const routes = require('./routes');
 const message = require('./controllers/message');
 const APIResult = require('./api-result');
 const swaggerDoc = YAML.load('./swagger.yaml');
+const routesTails = require('./routes/tails');
 
 const app = express();
 
@@ -34,6 +35,7 @@ app.get('/healthcheck', (req, res, next) => {
 app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerDoc));
 
 app.use('/api/', routes);
+app.use('/tails/', routesTails);
 
 app.use(middleware.after);
 
