@@ -34,7 +34,15 @@ router.route('/:credentialId').get(
     })
 );
 
-router.use(['/', '/:credentialId'], (req, res, next) => {
+router.route('/:credentialId/revoke').post(
+    wrap(async (req, res, next) => {
+        const data = await controller.credential.revoke(req.wallet, req.params.credentialId);
+        res.locals.result = data ? APIResult.success(data) : APIResult.notFound();
+        next();
+    })
+);
+
+router.use(['/', '/:credentialId', '/:credentialId/revoke'], (req, res, next) => {
     // FIXME eventually we should move away from misusing the
     // error handler and instead pass results through res.locals
     if (res.locals.result) {

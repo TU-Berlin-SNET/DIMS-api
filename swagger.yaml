@@ -113,6 +113,10 @@ definitions:
       schemaId:
         description: 'A unique string value identifying a schema'
         type: string
+      tag:
+        description: 'A string value identifying credential definition uniquely within given schema'
+        type: string
+        default: 'TAG1'
       supportRevocation:
         description: '(Optional) States if revocation should be supported for this credential definiton'
         type: boolean
@@ -875,6 +879,30 @@ paths:
       tags:
         - credential
 
+  /api/credential/{id}/revoke:
+    parameters:
+      - description: 'A unique string value identifying this credential.'
+        in: path
+        name: id
+        required: true
+        type: string
+    post:
+      summary: 'Revoke a credential'
+      description: 'Revoke a credential'
+      parameters:
+        - in: body
+          name: data
+          schema:
+            type: object
+            properties:
+              wallet:
+                $ref: '#/definitions/wallet'
+      responses:
+        '200':
+          description: ''
+      tags:
+        - credential
+
   /api/proofrequesttemplate:
     get:
       summary: 'List proof request templates'
@@ -1168,3 +1196,20 @@ paths:
           description: ''
       tags:
         - message
+
+  /tails/{revocRegDefId}:
+    parameters:
+      - in: path
+        name: revocRegDefId
+        description: 'unique id of revocation registry'
+        required: true
+        type: string
+    get:
+      summary: 'Agent Revocation Tails Endpoint'
+      description: 'Public immutable shared blob linked to given revocation registry definition'
+      security: []
+      responses:
+        '200':
+          description: ''
+      tags:
+        - proof
