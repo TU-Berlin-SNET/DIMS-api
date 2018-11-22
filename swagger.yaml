@@ -2104,6 +2104,30 @@ paths:
       tags:
         - credential
 
+  /api/credential/{id}/revoke:
+    parameters:
+      - description: 'A unique string value identifying this credential.'
+        in: path
+        name: id
+        required: true
+        type: string
+    post:
+      summary: 'Revoke a credential'
+      description: 'Revoke a credential'
+      parameters:
+        - in: body
+          name: data
+          schema:
+            type: object
+            properties:
+              wallet:
+                $ref: '#/definitions/wallet'
+      responses:
+        '200':
+          description: ''
+      tags:
+        - credential
+
   /api/proofrequesttemplate:
     get:
       summary: 'List proof request templates'
