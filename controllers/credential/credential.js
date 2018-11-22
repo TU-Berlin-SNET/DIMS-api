@@ -100,11 +100,9 @@ module.exports = {
             revocReg
         );
 
-        const meta = {
-            revocRegId: revocRegId,
-            credRevocId: credRevocId,
-            revocRegDelta: revocRegDelta
-        };
+        // put revocation info in meta if available
+        const meta = revocRegId ? { revocRegId, credRevocId, revocRegDelta } : null;
+
         const message = {
             id: credentialRequest.messageId,
             origin: pairwise['my_did'],

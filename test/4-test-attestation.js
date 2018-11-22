@@ -223,7 +223,7 @@ describe('attestation (schemas, credentials, and proofs)', function() {
             credentialRequest = res2.body[0];
         });
 
-        it('issuer should accept credential request, issue/send credential', async function() {
+        it('issuer should accept credential request and issue/send credential', async function() {
             const res = await agent
                 .post('/api/credential')
                 .set(bothHeaders)
