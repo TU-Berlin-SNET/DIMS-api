@@ -1,5 +1,5 @@
 const APIResult = require('../api-result');
-const WalletController = require('./wallet');
+const WalletController = require('./wallet/index');
 const wrap = require('../asyncwrap').wrap;
 
 const User = require('../models/user');
@@ -35,15 +35,13 @@ async function createUser(username, password, wallet) {
     if (await usernameIsTaken(username)) {
         throw APIResult.badRequest('username already taken');
     }
-    let user = await new User({
+    const user = await new User({
         username: username,
         password: password
-    });
+    }).save();
     if (typeof wallet === 'object') {
-        const walletItem = await WalletController.createWallet(wallet, user);
-        user.wallet = walletItem._id;
+        await WalletController.wallet.create(user, wallet.name, wallet.credentials, wallet.seed);
     }
-    user = await user.save();
     return user;
 }
 

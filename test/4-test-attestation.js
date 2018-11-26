@@ -151,6 +151,13 @@ describe('attestation (schemas, credentials, and proofs)', function() {
         // testcase-local variables
         let credentialOffer;
         let credentialRequest;
+        let credentialMessage;
+        let credential;
+        const values = {
+            firstname: 'Alice',
+            lastname: 'Doe',
+            age: '32'
+        };
 
         it('issuer should send credential offer and holder should receive it', async function() {
             const res = await agent
@@ -216,41 +223,83 @@ describe('attestation (schemas, credentials, and proofs)', function() {
             credentialRequest = res2.body[0];
         });
 
-        it('issuer should accept credential request, issue/send credential, and holder should receive it', async function() {
+        it('issuer should accept credential request and issue/send credential', async function() {
             const res = await agent
                 .post('/api/credential')
                 .set(bothHeaders)
                 .set({ Authorization: issuer.token })
                 .send({
                     credentialRequestId: credentialRequest.id,
-                    values: {
-                        firstname: 'Alice',
-                        lastname: 'Doe',
-                        age: '32'
-                    }
+                    values: values
                 })
                 .expect(201);
             expect(res.body).to.contain.keys('id', 'type', 'message', 'messageId');
             expect(res.body.message.message).to.contain.keys('schema_id', 'cred_def_id', 'values');
+            credentialMessage = res.body;
+        });
 
-            const res2 = await agent
+        it('issuer should list issued credentials', async function() {
+            const res = await agent
                 .get('/api/credential')
+                .set(bothHeaders)
+                .set({ Authorization: issuer.token })
+                .expect(200);
+            expect(res.body)
+                .to.be.an('Array')
+                .with.lengthOf(1);
+            expect(res.body[0]).to.eql(credentialMessage);
+        });
+
+        it('issuer should filter issued credentials by recipientDid', async function() {
+            const res = await agent
+                .get('/api/credential?recipientDid=' + holderIssuerDid)
+                .set(bothHeaders)
+                .set({ Authorization: issuer.token })
+                .expect(200);
+            expect(res.body)
+                .to.be.an('Array')
+                .with.lengthOf(1);
+            expect(res.body[0]).to.eql(credentialMessage);
+        });
+
+        it('issuer should retrieve issued credential message by id', async function() {
+            const res = await agent
+                .get('/api/credential/' + credentialMessage.id)
+                .set(bothHeaders)
+                .set({ Authorization: issuer.token })
+                .expect(200);
+            expect(res.body).to.eql(credentialMessage);
+        });
+
+        it('holder should list credentials in wallet and have received credential from issuer', async function() {
+            const res = await agent
+                .get('/api/wallet/default/credential')
                 .set(bothHeaders)
                 .set({ Authorization: holder.token })
                 .expect(200);
-            expect(res2.body)
+            expect(res.body)
                 .to.be.an('Array')
                 .with.lengthOf(1);
-            expect(res2.body[0]).to.contain.keys('referent', 'attrs');
-            expect(res2.body[0].attrs)
+            expect(res.body[0]).to.contain.keys('referent', 'attrs');
+            expect(res.body[0].attrs)
                 .to.have.property('firstname')
-                .that.equals('Alice');
-            expect(res2.body[0].attrs)
+                .that.equals(values.firstname);
+            expect(res.body[0].attrs)
                 .to.have.property('lastname')
-                .that.equals('Doe');
-            expect(res2.body[0].attrs)
+                .that.equals(values.lastname);
+            expect(res.body[0].attrs)
                 .to.have.property('age')
-                .that.equals('32');
+                .that.equals(values.age);
+            credential = res.body[0];
+        });
+
+        it('holder should retrieve credential by id / referent', async function() {
+            const res = await agent
+                .get('/api/wallet/default/credential/' + credential.referent)
+                .set(bothHeaders)
+                .set({ Authorization: holder.token })
+                .expect(200);
+            expect(res.body).to.eql(credential);
         });
     });
 

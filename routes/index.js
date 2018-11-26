@@ -7,13 +7,13 @@ const router = require('express').Router();
 const auth = require('../middleware/auth');
 const walletProvider = require('../middleware/walletProvider');
 const user = require('../controllers/user');
-const wallet = require('../controllers/wallet');
 const schema = require('../controllers/indy-schema');
 const creddef = require('../controllers/credentialdef');
 const transactions = require('../controllers/transactions');
 const message = require('../controllers/message');
 const nym = require('./nym');
 
+const wallet = require('./wallet');
 const connectionOffer = require('./connection-offer');
 const connectionRequest = require('./connection-request');
 const connectionResponse = require('./connection-response');
@@ -42,15 +42,7 @@ router
     .put(user.update)
     .delete(user.delete);
 
-router
-    .route('/wallet')
-    .get(wallet.list)
-    .post(wallet.create);
-
-router
-    .route('/wallet/:wallet')
-    .get(wallet.retrieve)
-    .delete(wallet.delete);
+router.use('/wallet', wallet);
 
 router.use('/connectionoffer', connectionOffer);
 
