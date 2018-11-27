@@ -312,6 +312,71 @@ definitions:
       - name
       - version
       - attrNames
+  schema_post:
+    type: object
+    required:
+      - attributes
+      - name
+      - version
+    properties:
+      name:
+        type: string
+        description: 'A unique name for the schema'
+      version:
+        type: string
+        description: 'Schema version'
+      parentSchemaId:
+        type: string
+        description: 'Schema Id of the parent'
+      createCredentialDefinition:
+        type: boolean
+        default: true
+      isRevocable:
+        type: boolean
+        description:
+          'Flag to define if credentials issued with this schema could be revoked. If true it will generate one or multiple Revocation Registries.'
+        default: false
+      attributes:
+        type: array
+        description: 'List of attribute names put into the schema'
+        items:
+          required:
+            - name
+            - type
+          properties:
+            name:
+              type: string
+              description: 'Name of the attribute (Key)'
+            type:
+              type: string
+              description: 'A valid type for attributes, as requested using GET /types in schema compiler API'
+    example:
+      name: 'Passport'
+      version: '1.0'
+      isRevocable: false
+      parentSchemaId: 'Th7MpTaRZVRYnPiabds81Y:2:ID_NL:2.0'
+      attributes:
+        - name: 'Given Name'
+          type: string
+  schema_details:
+    allOf:
+      - $ref: '#/definitions/schema_post'
+      - type: object
+        properties:
+          isDeprecated:
+            type: boolean
+          lowLevelSchema:
+            type: object
+            properties: {}
+          credentialDefinitionId:
+            type: string
+          revocationRegistryId:
+            type: string
+        example:
+          isDeprecated: false
+          lowLevelSchema: {}
+          credentialDefinitionId: 'Th7MpTaRZVRYnPiabds81Y:3:CL:15:TAG1'
+          revocationRegistryId: ''
   message_post:
     type: object
     properties:
@@ -720,7 +785,7 @@ paths:
         '200':
           description: ''
       tags:
-        - schema
+        - indyschema
     post:
       summary: 'Create a Schema'
       description: 'Create a Schema'
@@ -733,7 +798,7 @@ paths:
         '201':
           description: ''
       tags:
-        - schema
+        - indyschema
 
   /api/indyschema/{schemaid}:
     parameters:
@@ -749,6 +814,137 @@ paths:
       responses:
         '200':
           description: ''
+      tags:
+        - indyschema
+
+  /api/schema:
+    get:
+      tags:
+        - schema
+      summary: 'List schemas'
+      description: 'List schemas from the logged in user'
+      parameters:
+        - name: onlyActive
+          in: query
+          description: '(Optional) Flag to filter all non-active schemas'
+          required: false
+          type: boolean
+        - $ref: '#/parameters/walletHeader'
+      responses:
+        200:
+          description: ''
+          schema:
+            type: array
+            example:
+              - name: 'Passport'
+                version: '1.0'
+                createdAt: '2018-10-21T18:27:23.759Z'
+                schemaId: 'Th7MpTaRZVRYnPiabds81Y:2:Passport:1.0'
+              - name: 'ID_NL'
+                version: '2.0'
+                createdAt: '2018-09-21T18:27:23.759Z'
+                schemaId: 'Th7MpTaRZVRYnPiabds81Y:2:ID_NL:2.0'
+              - name: 'Passport'
+                version: '2.0'
+                createdAt: '2018-08-21T18:27:23.759Z'
+                schemaId: 'Th7MpTaRZVRYnPiabds81Y:2:Passport:2.0'
+            items:
+              properties:
+                name:
+                  type: 'string'
+                  description: 'Name of the schema'
+                version:
+                  type: 'string'
+                  description: 'Version of the schema'
+                schemaId:
+                  type: 'string'
+                  description: 'Schema Id (as defined in Indy)'
+                createdDate:
+                  type: 'number'
+                  description: 'Creation Date of the schema (EPOCH)'
+    post:
+      tags:
+        - schema
+      summary: 'Create a Schema'
+      description: 'Create a Schema, Credential Definition & Revocation Registry (if revocable) for the logged in user'
+      parameters:
+        - in: body
+          name: body
+          required: false
+          schema:
+            $ref: '#/definitions/schema_post'
+        - $ref: '#/parameters/walletHeader'
+
+      responses:
+        201:
+          description: ''
+        400:
+          description: 'Schema does not pass the schema compiler/typechecker'
+        409:
+          description: 'Schema with the same name and version already exists'
+
+  /api/schema/{schemaid}:
+    get:
+      tags:
+        - schema
+      summary: 'Retrieve a schema'
+      description: 'Retrieve a schema'
+      parameters:
+        - name: schemaid
+          in: path
+          description: 'A unique string value identifying this schema.'
+          required: true
+          type: string
+        - $ref: '#/parameters/walletHeader'
+      responses:
+        200:
+          description: 'Schema Details'
+          schema:
+            $ref: '#/definitions/schema_details'
+        404:
+          description: 'Schema with that ID not found in database'
+
+    patch:
+      tags:
+        - schema
+      summary: 'Alter schema by the given operation'
+      description: 'Alter schema by the given operation'
+      parameters:
+        - $ref: '#/parameters/walletHeader'
+        - name: schemaid
+          in: path
+          description: 'A unique string value identifying this schema.'
+          required: true
+          type: string
+        - in: body
+          name: body
+          required: false
+          schema:
+            type: 'object'
+            required:
+              - 'operation'
+            properties:
+              operation:
+                type: 'string'
+                enum:
+                  - 'revoke'
+      responses:
+        204:
+          description: 'Successfully altered schema'
+        422:
+          description: 'Schema does not support revocations, or is already revoked'
+
+  /api/attribute/type:
+    get:
+      summary: 'The types supported by the high-level schema language'
+      description: 'The types supported by the high-level schema language'
+      responses:
+        200:
+          description: 'All the names of the supported types by the schema-compiler'
+          schema:
+            type: array
+            items:
+              type: string
       tags:
         - schema
 

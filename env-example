@@ -56,6 +56,15 @@ POOL_NAME=testPool
 ## path to pool_transactions_genesis
 GENESIS_TXN=pool_transactions_genesis
 
+# Schema compiler api
+# ===============================================
+
+## the ip where the schema-compiler will listen for input high-level schemas
+SCHEMA_COMP_HOST=172.16.0.150
+
+## the port where the schema-compiler will listen
+SCHEMA_COMP_PORT=8080
+
 
 # Deployment
 # ===============================================
