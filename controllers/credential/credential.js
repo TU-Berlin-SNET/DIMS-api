@@ -94,7 +94,8 @@ module.exports = {
         }
 
         const [credential, credRevocId, revocRegDelta] = await lib.credential.issuerCreateCredential(
-            wallet,
+            wallet.handle,
+            wallet.ownDid,
             credentialRequest,
             credentialValues,
             revocReg
@@ -145,17 +146,20 @@ module.exports = {
      * @return {Promise<Message>}
      */
     async revoke(wallet, id) {
-        const message = await Message.findTypeById(wallet, id, messageTypes.credentialRequest).exec();
+        const message = await Message.findTypeByMessageId(wallet, id, messageTypes.CREDENTIAL).exec();
         if (!message) {
-            return message;
+            throw Error('credential not found for id ' + id);
         }
-        // TODO blobStorageReaderHandle
-        // await lib.sdk.issuerRevokeCredential(
-        //     wallet.handle,
-        //     blobStorageReaderHandle,
-        //     message.meta.revocRegId,
-        //     message.meta.credRevocId
-        // );
+
+        const revocRegId = message.meta.revocRegId;
+        const credRevocId = message.meta.credRevocId;
+        let revocReg = null;
+        if (revocRegId) {
+            revocReg = await RevReg.findOne({ revocRegId: revocRegId }).exec();
+        }
+
+        // returns revoc_registry_delta
+        return await lib.credential.issuerRevokeCredential(wallet.handle, wallet.ownDid, credRevocId, revocReg);
     },
 
     /**

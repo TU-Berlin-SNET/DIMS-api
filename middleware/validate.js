@@ -11,7 +11,7 @@ const APIResult = require('../api-result');
 const swaggerDoc = YAML.load('./swagger.yaml');
 
 ajv.addSchema(swaggerDoc, 'swagger.json');
-const rx = /^\/api\/(\w+)/;
+const rx = /^\/api\/(\w+)$/;
 
 /**
  * Validation Middleware

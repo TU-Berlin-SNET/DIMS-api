@@ -59,10 +59,8 @@ module.exports = {
                 blobStorageWriter
             );
 
-            let tailsFileLocation = revocRegDef.value.tailsLocation;
-            // change the URL of tails from file path to the context path
-            revocRegDef.value.tailsLocation = '/tails/' + revocRegId + '/';
-            // store resulting revocation registry definition to the ledger
+            revocRegDef.value.tailsLocation =
+                'http://' + process.env.APP_HOST + ':' + process.env.APP_PORT + '/tails/' + revocRegId;
             await pool.revocRegDefRequest(req.wallet.handle, req.wallet.ownDid, revocRegDef);
             // store first value of the accumulator
             await pool.revocRegEntryRequest(
@@ -79,10 +77,6 @@ module.exports = {
             tailsdoc.hash = revocRegDef.value.tailsHash;
             // foreign key
             tailsdoc.credDefId = credDefId;
-
-            // read back the tails from the file created by blobstoragewriter
-            tailsdoc.tails = fs.readFileSync(tailsFileLocation);
-            fs.unlinkSync(tailsFileLocation);
         }
 
         const credDefDoc = await new CredDef(doc).save();
@@ -103,10 +97,13 @@ module.exports = {
     }),
 
     retrieveTails: wrap(async (req, res, next) => {
-        const registry = await RevocRegistry.findOne({ revocRegDefId: req.params.revocRegDefId }).exec();
+        const registry = await RevocRegistry.findOne({ revocRegId: req.params.revocRegDefId }).exec();
 
         if (!registry) next(new APIResult(404));
         // TODO: export as binary instead of base64
-        else next(new APIResult(200, registry.tails.toString('base64')));
+        else {
+            const tails = fs.readFileSync(lib.revocationRegistry.tailsBaseDir + '/' + registry.hash);
+            next(new APIResult(200, tails.toString('base64')));
+        }
     })
 };
