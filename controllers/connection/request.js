@@ -13,6 +13,13 @@ const ConnectionResponse = require('./response');
 
 const Message = Mongoose.model('Message');
 
+const ENDPOINT =
+    process.env.APP_DOMAIN_PROTOCOL +
+    '://' +
+    process.env.APP_DOMAIN_HOST +
+    (process.env.APP_DOMAIN_PORT ? `:${process.env.APP_DOMAIN_PORT}` : '') +
+    '/indy';
+
 module.exports = {
     /**
      * List connection requests belonging to wallet
@@ -38,7 +45,7 @@ module.exports = {
      * @param {object} [connectionOffer]
      * @return {Promise<Message>} Message - connection request object
      */
-    async create(wallet, myEndpoint = process.env.APP_ENDPOINT, theirDid, theirVk, theirEndpoint, connectionOffer) {
+    async create(wallet, myEndpoint = ENDPOINT, theirDid, theirVk, theirEndpoint, connectionOffer) {
         const [theirEndpointDid, theirEndpointVk, theirEndpointAddress] = await lib.did.ensureDidInfo(
             wallet.handle,
             pool,

@@ -18,13 +18,15 @@ const pool = require('./pool');
 const middleware = require('./middleware');
 const routes = require('./routes');
 const message = require('./controllers/message');
+const credentialDefinition = require('./controllers/credentialdef');
 const APIResult = require('./api-result');
 const swaggerDoc = YAML.load('./swagger.yaml');
-const routesTails = require('./routes/tails');
 
 const app = express();
 
 app.use(middleware.before);
+
+app.get('/tails/:tailsHash', credentialDefinition.retrieveTails);
 
 app.post('/indy', message.receiveMessage);
 
@@ -35,7 +37,6 @@ app.get('/healthcheck', (req, res, next) => {
 app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerDoc));
 
 app.use('/api/', routes);
-app.use('/tails/', routesTails);
 
 app.use(middleware.after);
 

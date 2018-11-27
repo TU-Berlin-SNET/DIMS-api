@@ -4,7 +4,6 @@
  */
 
 const Mongoose = require('../db');
-const Mixed = Mongoose.Schema.Types.Mixed;
 
 const schema = new Mongoose.Schema({
     created: {
@@ -21,8 +20,7 @@ const schema = new Mongoose.Schema({
     },
     hash: {
         type: String
-    },
-    tails: Mixed
+    }
 });
 
 module.exports = Mongoose.model('RevocationRegistry', schema);

@@ -8,6 +8,13 @@ const lib = require('../../lib');
 const Mongoose = require('../../db');
 const Message = Mongoose.model('Message');
 
+const ENDPOINT =
+    process.env.APP_DOMAIN_PROTOCOL +
+    '://' +
+    process.env.APP_DOMAIN_HOST +
+    (process.env.APP_DOMAIN_PORT ? `:${process.env.APP_DOMAIN_PORT}` : '') +
+    '/indy';
+
 module.exports = {
     /**
      * List connection offers belonging to wallet
@@ -27,10 +34,10 @@ module.exports = {
      * @param {object} [data] additional data to put in the offer
      * @param {object} [meta] additional meta information to store with offer (and later in pairwise)
      * @param {string} [role] role that is offered, e.g. TRUST_ANCHOR, ..
-     * @param {string} [endpoint] my endpoint, default is process.env.APP_ENDPOINT
+     * @param {string} [endpoint] my endpoint, default is derived from environment variables
      * @return {Promise<Message>} Message object including the connection offer
      */
-    async create(wallet, data, meta = {}, role, endpoint = process.env.APP_ENDPOINT) {
+    async create(wallet, data, meta = {}, role, endpoint = ENDPOINT) {
         const [did, vk] = await wallet.getPrimaryDid();
         const [myDid] = await lib.sdk.createAndStoreMyDid(wallet.handle, {});
         const offer = await lib.connection.createConnectionOffer(did, vk, endpoint);

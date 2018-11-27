@@ -74,7 +74,6 @@ describe('Connection', function() {
             .set(bothHeaders)
             .set({ Authorization: steward.token })
             .send({
-                endpoint: process.env.APP_ENDPOINT,
                 role: 'TRUST_ANCHOR',
                 meta: {
                     metaId: 'test'
@@ -157,7 +156,6 @@ describe('Connection', function() {
             .set(bothHeaders)
             .set({ Authorization: user.token })
             .send({
-                endpoint: process.env.APP_ENDPOINT,
                 connectionOffer: connectionOffer.message
             })
             .expect(200);
@@ -196,9 +194,8 @@ describe('Connection', function() {
             .set(bothHeaders)
             .set({ Authorization: user.token })
             .send({
-                endpoint: process.env.APP_ENDPOINT,
                 theirDid: steward.wallet.ownDid,
-                theirEndpoint: process.env.APP_ENDPOINT
+                theirEndpoint: vars.AGENT_ENDPOINT
             })
             .expect(200);
         expect(res.body.message).to.contain.keys('id', 'type', 'message');

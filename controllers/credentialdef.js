@@ -2,9 +2,9 @@
  * IDChain Agent REST API
  * Credential Definition Controller
  */
+'use strict';
 
 const fs = require('fs');
-
 const indy = require('indy-sdk');
 
 const lib = require('../lib');
@@ -13,6 +13,13 @@ const pool = require('../pool');
 const APIResult = require('../api-result');
 const CredDef = require('../models/credentialdef');
 const RevocRegistry = require('../models/revocation-registry');
+
+const ENDPOINT =
+    process.env.APP_DOMAIN_PROTOCOL +
+    '://' +
+    process.env.APP_DOMAIN_HOST +
+    (process.env.APP_DOMAIN_PORT ? `:${process.env.APP_DOMAIN_PORT}` : '') +
+    '/tails/';
 
 module.exports = {
     create: wrap(async (req, res, next) => {
@@ -59,8 +66,9 @@ module.exports = {
                 blobStorageWriter
             );
 
-            revocRegDef.value.tailsLocation =
-                'http://' + process.env.APP_HOST + ':' + process.env.APP_PORT + '/tails/' + revocRegId;
+            // set full URL in tailsLocation
+            revocRegDef.value.tailsLocation = ENDPOINT + revocRegDef.value.tailsHash;
+
             await pool.revocRegDefRequest(req.wallet.handle, req.wallet.ownDid, revocRegDef);
             // store first value of the accumulator
             await pool.revocRegEntryRequest(
@@ -97,13 +105,15 @@ module.exports = {
     }),
 
     retrieveTails: wrap(async (req, res, next) => {
-        const registry = await RevocRegistry.findOne({ revocRegId: req.params.revocRegDefId }).exec();
-
-        if (!registry) next(new APIResult(404));
-        // TODO: export as binary instead of base64
-        else {
-            const tails = fs.readFileSync(lib.revocationRegistry.tailsBaseDir + '/' + registry.hash);
-            next(new APIResult(200, tails.toString('base64')));
-        }
+        const data = await new Promise((resolve, reject) => {
+            fs.readFile(lib.revocationRegistry.tailsBaseDir + '/' + req.params.tailsHash, 'base64', (err, data) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(data);
+                }
+            });
+        });
+        next(new APIResult(200, data));
     })
 };

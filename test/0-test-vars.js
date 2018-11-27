@@ -13,3 +13,9 @@ module.exports.acceptHeader = { Accept: 'application/json' };
 module.exports.contentHeader = { 'Content-Type': 'application/json' };
 module.exports.bothHeaders = Object.assign({}, module.exports.acceptHeader, module.exports.contentHeader);
 module.exports.stewardSeed = '000000000000000000000000steward1';
+module.exports.AGENT_ENDPOINT =
+    process.env.APP_DOMAIN_PROTOCOL +
+    '://' +
+    process.env.APP_DOMAIN_HOST +
+    (process.env.APP_DOMAIN_PORT ? `:${process.env.APP_DOMAIN_PORT}` : '') +
+    '/indy';

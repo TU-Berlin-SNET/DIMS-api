@@ -80,16 +80,13 @@ async function connect(user1token, user2token) {
         .post('/api/connectionoffer')
         .set(bothHeaders)
         .set({ Authorization: user1token })
-        .send({
-            endpoint: process.env.APP_ENDPOINT
-        })
+        .send({})
         .expect(201);
     const request = await agent
         .post('/api/connectionrequest')
         .set(bothHeaders)
         .set({ Authorization: user2token })
         .send({
-            endpoint: process.env.APP_ENDPOINT,
             connectionOffer: offer.body.message
         })
         .expect(200);
