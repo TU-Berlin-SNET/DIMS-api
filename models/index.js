@@ -7,6 +7,7 @@ const User = require('./user');
 const Wallet = require('./wallet');
 const Message = require('./message');
 const IndySchema = require('./indy-schema');
+const Schema = require('./schema');
 const CredentialDefinition = require('./credentialdef');
 const Credential = require('./credential');
 const Proof = require('./proof');
@@ -17,6 +18,7 @@ module.exports = {
     Wallet,
     Message,
     IndySchema,
+    Schema,
     CredentialDefinition,
     Credential,
     Proof,

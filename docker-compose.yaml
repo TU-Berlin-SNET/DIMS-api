@@ -30,6 +30,15 @@ services:
     networks:
       - indy-network
 
+  schemac:
+    image: idchain/schemacompiler
+    environment:
+      - SCHEMA_COMP_HOST
+      - SCHEMA_COMP_PORT
+    networks:
+      indy-network:
+        ipv4_address: ${SCHEMA_COMP_HOST}
+
   api:
     build:
       context: .
@@ -50,11 +59,14 @@ services:
       - GENESIS_TXN
       - LOG_LEVEL
       - RUST_LOG
+      - SCHEMA_COMP_HOST
+      - SCHEMA_COMP_PORT
     ports:
       - ${APP_PORT}:${APP_PORT}
     depends_on:
       - mongodb
       - pool
+      - schemac
     networks:
       indy-network:
         ipv4_address: ${APP_HOST}

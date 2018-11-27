@@ -46,6 +46,8 @@ let connectionOfferToDelete;
 let connectionRequest;
 
 describe('Connection', function() {
+    let pairwise;
+
     before(async function() {
         steward.id = await core.createUser(steward);
         steward.token = await core.login(steward.username, steward.password);
@@ -251,9 +253,39 @@ describe('Connection', function() {
             .to.have.property('pairwise')
             .that.is.an('Array')
             .with.lengthOf.at.least(1);
-        const pairwise = getRes.body.pairwise.filter(v => v['my_did'] === res.body.message.did);
-        expect(pairwise)
+        pairwise = getRes.body.pairwise.find(v => v['my_did'] === res.body.message.did);
+        expect(pairwise).to.be.an('Object');
+        expect(pairwise).to.contain.keys('my_did', 'their_did', 'metadata');
+    });
+
+    it('should list connections', async function() {
+        const res = await agent
+            .get('/api/wallet/default/connection')
+            .set(bothHeaders)
+            .set({ Authorization: steward.token })
+            .expect(200);
+        expect(res.body)
             .to.be.an('Array')
-            .with.lengthOf(1);
+            .with.lengthOf(2);
+        pairwise = res.body.find(v => v['my_did'] === pairwise['my_did']);
+        expect(pairwise).to.be.an('Object');
+        expect(pairwise).to.contain.keys('my_did', 'their_did', 'metadata');
+        expect(pairwise.metadata).to.be.an('Object');
+        expect(pairwise.metadata).to.contain.keys(
+            'theirEndpointDid',
+            'theirEndpointVk',
+            'theirEndpoint',
+            'acknowledged'
+        );
+        expect(pairwise.metadata.acknowledged).to.be.true;
+    });
+
+    it('should retrieve connection by theirDid', async function() {
+        const res = await agent
+            .get('/api/wallet/default/connection/' + pairwise['their_did'])
+            .set(bothHeaders)
+            .set({ Authorization: steward.token })
+            .expect(200);
+        expect(res.body).to.eql(pairwise);
     });
 });

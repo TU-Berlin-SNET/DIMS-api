@@ -20,15 +20,20 @@ const RevReg = require('../../models/revocation-registry');
 
 module.exports = {
     /**
-     * List credentials in wallet
+     * List credentials issued and sent with current wallet
      * @param {Wallet} wallet
-     * @param {object} query
+     * @param {object} query additional query parameters to filter by, e.g. recipientDid
      * @return {Promise<Message[]>}
      */
     async list(wallet, query = {}) {
-        const [searchHandle, totalCount] = await lib.sdk.proverSearchCredentials(wallet.handle, query);
-        const credentials = await lib.sdk.proverFetchCredentials(searchHandle, totalCount);
-        return credentials;
+        const search = Message.find({
+            wallet: wallet._id,
+            type: messageTypes.CREDENTIAL
+        });
+        if (query) {
+            search.find(query);
+        }
+        return search.exec();
     },
 
     /**
@@ -95,11 +100,9 @@ module.exports = {
             revocReg
         );
 
-        const meta = {
-            revocRegId: revocRegId,
-            credRevocId: credRevocId,
-            revocRegDelta: revocRegDelta
-        };
+        // put revocation info in meta if available
+        const meta = revocRegId ? { revocRegId, credRevocId, revocRegDelta } : null;
+
         const message = {
             id: credentialRequest.messageId,
             origin: pairwise['my_did'],
@@ -122,13 +125,17 @@ module.exports = {
     },
 
     /**
-     * Retrieve a credential
+     * Retrieve a credential issued and sent with current wallet
      * @param {Wallet} wallet
-     * @param {String} id credential id as stored in wallet
+     * @param {String} id credential id as stored in DB
      * @return {Promise<Credential>}
      */
     async retrieve(wallet, id) {
-        return lib.sdk.proverGetCredential(wallet.handle, id);
+        return Message.findOne({
+            _id: id,
+            wallet: wallet._id,
+            type: messageTypes.CREDENTIAL
+        }).exec();
     },
 
     /**
