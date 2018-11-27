@@ -120,7 +120,6 @@ module.exports = {
                 wallet.ownDid,
                 schemaId,
                 'TAG1',
-                'CL',
                 isRevocable
             );
             await new CredDef({
