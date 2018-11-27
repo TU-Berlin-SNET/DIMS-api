@@ -303,7 +303,7 @@ describe('attestation with revocation (schemas, credentials, and proofs)', funct
 
         it('issuer should revoke issued credential', async function() {
             await agent
-                .post(`/api/credential/${credentialMessage.messageId}/revoke`)
+                .post(`/api/credential/${credentialMessage.id}/revoke`)
                 .set(bothHeaders)
                 .set({ Authorization: issuer.token })
                 .expect(200);

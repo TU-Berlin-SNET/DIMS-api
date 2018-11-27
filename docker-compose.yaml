@@ -47,7 +47,9 @@ services:
     environment:
       - APP_HOST
       - APP_PORT
-      - APP_ENDPOINT
+      - APP_DOMAIN_PROTOCOL
+      - APP_DOMAIN_HOST
+      - APP_DOMAIN_PORT
       - JWT_SECRET
       - DB_HOST
       - DB_PORT

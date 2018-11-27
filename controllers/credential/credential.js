@@ -146,9 +146,9 @@ module.exports = {
      * @return {Promise<Message>}
      */
     async revoke(wallet, id) {
-        const message = await Message.findTypeByMessageId(wallet, id, messageTypes.CREDENTIAL).exec();
+        const message = await Message.findTypeById(wallet, id, messageTypes.CREDENTIAL).exec();
         if (!message) {
-            throw Error('credential not found for id ' + id);
+            return null;
         }
 
         const revocRegId = message.meta.revocRegId;
