@@ -22,6 +22,33 @@ produces:
   - application/json
 security:
   - Bearer: []
+tags:
+  - name: common
+    description: 'Common endpoints for issuer, verifier, and prover'
+  - name: issuer
+    description: 'Endpoints for an Issuer'
+  - name: verifier
+    description: 'Endpoints for a verifier'
+  - name: prover
+    description: 'Endpoints for a prover'
+  - name: user
+    description: 'User endpoints'
+  - name: wallet
+    description: 'Wallet endpoints'
+  - name: connection
+    description: 'Connection offer/request/response endpoints'
+  - name: indyschema
+    description: 'Low-level indy schema endpoints'
+  - name: schema
+    description: 'High-level schema endpoints'
+  - name: credential
+    description: 'Credential definition/offer/request endpoints'
+  - name: proof
+    description: 'Proof request, and proof endpoints'
+  - name: transaction
+    description: 'Low-level indy transaction endpoints'
+  - name: message
+    description: 'Message endpoints'
 
 parameters:
   userParam:
@@ -1320,6 +1347,10 @@ paths:
                 type: string
       tags:
         - user
+        - common
+        - issuer
+        - verifier
+        - prover
 
   /api/user:
     post:
@@ -1348,6 +1379,10 @@ paths:
           $ref: '#/responses/bad_request'
       tags:
         - user
+        - common
+        - issuer
+        - verifier
+        - prover
 
   /api/user/{user}:
     parameters:
@@ -1368,6 +1403,10 @@ paths:
           $ref: '#/responses/not_found'
       tags:
         - user
+        - common
+        - issuer
+        - verifier
+        - prover
     put:
       summary: 'Update a User (at least one of the properties must be provided)'
       description: 'Update a User (at least one of the properties must be provided)'
@@ -1389,6 +1428,10 @@ paths:
           $ref: '#/responses/not_found'
       tags:
         - user
+        - common
+        - issuer
+        - verifier
+        - prover
     delete:
       summary: 'Delete a User'
       description: 'Delete a User'
@@ -1403,6 +1446,10 @@ paths:
           $ref: '#/responses/not_found'
       tags:
         - user
+        - common
+        - issuer
+        - verifier
+        - prover
 
   /api/wallet:
     get:
@@ -1421,6 +1468,10 @@ paths:
           $ref: '#/responses/not_found'
       tags:
         - wallet
+        - common
+        - issuer
+        - verifier
+        - prover
     post:
       summary: 'Create a new Wallet (optionally with given name and settings)'
       description: 'Create a new Wallet (optionally with given name and settings)'
@@ -1442,6 +1493,10 @@ paths:
           $ref: '#/responses/not_found'
       tags:
         - wallet
+        - common
+        - issuer
+        - verifier
+        - prover
 
   /api/wallet/{wallet}:
     parameters:
@@ -1462,6 +1517,10 @@ paths:
           $ref: '#/responses/not_found'
       tags:
         - wallet
+        - common
+        - issuer
+        - verifier
+        - prover
     delete:
       summary: 'Delete a Wallet'
       description: 'Delete a Wallet'
@@ -1474,6 +1533,10 @@ paths:
           $ref: '#/responses/not_found'
       tags:
         - wallet
+        - common
+        - issuer
+        - verifier
+        - prover
 
   /api/wallet/{wallet}/connection/:
     parameters:
@@ -1494,6 +1557,10 @@ paths:
           $ref: '#/responses/not_found'
       tags:
         - wallet
+        - common
+        - issuer
+        - verifier
+        - prover
 
   /api/wallet/{wallet}/connection/{theirDid}:
     parameters:
@@ -1513,6 +1580,10 @@ paths:
           $ref: '#/responses/not_found'
       tags:
         - wallet
+        - common
+        - issuer
+        - verifier
+        - prover
 
   /api/wallet/{wallet}/credential/:
     get:
@@ -1559,6 +1630,7 @@ paths:
           $ref: '#/responses/not_found'
       tags:
         - wallet
+        - prover
 
   /api/wallet/{wallet}/credential/{credential}:
     parameters:
@@ -1574,6 +1646,7 @@ paths:
             $ref: '#/definitions/indy_credential'
       tags:
         - wallet
+        - prover
 
   /api/connection/{myDid}:
     parameters:
@@ -1608,6 +1681,8 @@ paths:
           $ref: '#/responses/not_found'
       tags:
         - connection
+        - issuer
+        - verifier
 
   /api/connectionoffer:
     get:
@@ -1628,6 +1703,8 @@ paths:
           $ref: '#/responses/not_found'
       tags:
         - connection
+        - issuer
+        - verifier
     post:
       summary: 'Create a new connection offer'
       description: 'Create a new connection offer'
@@ -1649,6 +1726,8 @@ paths:
           $ref: '#/responses/not_found'
       tags:
         - connection
+        - issuer
+        - verifier
 
   /api/connectionoffer/{connectionOfferId}:
     parameters:
@@ -1672,6 +1751,10 @@ paths:
           $ref: '#/responses/not_found'
       tags:
         - connection
+        - common
+        - issuer
+        - verifier
+        - prover
     delete:
       summary: 'Delete a connection offer by _id'
       description: 'Delete a connection offer by _id'
@@ -1684,6 +1767,10 @@ paths:
           $ref: '#/responses/not_found'
       tags:
         - connection
+        - common
+        - issuer
+        - verifier
+        - prover
 
   /api/connectionrequest:
     get:
@@ -1704,6 +1791,10 @@ paths:
           $ref: '#/responses/not_found'
       tags:
         - connection
+        - common
+        - issuer
+        - verifier
+        - prover
     post:
       summary: 'Accept a connection offer and/or send a connection request'
       description: 'Accept a connection offer and/or send a connection request'
@@ -1725,6 +1816,10 @@ paths:
           $ref: '#/responses/not_found'
       tags:
         - connection
+        - common
+        - issuer
+        - verifier
+        - prover
 
   /api/connectionrequest/{connectionRequestId}:
     parameters:
@@ -1748,6 +1843,10 @@ paths:
           $ref: '#/responses/not_found'
       tags:
         - connection
+        - common
+        - issuer
+        - verifier
+        - prover
     delete:
       summary: 'Delete a connection request by _id'
       description: 'Delete a connection request by _id'
@@ -1760,6 +1859,10 @@ paths:
           $ref: '#/responses/not_found'
       tags:
         - connection
+        - common
+        - issuer
+        - verifier
+        - prover
 
   /api/connectionresponse:
     post:
@@ -1783,6 +1886,10 @@ paths:
           $ref: '#/responses/not_found'
       tags:
         - connection
+        - common
+        - issuer
+        - verifier
+        - prover
 
   /api/indyschema:
     get:
@@ -1803,6 +1910,7 @@ paths:
           $ref: '#/responses/not_found'
       tags:
         - indyschema
+        - issuer
     post:
       summary: 'Create a low-level indy schema'
       description: 'Create a low-level indy schema'
@@ -1824,6 +1932,7 @@ paths:
           $ref: '#/responses/not_found'
       tags:
         - indyschema
+        - issuer
 
   /api/indyschema/{schemaid}:
     parameters:
@@ -1847,11 +1956,14 @@ paths:
           $ref: '#/responses/not_found'
       tags:
         - indyschema
+        - issuer
+        - verifier
 
   /api/schema:
     get:
       tags:
         - schema
+        - issuer
       summary: 'List schemas'
       description: 'List schemas from the logged in user'
       parameters:
@@ -1896,6 +2008,7 @@ paths:
     post:
       tags:
         - schema
+        - issuer
       summary: 'Create a Schema'
       description: 'Create a Schema, Credential Definition & Revocation Registry (if revocable) for the logged in user'
       parameters:
@@ -1918,6 +2031,8 @@ paths:
     get:
       tags:
         - schema
+        - issuer
+        - verifier
       summary: 'Retrieve a schema'
       description: 'Retrieve a schema'
       parameters:
@@ -1938,6 +2053,7 @@ paths:
     patch:
       tags:
         - schema
+        - issuer
       summary: 'Alter schema by the given operation'
       description: 'Alter schema by the given operation'
       parameters:
@@ -1978,6 +2094,7 @@ paths:
               type: string
       tags:
         - schema
+        - issuer
 
   /api/credentialdef:
     get:
@@ -1998,6 +2115,7 @@ paths:
           $ref: '#/responses/not_found'
       tags:
         - credential
+        - issuer
     post:
       summary: 'Create a credential definition'
       description: 'Create a credential definition'
@@ -2023,6 +2141,7 @@ paths:
           $ref: '#/responses/not_found'
       tags:
         - credential
+        - issuer
 
   /api/credentialdef/{creddef}:
     parameters:
@@ -2046,6 +2165,7 @@ paths:
           $ref: '#/responses/not_found'
       tags:
         - credential
+        - issuer
 
   /api/credentialoffer:
     get:
@@ -2066,6 +2186,8 @@ paths:
           $ref: '#/responses/not_found'
       tags:
         - credential
+        - issuer
+        - prover
     post:
       summary: 'Create and send a credential offer'
       description: 'Create and send a credential offer'
@@ -2087,6 +2209,7 @@ paths:
           $ref: '#/responses/not_found'
       tags:
         - credential
+        - issuer
 
   /api/credentialoffer/{id}:
     parameters:
@@ -2112,6 +2235,8 @@ paths:
           $ref: '#/responses/not_found'
       tags:
         - credential
+        - issuer
+        - prover
     delete:
       summary: 'Delete a credential offer'
       description: 'Delete a credential offer'
@@ -2124,6 +2249,8 @@ paths:
           $ref: '#/responses/not_found'
       tags:
         - credential
+        - issuer
+        - prover
 
   /api/credentialrequest:
     get:
@@ -2142,6 +2269,8 @@ paths:
           $ref: '#/responses/not_found'
       tags:
         - credential
+        - issuer
+        - prover
     post:
       summary: 'Accept credential offer and create credential request'
       description: 'Accept credential offer and create credential request'
@@ -2163,6 +2292,7 @@ paths:
           $ref: '#/responses/not_found'
       tags:
         - credential
+        - issuer
 
   /api/credentialrequest/{id}:
     parameters:
@@ -2186,6 +2316,8 @@ paths:
           $ref: '#/responses/not_found'
       tags:
         - credential
+        - issuer
+        - prover
     delete:
       summary: 'Delete a credential request'
       description: 'Delete a credential request'
@@ -2198,6 +2330,8 @@ paths:
           $ref: '#/responses/not_found'
       tags:
         - credential
+        - issuer
+        - prover
 
   /api/credential/:
     get:
@@ -2222,6 +2356,7 @@ paths:
           $ref: '#/responses/not_found'
       tags:
         - credential
+        - issuer
     post:
       summary: 'Issue/Create a credential and send to recipient'
       description: 'Issue/Create a credential and send to recipient'
@@ -2243,6 +2378,7 @@ paths:
           $ref: '#/responses/not_found'
       tags:
         - credential
+        - issuer
 
   /api/credential/{id}:
     parameters:
@@ -2266,6 +2402,7 @@ paths:
           $ref: '#/responses/not_found'
       tags:
         - credential
+        - issuer
 
   # Endpoint is WIP
   /api/credential/{id}/revoke:
@@ -2299,6 +2436,7 @@ paths:
           $ref: '#/responses/not_found'
       tags:
         - credential
+        - issuer
 
   /api/proofrequesttemplate:
     get:
@@ -2319,6 +2457,7 @@ paths:
           $ref: '#/responses/not_found'
       tags:
         - proof
+        - verifier
     post:
       summary: 'Create a proof request templates'
       description: 'Create a proof request templates'
@@ -2340,6 +2479,7 @@ paths:
           $ref: '#/responses/not_found'
       tags:
         - proof
+        - verifier
 
   /api/proofrequesttemplate/{id}:
     parameters:
@@ -2363,6 +2503,7 @@ paths:
           $ref: '#/responses/not_found'
       tags:
         - proof
+        - verifier
     delete:
       summary: 'Delete a proof request template'
       description: 'Delete a proof request template'
@@ -2375,6 +2516,7 @@ paths:
           $ref: '#/responses/not_found'
       tags:
         - proof
+        - verifier
 
   /api/proofrequest:
     get:
@@ -2395,6 +2537,8 @@ paths:
           $ref: '#/responses/not_found'
       tags:
         - proof
+        - verifier
+        - prover
     post:
       summary: 'Create and send a proof request'
       description: 'Create and send a proof request'
@@ -2416,6 +2560,7 @@ paths:
           $ref: '#/responses/not_found'
       tags:
         - proof
+        - verifier
 
   /api/proofrequest/{id}:
     parameters:
@@ -2439,6 +2584,8 @@ paths:
           $ref: '#/responses/not_found'
       tags:
         - proof
+        - verifier
+        - prover
     delete:
       summary: 'Delete a proof request'
       description: 'Delete a proof request'
@@ -2451,6 +2598,8 @@ paths:
           $ref: '#/responses/not_found'
       tags:
         - proof
+        - verifier
+        - prover
 
   /api/proof:
     get:
@@ -2471,6 +2620,7 @@ paths:
           $ref: '#/responses/not_found'
       tags:
         - proof
+        - verifier
     post:
       summary: 'Create and send a Proof'
       description: 'Create and send a Proof'
@@ -2492,6 +2642,7 @@ paths:
           $ref: '#/responses/not_found'
       tags:
         - proof
+        - prover
 
   /api/proof/{id}:
     parameters:
@@ -2517,6 +2668,7 @@ paths:
           $ref: '#/responses/not_found'
       tags:
         - proof
+        - verifier
     delete:
       summary: 'Delete a received proof'
       description: 'Delete a received proof'
@@ -2529,6 +2681,7 @@ paths:
           $ref: '#/responses/not_found'
       tags:
         - proof
+        - verifier
 
   /api/transactions:
     get:
@@ -2736,3 +2889,5 @@ paths:
           $ref: '#/responses/not_found'
       tags:
         - proof
+        - issuer
+        - prover
