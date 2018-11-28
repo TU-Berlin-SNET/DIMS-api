@@ -7,19 +7,13 @@
 const fs = require('fs');
 const indy = require('indy-sdk');
 
+const config = require('../config');
 const lib = require('../lib');
 const wrap = require('../asyncwrap').wrap;
 const pool = require('../pool');
 const APIResult = require('../api-result');
 const CredDef = require('../models/credentialdef');
 const RevocRegistry = require('../models/revocation-registry');
-
-const ENDPOINT =
-    process.env.APP_DOMAIN_PROTOCOL +
-    '://' +
-    process.env.APP_DOMAIN_HOST +
-    (process.env.APP_DOMAIN_PORT ? `:${process.env.APP_DOMAIN_PORT}` : '') +
-    '/tails/';
 
 module.exports = {
     create: wrap(async (req, res, next) => {
@@ -67,7 +61,7 @@ module.exports = {
             );
 
             // set full URL in tailsLocation
-            revocRegDef.value.tailsLocation = ENDPOINT + revocRegDef.value.tailsHash;
+            revocRegDef.value.tailsLocation = config.APP_TAILS_ENDPOINT + revocRegDef.value.tailsHash;
 
             await pool.revocRegDefRequest(req.wallet.handle, req.wallet.ownDid, revocRegDef);
             // store first value of the accumulator

@@ -21,6 +21,11 @@ APP_DOMAIN_PORT=8000
 # (in minutes)
 APP_WALLETCACHE_TTL=15
 
+# whether to always write pairwise dids onto the ledger per nym request
+# by default pairwise dids are only stored locally and not stored on the ledger
+# except when a role other than NONE is offered
+APP_NYM_ALWAYS=false
+
 # bcrypt saltOrRounds configuration
 SALTROUNDS=10
 
