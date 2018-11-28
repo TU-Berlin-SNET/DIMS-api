@@ -46,6 +46,14 @@ module.exports = {
     },
 
     async create(wallet, user, name, version, parentSchemaId, attributes, createCredentialDefinition, isRevocable) {
+        const exists = await Schema.findOne({
+            wallet: wallet.id,
+            name: name,
+            version: version
+        }).exec();
+
+        if (exists) throw new APIResult(409); // schema with same name and version already exists in db for the current user
+
         // Collect all related parent schemas
         let allSchemas = await collectParentSchemas(wallet.id, parentSchemaId);
 
@@ -134,7 +142,7 @@ module.exports = {
 
     async retrieve(wallet, id) {
         // NOTE: we don't contact the ledger but the mongodb only
-        return Schema.findOne({ _id: id }).exec(); // correctly throws 404 when not found
+        return Schema.findById(id).exec(); // correctly throws 404 when not found
     },
 
     async update(wallet, id, operation) {
