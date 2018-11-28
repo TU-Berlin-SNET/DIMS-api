@@ -11,27 +11,27 @@ const expect = require('chai').expect;
 const core = require('./0-test-core');
 const vars = require('./0-test-vars');
 
-const nonce = require('uuid/v4')();
+const testId = require('uuid/v4')();
 const { before, after, describe, it } = mocha;
 const agent = vars.agent;
 const bothHeaders = vars.bothHeaders;
 
 const users = [
     {
-        username: 'user' + nonce,
+        username: 'user' + testId,
         password: 'userPass',
         wallet: {
-            name: 'wallet' + nonce,
+            name: 'wallet' + testId,
             credentials: {
                 key: 'walletKey'
             }
         }
     },
     {
-        username: 'user2' + nonce,
+        username: 'user2' + testId,
         password: 'userPass',
         wallet: {
-            name: 'wallet2' + nonce,
+            name: 'wallet2' + testId,
             credentials: {
                 key: 'walletKey'
             }
@@ -65,8 +65,8 @@ describe('Default Wallet', function() {
             .post('/api/user')
             .set(bothHeaders)
             .send({
-                username: 'noneuser' + nonce,
-                password: 'nonepass' + nonce,
+                username: 'noneuser' + testId,
+                password: 'nonepass' + testId,
                 wallet: {
                     name: 'default',
                     credentials: { key: 'defaultkey' }

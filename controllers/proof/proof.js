@@ -131,6 +131,8 @@ module.exports = {
         if (!requestDoc) {
             throw APIResult.badRequest('invalid request nonce');
         }
+        // remove to prevent replays
+        await requestDoc.remove();
         // ok, proof was requested so continue
 
         const proofDoc = await Proof.findById(requestDoc.meta.proofId).exec();

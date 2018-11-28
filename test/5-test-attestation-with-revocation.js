@@ -79,18 +79,25 @@ describe('attestation with revocation (schemas, credentials, and proofs)', funct
         );
 
         // onboard issuer and relying party as TRUST_ANCHOR
+        // and holder as NONE (to use ownDid as endpoint did for communication)
         await Promise.all([
             core.onboard(
                 users.steward.token,
                 users.issuer.wallet.ownDid,
-                users.issuer.wallet.dids.filter(v => v.did === users.issuer.wallet.ownDid)[0].verkey,
+                users.issuer.wallet.dids.find(v => v.did === users.issuer.wallet.ownDid).verkey,
                 'TRUST_ANCHOR'
             ),
             core.onboard(
                 users.steward.token,
                 users.relyingParty.wallet.ownDid,
-                users.relyingParty.wallet.dids.filter(v => v.did === users.relyingParty.wallet.ownDid)[0].verkey,
+                users.relyingParty.wallet.dids.find(v => v.did === users.relyingParty.wallet.ownDid).verkey,
                 'TRUST_ANCHOR'
+            ),
+            core.onboard(
+                users.steward.token,
+                users.holder.wallet.ownDid,
+                users.holder.wallet.dids.find(v => v.did === users.holder.wallet.ownDid).verkey,
+                'NONE'
             )
         ]);
 

@@ -62,6 +62,20 @@ describe('Connection', function() {
             .set({ Authorization: steward.token })
             .expect(200);
         steward.wallet.ownDid = res.body.ownDid;
+
+        // onboard user's ownDid on the ledger for use as endpoint did
+        const res2 = await agent
+            .get('/api/wallet/default')
+            .set(bothHeaders)
+            .set({ Authorization: user.token })
+            .expect(200);
+        user.wallet.ownDid = res2.body.ownDid;
+        await core.onboard(
+            steward.token,
+            user.wallet.ownDid,
+            res2.body.dids.find(v => v.did === user.wallet.ownDid).verkey,
+            'NONE'
+        );
     });
 
     after(async function() {
