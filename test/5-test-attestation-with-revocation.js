@@ -155,7 +155,7 @@ describe('attestation with revocation (schemas, credentials, and proofs)', funct
         const values = {
             firstname: 'Alice',
             lastname: 'Doe',
-            age: '32'
+            age: -Math.floor(Date.now() / 1000) + 1000
         };
 
         it('issuer should send credential offer and holder should receive it', async function() {
@@ -288,7 +288,7 @@ describe('attestation with revocation (schemas, credentials, and proofs)', funct
                 .that.equals(values.lastname);
             expect(res.body[0].attrs)
                 .to.have.property('age')
-                .that.equals(values.age);
+                .that.equals(values.age.toString());
             credential = res.body[0];
         });
 
@@ -383,7 +383,7 @@ describe('attestation with revocation (schemas, credentials, and proofs)', funct
                     recipientDid: holderRPDid,
                     proofRequest: template.id,
                     templateValues: {
-                        age: 18
+                        age: -Math.floor(Date.now() / 1000)
                     }
                 })
                 .expect(201);
