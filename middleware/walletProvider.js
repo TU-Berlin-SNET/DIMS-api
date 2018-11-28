@@ -58,7 +58,7 @@ module.exports = {
             if (cache[name].timer) {
                 log.debug('wallet cache time is set, clearing it');
                 clearTimeout(cache[name].timer);
-                delete cache[name].time;
+                delete cache[name].timer;
             }
             log.debug('wallet cache hit', name, cache[name]);
             cache[name].counter += 1;

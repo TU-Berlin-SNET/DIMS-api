@@ -33,7 +33,7 @@ module.exports = {
             wallet.handle,
             pool,
             message.endpointDid,
-            message.endpointVk,
+            null, // endpointVk must be on the ledger
             message.endpoint
         );
         const requestNonce = message.nonce;

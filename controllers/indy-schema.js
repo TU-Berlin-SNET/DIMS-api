@@ -32,7 +32,7 @@ module.exports = {
     },
 
     async retrieve(wallet, id) {
-        const [, schema] = pool.getSchema(wallet.ownDid, id);
+        const [, schema] = await pool.getSchema(wallet.ownDid, id);
         return schema;
     }
 };

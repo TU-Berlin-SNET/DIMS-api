@@ -5,6 +5,7 @@
  */
 'use strict';
 
+const uuidv4 = require('uuid/v4');
 const mocha = require('mocha');
 const expect = require('chai').expect;
 
@@ -15,12 +16,12 @@ const { describe, it, before, after } = mocha;
 const agent = vars.agent;
 const bothHeaders = vars.bothHeaders;
 
-const nonce = require('../nonce').uuidv4hex();
+const testId = uuidv4();
 const steward = {
-    username: 'steward' + nonce,
+    username: 'steward' + testId,
     password: 'pass',
     wallet: {
-        name: 'wallet' + nonce,
+        name: 'wallet' + testId,
         seed: '000000000000000000000000Steward1',
         credentials: { key: 'walletkey' }
     }
