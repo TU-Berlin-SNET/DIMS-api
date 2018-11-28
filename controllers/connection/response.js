@@ -4,6 +4,7 @@
  */
 'use strict';
 
+const config = require('../../config');
 const lib = require('../../lib');
 const log = require('../../log').log;
 const Mongoose = require('../../db');
@@ -39,15 +40,6 @@ module.exports = {
         const requestNonce = message.nonce;
         const meta = request.meta || {};
 
-        // if we specifically added a role to our offer then this role
-        // will be in the request object as this means that this method
-        // was called automatically after receiving a connection request
-        // through agent-to-agent communication, also see: request.js handle method
-        if (meta && meta.role) {
-            // then write their did on the ledger with that role
-            // (this might have implications for GDPR)
-            await pool.nymRequest(wallet.handle, wallet.ownDid, theirDid, theirVk, null, meta.role);
-        }
         meta.theirEndpointDid = theirEndpointDid;
         meta.theirEndpointVk = theirEndpointVk;
         meta.theirEndpoint = theirEndpoint;
@@ -60,6 +52,21 @@ module.exports = {
 
         // delete meta.myDid so we do not store redundant information in pairwise meta
         delete meta.myDid;
+
+        // if we specifically added a role to our offer then this role
+        // will be in the request object as this means that this method
+        // was called automatically after receiving a connection request
+        // through agent-to-agent communication, also see: request.js handle method
+        // OR if NYM_ALWAYS flag is set
+        if (config.NYM_ALWAYS || (meta && meta.role)) {
+            // then write their did on the ledger with that role
+            // (this might have implications for GDPR)
+            await pool.nymRequest(wallet.handle, wallet.ownDid, theirDid, theirVk, null, meta.role);
+            // and if NYM_ALWAYS flag is set, write my did on the ledger as well
+            if (config.NYM_ALWAYS) {
+                await pool.nymRequest(wallet.handle, wallet.ownDid, myDid, myVk, null, 'NONE');
+            }
+        }
 
         // store their did and create pairwise
         await lib.connection.createRelationship(wallet.handle, myDid, theirDid, theirVk, meta);

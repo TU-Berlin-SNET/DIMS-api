@@ -50,6 +50,7 @@ services:
       - APP_DOMAIN_PROTOCOL
       - APP_DOMAIN_HOST
       - APP_DOMAIN_PORT
+      - APP_NYM_ALWAYS
       - JWT_SECRET
       - DB_HOST
       - DB_PORT

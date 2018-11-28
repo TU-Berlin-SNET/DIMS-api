@@ -3,7 +3,7 @@
  * Main
  */
 
-require('dotenv').config();
+require('./config');
 const express = require('express');
 const YAML = require('yamljs');
 const swaggerUi = require('swagger-ui-express');
