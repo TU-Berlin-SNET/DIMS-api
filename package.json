@@ -44,7 +44,7 @@
     "eslint-plugin-prettier": "^2.6.2",
     "husky": "^0.14.3",
     "mocha": "^5.2.0",
-    "nodemon": "^1.17.5",
+    "nodemon": "^1.18.7",
     "pino-debug": "^1.1.1",
     "prettier": "^1.14.0",
     "pretty-quick": "^1.6.0",
