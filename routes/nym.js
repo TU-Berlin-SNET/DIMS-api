@@ -7,7 +7,8 @@ router.post(
     '/',
     wrap(async (req, res, next) => {
         const data = await nym.post(req.wallet, req.body.did, req.body.verkey, req.body.alias, req.body.role);
-        next(APIResult.success(data));
+        res.locals.result = APIResult.success(data);
+        next();
     })
 );
 
@@ -15,7 +16,8 @@ router.get(
     '/:did',
     wrap(async (req, res, next) => {
         const data = await nym.get(req.wallet, req.params.did);
-        next(APIResult.success(data));
+        res.locals.result = APIResult.success(data);
+        next();
     })
 );
 
