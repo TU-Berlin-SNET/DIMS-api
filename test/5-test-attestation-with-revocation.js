@@ -60,6 +60,7 @@ let rp;
 let credDefId;
 let holderIssuerDid;
 let holderRPDid;
+let credentialMessage;
 
 describe('attestation with revocation (schemas, credentials, and proofs)', function() {
     before(async function() {
@@ -157,12 +158,11 @@ describe('attestation with revocation (schemas, credentials, and proofs)', funct
         // testcase-local variables
         let credentialOffer;
         let credentialRequest;
-        let credentialMessage;
         let credential;
         const values = {
             firstname: 'Alice',
             lastname: 'Doe',
-            age: -Math.floor(Date.now() / 1000) + 1000
+            age: 25
         };
 
         it('issuer should send credential offer and holder should receive it', async function() {
@@ -307,14 +307,6 @@ describe('attestation with revocation (schemas, credentials, and proofs)', funct
                 .expect(200);
             expect(res.body).to.eql(credential);
         });
-
-        it('issuer should revoke issued credential', async function() {
-            await agent
-                .post(`/api/credential/${credentialMessage.id}/revoke`)
-                .set(bothHeaders)
-                .set({ Authorization: issuer.token })
-                .expect(200);
-        });
     });
 
     describe('proofs', function() {
@@ -347,7 +339,8 @@ describe('attestation with revocation (schemas, credentials, and proofs)', funct
                         "p_value": {{ age }},
                         "restrictions": [{ "cred_def_id": "${credDefId}" }]
                     }
-                }
+                },
+                "non_revoked": {"to": {{ to }}}
             }`;
             const res = await agent
                 .post('/api/proofrequesttemplate')
@@ -382,6 +375,7 @@ describe('attestation with revocation (schemas, credentials, and proofs)', funct
         });
 
         it('relying party should create/send proof request using template and holder should receive it', async function() {
+            this.timeout(2000);
             const res = await agent
                 .post('/api/proofrequest')
                 .set(bothHeaders)
@@ -390,7 +384,8 @@ describe('attestation with revocation (schemas, credentials, and proofs)', funct
                     recipientDid: holderRPDid,
                     proofRequest: template.id,
                     templateValues: {
-                        age: -Math.floor(Date.now() / 1000)
+                        age: 18,
+                        to: Math.floor(Date.now() / 1000)
                     }
                 })
                 .expect(201);
@@ -464,6 +459,27 @@ describe('attestation with revocation (schemas, credentials, and proofs)', funct
             expect(res.body).to.contain.keys('id', 'type', 'messageId', 'message');
             expect(res.body.message).to.contain.keys('id', 'type', 'origin', 'message');
             expect(res.body.message.message).to.contain.keys('requested_proof', 'proof', 'identifiers');
+        });
+
+        it('relying party should query proof status and it should be received and the proof should be valid', async function() {
+            const res = await agent
+                .get('/api/proof/' + proof.id)
+                .set(bothHeaders)
+                .set({ Authorization: rp.token })
+                .expect(200);
+            expect(res.body).to.contain.keys('id', 'wallet', 'did', 'proof', 'status', 'isValid');
+            expect(res.body.did).to.equal(holderRPDid);
+            expect(res.body.proof).to.not.be.null;
+            expect(res.body.status).to.equal('received');
+            expect(res.body.isValid).to.be.true;
+        });
+
+        it('issuer should revoke issued credential', async function() {
+            await agent
+                .post(`/api/credential/${credentialMessage.id}/revoke`)
+                .set(bothHeaders)
+                .set({ Authorization: issuer.token })
+                .expect(200);
         });
 
         it('relying party should query proof status and it should be received and the proof should be invalid', async function() {
