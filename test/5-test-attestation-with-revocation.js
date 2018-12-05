@@ -375,7 +375,6 @@ describe('attestation with revocation (schemas, credentials, and proofs)', funct
         });
 
         it('relying party should create/send proof request using template and holder should receive it', async function() {
-            this.timeout(2000);
             const res = await agent
                 .post('/api/proofrequest')
                 .set(bothHeaders)
