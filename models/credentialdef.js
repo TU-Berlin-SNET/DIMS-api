@@ -15,7 +15,7 @@ const schema = new Mongoose.Schema({
         type: String,
         index: true
     },
-    revocRegId: {
+    revocRegDefId: {
         type: String
     },
     revocRegType: {

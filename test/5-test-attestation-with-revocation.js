@@ -474,11 +474,13 @@ describe('attestation with revocation (schemas, credentials, and proofs)', funct
         });
 
         it('issuer should revoke issued credential', async function() {
-            await agent
+            const res = await agent
                 .post(`/api/credential/${credentialMessage.id}/revoke`)
                 .set(bothHeaders)
                 .set({ Authorization: issuer.token })
                 .expect(200);
+            expect(res.body).to.contain.keys('ver', 'value');
+            expect(res.body.value.revoked).to.not.be.null;
         });
 
         it('relying party should query proof status and it should be received and the proof should be invalid', async function() {

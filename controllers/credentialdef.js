@@ -50,7 +50,7 @@ module.exports = {
                 issuance_type: 'ISSUANCE_ON_DEMAND',
                 max_cred_num: 100
             };
-            const [revocRegId, revocRegDef, revocRegEntry] = await indy.issuerCreateAndStoreRevocReg(
+            const [revocRegDefId, revocRegDef, revocRegEntry] = await indy.issuerCreateAndStoreRevocReg(
                 req.wallet.handle,
                 req.wallet.ownDid,
                 null,
@@ -68,14 +68,14 @@ module.exports = {
             await pool.revocRegEntryRequest(
                 req.wallet.handle,
                 req.wallet.ownDid,
-                revocRegId,
+                revocRegDefId,
                 lib.revocationRegistry.revocationType,
                 revocRegEntry
             );
-            doc.revocRegId = revocRegId;
+            doc.revocRegDefId = revocRegDefId;
             doc.revocRegType = revocRegDef.revocDefType;
 
-            tailsdoc.revocRegId = revocRegId;
+            tailsdoc.revocRegDefId = revocRegDefId;
             tailsdoc.hash = revocRegDef.value.tailsHash;
             // foreign key
             tailsdoc.credDefId = credDefId;
