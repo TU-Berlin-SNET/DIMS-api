@@ -189,6 +189,7 @@ module.exports = {
             if (isRevocable) {
                 await new RevocRegistry(tailsdoc).save();
             }
+            schemaDoc.credentialDefinitionId = credDefId;
         }
         return new Schema(schemaDoc).save();
     },
