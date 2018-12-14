@@ -84,12 +84,13 @@ module.exports = {
         }
 
         // optionally: find revocation registry
-        const revocRegId = credDef.revocRegId;
+        const revocRegDefId = credDef.revocRegDefId;
+
         let revocReg = null;
-        if (revocRegId) {
-            revocReg = await RevReg.findOne({ revocRegId: revocRegId }).exec();
+        if (revocRegDefId) {
+            revocReg = await RevReg.findOne({ revocRegDefId: revocRegDefId }).exec();
             if (!revocReg) {
-                throw Error('Revocation registry not found for ' + revocRegId);
+                throw Error('Revocation registry not found for ' + revocRegDefId);
             }
         }
 
@@ -102,7 +103,7 @@ module.exports = {
         );
 
         // put revocation info in meta if available
-        const meta = revocRegId ? { revocRegId, credRevocId, revocRegDelta } : null;
+        const meta = revocRegDefId ? { revocRegDefId, credRevocId, revocRegDelta } : null;
 
         const message = {
             id: credentialRequest.messageId,
@@ -151,11 +152,11 @@ module.exports = {
             return null;
         }
 
-        const revocRegId = message.meta.revocRegId;
+        const revocRegDefId = message.meta.revocRegDefId;
         const credRevocId = message.meta.credRevocId;
         let revocReg = null;
-        if (revocRegId) {
-            revocReg = await RevReg.findOne({ revocRegId: revocRegId }).exec();
+        if (revocRegDefId) {
+            revocReg = await RevReg.findOne({ revocRegDefId: revocRegDefId }).exec();
         }
 
         // returns revoc_registry_delta
@@ -171,7 +172,8 @@ module.exports = {
         log.debug('credential received');
         const innerMessage = await lib.message.authdecryptMessage(wallet.handle, message.origin, message.message);
         message.message = innerMessage;
-
+        let credential = innerMessage;
+        log.debug('credential', credential);
         const credentialRequest = await Message.findTypeByMessageId(
             wallet,
             message.id,
@@ -184,10 +186,8 @@ module.exports = {
         const [, credentialDefinition] = await pool.getCredDef(pairwise['my_did'], message.message.cred_def_id);
 
         let revocRegDefinition = null;
-
-        if (credentialDefinition.revocRegId)
-            [, revocRegDefinition] = await pool.getRevocRegDef(pairwise['my_did'], credentialDefinition.revocRegId);
-
+        if (credential.rev_reg_id)
+            [, revocRegDefinition] = await pool.getRevocRegDef(pairwise['my_did'], credential.rev_reg_id);
         await lib.sdk.proverStoreCredential(
             wallet.handle,
             null, // credId

@@ -10,7 +10,7 @@ const schema = new Mongoose.Schema({
         type: Date,
         default: Date.now
     },
-    revocRegId: {
+    revocRegDefId: {
         type: String,
         index: true
     },
