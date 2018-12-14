@@ -1,3 +1,4 @@
+'use strict';
 /**
  * Class encapsulating a result from the API
  * May be used for both successful responses
@@ -6,10 +7,13 @@
 class APIResult {
     /**
      * @param {number} status HTTP status code
-     * @param {Object} data response data
-     * @param {Object} error an error
+     * @param {Object} [data] response data
+     * @param {Object} [error] an error
      */
     constructor(status, data, error) {
+        if (!status) {
+            throw new Error('failed to construct APIResult, status is missing');
+        }
         this.status = status;
         this.data = data;
         this.error = error;
@@ -18,7 +22,7 @@ class APIResult {
     /**
      * Create APIResult with status and message
      * @param {number} status HTTP StatusCode
-     * @param {(string | Object)} message message String or Object
+     * @param {(string | Object)} [message] message String or Object
      * @return {APIResult} APIResult with status and message
      */
     static create(status, message) {

@@ -4,6 +4,7 @@
  */
 
 const log = require('../log').log;
+const APIResult = require('../api-result');
 
 const internalServerError = 500;
 const notFound = 404;
@@ -163,19 +164,39 @@ const indyCodes = {
     702: badRequest
 };
 
+/**
+ * Unpack, log, and respond with information provided
+ * in APIResult
+ * @param {APIResult} apiResult
+ * @param {Object} res expressjs response object
+ */
+function handleAPIResult(apiResult, res) {
+    log.debug('result: ', apiResult);
+    res.status(apiResult.status || 500);
+    if (apiResult.data) {
+        res.json(apiResult.data);
+    }
+    if (apiResult.error) {
+        log.error(apiResult.error);
+    }
+    res.end();
+}
+
 module.exports = {
-    resultMiddleware: (result, req, res, next) => {
-        log.info('result: ', result);
-        if (result instanceof Error || result.error) {
-            return next(result.error || result);
+    resultHandler: function(req, res, next) {
+        const result = res.locals.result;
+        if (result && result instanceof APIResult) {
+            handleAPIResult(result, res);
+        } else {
+            next();
         }
-        if (result.status) res.status(result.status);
-        if (result.data) res.json(result.data);
-        res.end();
     },
-    errorMiddleware: (err, req, res, next) => {
+    errorHandler: function(err, req, res, next) {
         log.error(err);
-        if (err.indyCode) {
+        if (err instanceof APIResult) {
+            return handleAPIResult(err, res);
+        }
+        if (err.indyCode && indyCodes[err.indyCode]) {
             err.status = indyCodes[err.indyCode];
         }
         return res.status(err.status || 500).json({ message: err.message });

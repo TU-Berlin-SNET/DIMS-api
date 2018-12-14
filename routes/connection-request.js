@@ -50,14 +50,4 @@ router
         })
     );
 
-router.use(['/', '/:connectionRequestId'], (req, res, next) => {
-    // FIXME eventually we should move away from misusing the
-    // error handler and instead pass results through res.locals
-    if (res.locals.result) {
-        next(res.locals.result);
-    } else {
-        next();
-    }
-});
-
 module.exports = router;

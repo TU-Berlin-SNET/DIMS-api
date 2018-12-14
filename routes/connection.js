@@ -13,16 +13,15 @@ router.route('/:myDid').get(
     wrap(async (req, res, next) => {
         const data = await controller.retrieve(req.wallet, req.params.myDid);
         if (data) {
-            next(
-                APIResult.success({
-                    myDid: data['my_did'],
-                    theirDid: data['their_did'],
-                    acknowledged: data.metadata.acknowledged
-                })
-            );
+            res.locals.result = APIResult.success({
+                myDid: data['my_did'],
+                theirDid: data['their_did'],
+                acknowledged: data.metadata.acknowledged
+            });
         } else {
-            next(APIResult.notFound('no matching connection found'));
+            res.locals.result = APIResult.notFound('no matching connection found');
         }
+        next();
     })
 );
 
