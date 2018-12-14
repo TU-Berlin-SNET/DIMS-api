@@ -2,7 +2,7 @@ swagger: '2.0'
 info:
   description: 'IdentityChain Agent REST API'
   title: 'IdentityChain API'
-  version: '0.1.5'
+  version: '0.2.0'
 schemes:
   - http
 securityDefinitions:
@@ -22,45 +22,154 @@ produces:
   - application/json
 security:
   - Bearer: []
+tags:
+  - name: common
+    description: 'Common endpoints for issuer, verifier, and prover'
+  - name: issuer
+    description: 'Endpoints for an Issuer'
+  - name: verifier
+    description: 'Endpoints for a verifier'
+  - name: prover
+    description: 'Endpoints for a prover'
+  - name: user
+    description: 'User endpoints'
+  - name: wallet
+    description: 'Wallet endpoints'
+  - name: connection
+    description: 'Connection offer/request/response endpoints'
+  - name: indyschema
+    description: 'Low-level indy schema endpoints'
+  - name: schema
+    description: 'High-level schema endpoints'
+  - name: credential
+    description: 'Credential definition/offer/request endpoints'
+  - name: proof
+    description: 'Proof request, and proof endpoints'
+  - name: transaction
+    description: 'Low-level indy transaction endpoints'
+  - name: message
+    description: 'Message endpoints'
 
 parameters:
   userParam:
     name: user
     in: path
-    description: 'A unique id value (or "me") identifying this user.'
+    description: |-
+      A unique id value identifying a user.
+      "me" may be used as shorthand for the current user.
     type: string
     required: true
   walletParam:
     name: wallet
     in: path
-    description: 'A unique id value (or "default") identifying this wallet.'
+    description: |-
+      A unique id value identifying a wallet.
+      "default" may be used as shorthand for the current user's default wallet.
     type: string
     required: true
   walletHeader:
     name: wallet
     in: header
-    description: '(Optional) A unique id value (or "default") identifying a wallet'
+    description: A unique id value identifying a wallet.
     type: string
   theirDidParam:
     name: theirDid
     in: path
     description: 'Their pairwise connection did'
     type: string
+    required: true
   credentialParam:
     name: credential
     in: path
     description: 'A unique id value identifying a credential'
     type: string
+    required: true
   credentialMessageParam:
     name: credentialMessage
     in: path
     description: 'A unique id value identifying a sent/issued credential message'
     type: string
+    required: true
 
 definitions:
-  wallet:
+  walletId:
     description: '(Optional) A unique id value identifying a wallet'
     type: string
+  id:
+    description: 'A uniquely identifying string value'
+    type: string
+  createdAt:
+    description: 'Creation Time'
+    type: string
+  updatedAt:
+    description: 'Last update time'
+    type: string
+  messageId:
+    description: 'Sent message id, could be a nonce depending on message format'
+    type: string
+  messageType:
+    description: 'Message Type'
+    type: string
+    enum:
+      - 'urn:sovrin:agent:message_type:sovrin.org/connection_offer'
+      - 'urn:sovrin:agent:message_type:sovrin.org/connection_request'
+      - 'urn:sovrin:agent:message_type:sovrin.org/connection_response'
+      - 'urn:sovrin:agent:message_type:sovrin.org/connection_acknowledge'
+      - 'urn:sovrin:agent:message_type:sovrin.org/credential_offer'
+      - 'urn:sovrin:agent:message_type:sovrin.org/credential_request'
+      - 'urn:sovrin:agent:message_type:sovrin.org/credential'
+      - 'urn:sovrin:agent:message_type:sovrin.org/proof_request'
+      - 'urn:sovrin:agent:message_type:sovrin.org/proof'
+  senderDid:
+    description: 'Sender Did'
+    type: string
+  recipientDid:
+    description: 'Recipient Did'
+    type: string
+  expireAt:
+    description: 'Optional expire time'
+    type: string
+  user:
+    type: object
+    properties:
+      id:
+        description: 'A unique string value identifying a user'
+        type: string
+      username:
+        description: 'Username'
+        type: string
+      wallet:
+        description: "Id of user's current default wallet"
+        type: string
+  wallet:
+    type: object
+    properties:
+      id:
+        description: 'A unique string value identifying a wallet'
+        type: string
+      createdAt:
+        description: 'wallet creation time'
+        type: string
+      updatedAt:
+        description: 'wallet update time'
+        type: string
+      owner:
+        description: 'Wallet Owner User Id'
+        type: string
+      users:
+        description: 'Array of user Ids which are allowed to use this wallet'
+        type: array
+        items:
+          type: string
+      credentials:
+        type: object
+        properties:
+          key:
+            description: 'Wallet Key'
+            type: string
+      ownDid:
+        description: 'Wallet primary did'
+        type: string
   user_post:
     type: object
     properties:
@@ -83,7 +192,7 @@ definitions:
         description: '(Optional) New password'
         type: string
       wallet:
-        $ref: '#/definitions/wallet'
+        $ref: '#/definitions/walletId'
   wallet_post:
     type: object
     properties:
@@ -109,7 +218,7 @@ definitions:
     type: object
     properties:
       wallet:
-        $ref: '#/definitions/wallet'
+        $ref: '#/definitions/walletId'
       credentialRequestId:
         description: 'Credential Request _id as stored in API'
         type: string
@@ -124,7 +233,7 @@ definitions:
     type: object
     properties:
       wallet:
-        $ref: '#/definitions/wallet'
+        $ref: '#/definitions/walletId'
       schemaId:
         description: 'A unique string value identifying a schema'
         type: string
@@ -141,7 +250,7 @@ definitions:
     type: object
     properties:
       wallet:
-        $ref: '#/definitions/wallet'
+        $ref: '#/definitions/walletId'
       recipientDid:
         description: 'DID for whom to create a credential offer'
         type: string
@@ -159,7 +268,7 @@ definitions:
     type: object
     properties:
       wallet:
-        $ref: '#/definitions/wallet'
+        $ref: '#/definitions/walletId'
       credentialOfferId:
         description: 'credentialoffer _id as stored in API'
         type: string
@@ -169,7 +278,7 @@ definitions:
     type: object
     properties:
       wallet:
-        $ref: '#/definitions/wallet'
+        $ref: '#/definitions/walletId'
       endpoint:
         description: '(Optional) Response endpoint for connection response - my endpoint'
         type: string
@@ -192,7 +301,7 @@ definitions:
     type: object
     properties:
       wallet:
-        $ref: '#/definitions/wallet'
+        $ref: '#/definitions/walletId'
       endpoint:
         description: '(Optional) Response endpoint for connection response - my endpoint'
         type: string
@@ -222,7 +331,7 @@ definitions:
     type: object
     properties:
       wallet:
-        $ref: '#/definitions/wallet'
+        $ref: '#/definitions/walletId'
       connectionRequestId:
         description: 'A unique string value identifying the connection request to respond to'
         type: string
@@ -233,7 +342,7 @@ definitions:
     type: object
     properties:
       wallet:
-        $ref: '#/definitions/wallet'
+        $ref: '#/definitions/walletId'
       template:
         description: 'proof request template (optionally with mustache placeholders)'
         type: string
@@ -245,7 +354,7 @@ definitions:
     type: object
     properties:
       wallet:
-        $ref: '#/definitions/wallet'
+        $ref: '#/definitions/walletId'
       recipientDid:
         description: 'DID for whom to create a proof request'
         type: string
@@ -271,7 +380,7 @@ definitions:
     type: object
     properties:
       wallet:
-        $ref: '#/definitions/wallet'
+        $ref: '#/definitions/walletId'
       proofRequestId:
         description: 'proof request _id'
         type: string
@@ -282,21 +391,11 @@ definitions:
           phone: '00001111'
     required:
       - proofRequestId
-  proofverification_post:
-    type: object
-    properties:
-      wallet:
-        $ref: '#/definitions/wallet'
-      encryptedProof:
-        description: 'Encrypted Proof'
-        type: string
-    required:
-      - encryptedProof
   indyschema_post:
     type: object
     properties:
       wallet:
-        $ref: '#/definitions/wallet'
+        $ref: '#/definitions/walletId'
       name:
         description: 'A unique name of the schema'
         type: string
@@ -381,7 +480,7 @@ definitions:
     type: object
     properties:
       wallet:
-        $ref: '#/definitions/wallet'
+        $ref: '#/definitions/walletId'
       did:
         description: 'Recipient DID'
         type: string
@@ -413,7 +512,7 @@ definitions:
     type: object
     properties:
       wallet:
-        $ref: '#/definitions/wallet'
+        $ref: '#/definitions/walletId'
       did:
         description: 'Did to write on the ledger'
         type: string
@@ -434,6 +533,787 @@ definitions:
     required:
       - did
       - verkey
+  error_message:
+    type: object
+    properties:
+      message:
+        description: 'Informational Message'
+        type: string
+  connection_offer:
+    type: object
+    properties:
+      id:
+        $ref: '#/definitions/id'
+      createdAt:
+        $ref: '#/definitions/createdAt'
+      updatedAt:
+        $ref: '#/definitions/updatedAt'
+      expireAt:
+        $ref: '#/definitions/expireAt'
+      messageId:
+        $ref: '#/definitions/messageId'
+      type:
+        description: 'urn:sovrin:agent:message_type:sovrin.org/connection_offer'
+        type: string
+      senderDid:
+        $ref: '#/definitions/senderDid'
+      recipientDid:
+        $ref: '#/definitions/recipientDid'
+      message:
+        $ref: '#/message_formats/connection_offer'
+      meta:
+        description: 'Additional Metadata'
+        type: object
+        properties:
+          role:
+            description: '(Optional) Role which is offered'
+            type: string
+          myDid:
+            description: "Sender's pairwise did (for reference purposes)"
+            type: string
+  connection_request:
+    type: object
+    properties:
+      id:
+        $ref: '#/definitions/id'
+      createdAt:
+        $ref: '#/definitions/createdAt'
+      updatedAt:
+        $ref: '#/definitions/updatedAt'
+      expireAt:
+        $ref: '#/definitions/expireAt'
+      messageId:
+        $ref: '#/definitions/messageId'
+      type:
+        description: 'urn:sovrin:agent:message_type:sovrin.org/connection_request'
+        type: string
+      senderDid:
+        $ref: '#/definitions/senderDid'
+      recipientDid:
+        $ref: '#/definitions/recipientDid'
+      message:
+        $ref: '#/message_formats/connection_request'
+      meta:
+        description: 'Additional Metadata'
+        type: object
+        properties:
+          role:
+            description: '(Optional) Role which was offered (only on offering side)'
+            type: string
+          myDid:
+            description: "User's pairwise did"
+            type: string
+          theirEndpointDid:
+            description: "(Only on sender side) Recipient's endpoint did"
+            type: string
+          theirEndpointVk:
+            description: "(Only on sender side) Recipient's endpoint did verification key"
+            type: string
+          theirEndpoint:
+            description: "(Only on sender side) Recipient's endpoint address"
+            type: string
+  connection_response:
+    $ref: '#/message_formats/connection_response'
+  credential_offer:
+    type: object
+    properties:
+      id:
+        $ref: '#/definitions/id'
+      createdAt:
+        $ref: '#/definitions/createdAt'
+      updatedAt:
+        $ref: '#/definitions/updatedAt'
+      expireAt:
+        $ref: '#/definitions/expireAt'
+      messageId:
+        $ref: '#/definitions/messageId'
+      type:
+        description: 'urn:sovrin:agent:message_type:sovrin.org/credential_offer'
+        type: string
+      senderDid:
+        $ref: '#/definitions/senderDid'
+      recipientDid:
+        $ref: '#/definitions/recipientDid'
+      message:
+        $ref: '#/message_formats/credential_offer'
+      meta:
+        description: 'Additional Metadata'
+        type: object
+        properties:
+          credentialLocation:
+            description: '(Optional) URL location of credential values to automatically issue credentials on request'
+            type: string
+  indy_schema_db:
+    description: 'Indy low-level schema as stored in DB'
+    type: object
+    properties:
+      name:
+        description: 'Schema Name'
+        type: string
+      createdAt:
+        $ref: '#/definitions/createdAt'
+      updatedAt:
+        $ref: '#/definitions/updatedAt'
+      attrNames:
+        type: array
+        items:
+          description: 'Schema attribute name'
+          type: string
+      version:
+        description: 'Schema Version'
+        type: string
+      wallet:
+        description: 'Owner Wallet Id'
+        type: string
+      schemaId:
+        description: 'Schema Id'
+        type: string
+      data:
+        $ref: '#/definitions/indy_schema'
+  indy_schema:
+    description: 'Schema as created by indy-sdk and stored on the ledger'
+    type: object
+    properties:
+      id:
+        description: 'Schema Id'
+        type: string
+      attrNames:
+        type: array
+        items:
+          description: 'Schema attribute name'
+          type: string
+      name:
+        description: 'Schema Name'
+        type: string
+      version:
+        description: 'Schema Version'
+        type: string
+      ver:
+        description: 'Schema JSON Version'
+        type: string
+  credential_definition:
+    type: object
+    properties:
+      created:
+        $ref: '#/definitions/createdAt'
+      credDefId:
+        description: 'Credential Definition Id'
+        type: string
+      revocRegId:
+        description: '(Optional) Revocation Registry Id'
+        type: string
+      revocRegType:
+        description: '(Optional) Revocation Registry Type'
+        type: string
+      wallet:
+        description: 'Owner Wallet id'
+        type: string
+      data:
+        $ref: '#/definitions/indy_credential_definition'
+  indy_credential_definition:
+    type: object
+    properties:
+      id:
+        $ref: '#/definitions/id'
+      schemaId:
+        description: 'Schema Id'
+        type: string
+      type:
+        description: 'Credential Definition Type'
+        type: string
+      tag:
+        description: 'Credential Definition Tag'
+        type: string
+      value:
+        type: object
+        properties:
+          primary:
+            description: 'Primary Credential Public Key'
+            type: string
+          revocation:
+            description: '(Optional) Revocation Credential Public Key'
+            type: string
+      ver:
+        description: 'Credential Definition Version'
+        type: string
+  indy_credential:
+    description: 'Credential as created by indy-sdk, fields may vary'
+    type: object
+    properties:
+      referent:
+        description: 'Credential Id as stored in wallet'
+        type: string
+      schema_id:
+        description: 'Schema Id'
+        type: string
+      cred_def_id:
+        description: 'Credential Definition Id'
+        type: string
+      rev_reg_def_id:
+        description: '(Optional) Revocation Registry Definition Id, if revocable'
+        type: string
+      values:
+        description: 'Credential Values'
+        type: object
+      signature:
+        description: 'Signature'
+        type: string
+      signature_correctness_proof:
+        description: 'Signature Correctness Proof'
+        type: string
+  credential_request:
+    type: object
+    properties:
+      id:
+        $ref: '#/definitions/id'
+      createdAt:
+        $ref: '#/definitions/createdAt'
+      updatedAt:
+        $ref: '#/definitions/updatedAt'
+      expireAt:
+        $ref: '#/definitions/expireAt'
+      messageId:
+        $ref: '#/definitions/messageId'
+      type:
+        description: 'urn:sovrin:agent:message_type:sovrin.org/credential_request'
+        type: string
+      senderDid:
+        $ref: '#/definitions/senderDid'
+      recipientDid:
+        $ref: '#/definitions/recipientDid'
+      message:
+        $ref: '#/message_formats/credential_request'
+      meta:
+        description: 'Credential request metadata JSON as created by indy-sdk'
+        type: object
+  credential_message:
+    type: object
+    properties:
+      id:
+        $ref: '#/definitions/id'
+      createdAt:
+        $ref: '#/definitions/createdAt'
+      updatedAt:
+        $ref: '#/definitions/updatedAt'
+      expireAt:
+        $ref: '#/definitions/expireAt'
+      messageId:
+        $ref: '#/definitions/messageId'
+      type:
+        description: 'urn:sovrin:agent:message_type:sovrin.org/credential'
+        type: string
+      senderDid:
+        $ref: '#/definitions/senderDid'
+      recipientDid:
+        $ref: '#/definitions/recipientDid'
+      message:
+        $ref: '#/message_formats/credential'
+      meta:
+        description: 'Additional Metadata'
+        type: object
+        properties:
+          revocRegId:
+            description: '(Optional) Revocation Registry Id'
+            type: string
+          credRevocId:
+            description: '(Optional) Credential Revocation Id'
+            type: string
+          revocRegDelta:
+            description: '(Optional) Revocation Registry Delta'
+            type: string
+  proofrequest_message:
+    type: object
+    properties:
+      id:
+        $ref: '#/definitions/id'
+      createdAt:
+        $ref: '#/definitions/createdAt'
+      updatedAt:
+        $ref: '#/definitions/updatedAt'
+      expireAt:
+        $ref: '#/definitions/expireAt'
+      messageId:
+        $ref: '#/definitions/messageId'
+      type:
+        description: 'urn:sovrin:agent:message_type:sovrin.org/proof_request'
+        type: string
+      senderDid:
+        $ref: '#/definitions/senderDid'
+      recipientDid:
+        $ref: '#/definitions/recipientDid'
+      message:
+        $ref: '#/message_formats/proof_request'
+      meta:
+        description: 'Additional Metadata'
+        type: object
+        properties:
+          proofId:
+            description: 'Proof placeholder Id which can be queried for proof status'
+            type: string
+  proof_message:
+    type: object
+    properties:
+      id:
+        $ref: '#/definitions/id'
+      createdAt:
+        $ref: '#/definitions/createdAt'
+      updatedAt:
+        $ref: '#/definitions/updatedAt'
+      expireAt:
+        $ref: '#/definitions/expireAt'
+      messageId:
+        $ref: '#/definitions/messageId'
+      type:
+        description: 'urn:sovrin:agent:message_type:sovrin.org/proof'
+        type: string
+      senderDid:
+        $ref: '#/definitions/senderDid'
+      recipientDid:
+        $ref: '#/definitions/recipientDid'
+      message:
+        $ref: '#/message_formats/proof'
+  proof:
+    type: object
+    properties:
+      wallet:
+        description: 'Recipient wallet Id'
+        type: string
+      did:
+        description: 'Proof Sender/Prover Pairwise Did'
+        type: string
+      proof:
+        description: 'Proof as created by indy-sdk and sent by prover'
+        type: object
+      status:
+        description: 'Proof status (pending or received)'
+        type: string
+        enum:
+          - pending
+          - received
+      meta:
+        description: 'Additional Metadata'
+        type: object
+        properties:
+          proofRequest:
+            description: 'Proof request object, necessary for further processing'
+            type: object
+      isValid:
+        description: 'Whether proof is valid or not'
+        type: boolean
+  pairwise:
+    type: object
+    properties:
+      myDid:
+        description: 'My pairwise DID'
+        type: string
+      theirDid:
+        description: 'Their pairwise DID'
+        type: string
+      metadata:
+        description: 'Additional Metadata, may include other things'
+        type: object
+        properties:
+          theirEndpointDid:
+            description: 'Their endpoint did'
+            type: string
+          theirEndpointVk:
+            description: 'Their endpoint did verification key'
+            type: string
+          theirEndpoint:
+            description: 'Their endpoint address'
+            type: string
+          acknowledged:
+            description: 'Whether this connection was acknowledged'
+            type: boolean
+  proofrequest_template:
+    type: object
+    properties:
+      wallet:
+        description: 'Owner wallet Id'
+        type: string
+      createdAt:
+        $ref: '#/definitions/createdAt'
+      updatedAt:
+        $ref: '#/definitions/updatedAt'
+      template:
+        description: 'Proof request mustachejs template string'
+        type: string
+  indy_transaction:
+    description: 'Indy Transaction as retrieved from ledger'
+    type: object
+    example:
+      txn:
+        data:
+          role: '2'
+          verkey: '~7TYfekw4GUagBnBVCqPjiC'
+          dest: Th7MpTaRZVRYnPiabds81Y
+        type: '1'
+        metadata:
+          from: V4SGRU86Z58d6TV7PBUe6f
+      ver: '1'
+      rootHash: D47RQhSxcBgWB1oBZwFeKom3Fvi343NTfpAdKb6uNLuw
+      txnMetadata:
+        seqNo: 2
+      reqSignature: {}
+      auditPath:
+        - JBMXqyYxQrtkq9AJjHueEiAtpGiNzVYXkgWqHkZo5zUi
+  indy_nym_result:
+    description: 'Indy NYM Result'
+    type: object
+    example:
+      ver: '1'
+      auditPath:
+        - EsY4hbw8MPXuyQTiq43pvwJqak6pGzfKwJKMXoi6uYS7
+        - DNHM372JZJoGcxdHdmsj3QSSiomyeZux6ssJXxAJqyvd
+      txnMetadata:
+        seqNo: 11
+        txnId: add157fff4d23744df58af490dfd10b7bdf7783b8de6cf4c8b0ab99bee43ab19
+        txnTime: 1542895203
+      rootHash: 7tHdWdQ8YQsDtBEN7e72kykgNqpBg8w8WtpHESZqM7te
+      txn:
+        metadata:
+          digest: 9d5187f1075b17a625b2878c09823080a55c46db662fc798d46c5bae567859e9
+          from: Th7MpTaRZVRYnPiabds81Y
+          reqId: 1542895203354360000
+        type: '1'
+        data:
+          role: '101'
+          alias: Government
+          verkey: Efr5B7iJn2t9jEZRtne6bSpFWUMJBBHhJzVoqAurFQv2
+          dest: S5g1z6eUGjdTF6uiuvoJDC
+        protocolVersion: 2
+      reqSignature:
+        type: ED25519
+        values:
+          - value: 39vDSiQPeH9265BvPkaryDqr8C8ipzhj4iwGerGgr32KxmhjeSaPZXDRUAkrZsfzcNgHYkditwVyNfcTBYEPV1e1
+            from: Th7MpTaRZVRYnPiabds81Y
+  indy_nym:
+    description: 'Indy NYM transaction'
+    type: object
+    example:
+      type: '105'
+      state_proof:
+        proof_nodes:
+          '+QHp+LOgPdFX//TSN0TfWK9JDf0Qt733eDuN5s9Miwq5m+5Dqxm4kPiOuIx7ImlkZW50aWZpZXIiOiJUaDdNcFRhUlpWUlluUGlhYmRzODFZIiwicm9sZSI6IjEwMSIsInNlcU5vIjoxMSwidHhuVGltZSI6MTU0Mjg5NTIwMywidmVya2V5IjoiRWZyNUI3aUpuMnQ5akVaUnRuZTZiU3BGV1VNSkJCSGhKelZvcUF1ckZRdjIiffkBMaDT0j9uCbFabO0LnyutnB5uDC61QaWLtVTJU4XCa4sWo4CAoJqauj70Qf++s0g43b1zvnQEyQJh2lfNqxFRtmaADvkwgKACG8f0w2NsuDibWYibc1TYySAgUKSeIevHF6wVZdMBL6BEAIIJs0un9jVqVEABbCWTkc0rybTVrFgaKU6LD6ciGYCAgKBjZtlPSrjbP4QJFMmYYGWdMN8am6ylwGmeWrYLq3scS6AkcibehQ5iUOtCXD3lQORF05za0YiwT2DavXYCOkmJQoCgfSVcTjtW1SUW/CcILmuBjzvybpOl4RlMkgp3hJTFe2qgG9KhOW51cPReSFM+bhjF8JwB0JqIO+TMzzDo7i/n97WgOzoZfFEvyKcPZvdFjW/+5+SwMc2p8UporYwQiM0hnBqA'
+        root_hash: 8sVQPW4KMVyqFoMyPhwZ4L5CbiDiN4qdG3J2wNq1ktzJ
+        multi_signature:
+          signature:
+            R3pHQoLzAYgXAK4awmCCG5LeV4oqDPqk5zf2xp7j236wJu3obMVK4pxed9n8GUyPTB4ntehvWZpd7SNod9PyhHz6JZxJhtstWemPncSFXYAZwHkFsnP3ZVWs4MTthAgj528SpRUcnFA5sWAypj1SaFiKGb9mu2gA2cHJvcjcXe5oAF
+          participants:
+            - Node2
+            - Node4
+            - Node3
+          value:
+            txn_root_hash: 7tHdWdQ8YQsDtBEN7e72kykgNqpBg8w8WtpHESZqM7te
+            pool_state_root_hash: FEEmzwdmT4VzvqHKDH3VVxgJgxwSVTN7yS9vYJe5LV64
+            state_root_hash: 8sVQPW4KMVyqFoMyPhwZ4L5CbiDiN4qdG3J2wNq1ktzJ
+            timestamp: 1542895203
+            ledger_id: 1
+      data:
+        dest: S5g1z6eUGjdTF6uiuvoJDC
+        identifier: Th7MpTaRZVRYnPiabds81Y
+        role: '101'
+        seqNo: 11
+        txnTime: 1542895203
+        verkey: Efr5B7iJn2t9jEZRtne6bSpFWUMJBBHhJzVoqAurFQv2
+      identifier: Th7MpTaRZVRYnPiabds81Y
+      seqNo: 11
+      reqId: 1542895352021723000
+      dest: S5g1z6eUGjdTF6uiuvoJDC
+      txnTime: 1542895203
+  message_db:
+    description: 'Message Object as stored in DB'
+    type: object
+    properties:
+      id:
+        $ref: '#/definitions/id'
+      createdAt:
+        $ref: '#/definitions/createdAt'
+      updatedAt:
+        $ref: '#/definitions/updatedAt'
+      expireAt:
+        $ref: '#/definitions/expireAt'
+      messageId:
+        $ref: '#/definitions/messageId'
+      type:
+        $ref: '#/definitions/messageType'
+      senderDid:
+        $ref: '#/definitions/senderDid'
+      recipientDid:
+        $ref: '#/definitions/recipientDid'
+      message:
+        description: 'Message which is sent to recipient, see message_formats'
+        type: object
+      meta:
+        description: 'Additional Metadata'
+        type: object
+
+responses:
+  accepted:
+    description: 'Message accepted'
+  no_content:
+    description: 'Success - but no content'
+  bad_request:
+    description: 'Bad Request'
+    schema:
+      $ref: '#/definitions/error_message'
+  not_found:
+    description: 'Not Found'
+    schema:
+      $ref: '#/definitions/error_message'
+  unauthorized:
+    description: 'Unauthorized'
+
+message_formats:
+  connection_offer:
+    type: object
+    properties:
+      id:
+        description: 'Offer Nonce'
+        type: string
+      type:
+        description: 'urn:sovrin:agent:message_type:sovrin.org/connection_offer'
+        type: string
+      message:
+        type: object
+        properties:
+          did:
+            description: "Sender's Endpoint DID"
+            type: string
+          verkey:
+            description: "(Optional) Sender's Endpoint DID Verification Key, required if not on ledger"
+            type: string
+          endpoint:
+            description: "(Optional) Sender's Endpoint DID endpoint Address, required if not on ledger"
+            type: string
+          nonce:
+            description: 'Offer Nonce'
+            type: string
+          data:
+            description: 'Object containing additional information about sender such as name, description, logo, etc.'
+            type: object
+  connection_request:
+    type: object
+    properites:
+      id:
+        description: 'offer nonce, if applicable, or request nonce'
+        type: string
+      type:
+        description: 'urn:sovrin:agent:message_type:sovrin.org/connection_request'
+        type: string
+      message:
+        type: object
+        properties:
+          did:
+            description: "Sender's Pairwise DID"
+            type: string
+          verkey:
+            description: "(Optional) Sender's Pairwise DID Verification Key, required if not on ledger"
+            type: string
+          endpointDid:
+            description: "(Optional) Sender's Endpoint DID, required if not on ledger not diddoc has no endpoint"
+            type: string
+          endpoint:
+            description: "(Optional) Sender's Endpoint DID endpoint Address, required if not on ledger"
+            type: string
+          nonce:
+            description: 'Request Nonce'
+            type: string
+  connection_response:
+    type: object
+    properites:
+      id:
+        description: 'request nonce'
+        type: string
+      aud:
+        description: "Recipient's pairwise did"
+        type: string
+      type:
+        description: 'urn:sovrin:agent:message_type:sovrin.org/connection_response'
+        type: string
+      message:
+        type: object
+        properties:
+          did:
+            description: "Sender's Pairwise DID"
+            type: string
+          verkey:
+            description: "(Optional) Sender's Pairwise DID Verification Key, required if not on ledger"
+            type: string
+          nonce:
+            description: 'Request Nonce'
+            type: string
+  connection_acknowledgement:
+    type: object
+    properites:
+      id:
+        description: "Sender's Pairwise DID"
+        type: string
+      type:
+        description: 'urn:sovrin:agent:message_type:sovrin.org/connection_acknowledge'
+        type: string
+      message:
+        description: 'SUCCESS'
+        type: string
+  credential_offer:
+    type: object
+    properites:
+      id:
+        description: 'offer nonce'
+        type: string
+      origin:
+        description: "Sender's pairwise did"
+        type: string
+      type:
+        description: 'urn:sovrin:agent:message_type:sovrin.org/credential_offer'
+        type: string
+      message:
+        description: 'Credential Offer as created by indy-sdk, fields may vary'
+        type: object
+        properties:
+          schema_id:
+            description: "Offered credential's schema id"
+            type: string
+          cred_def_id:
+            description: "Offered credential's credentialdefinition id"
+            type: string
+          nonce:
+            description: 'Offer Nonce'
+            type: string
+          key_correctness_proof:
+            description: 'Key Correctness Proof'
+            type: string
+  credential_request:
+    type: object
+    properites:
+      id:
+        description: 'offer nonce'
+        type: string
+      origin:
+        description: "Sender's pairwise did"
+        type: string
+      type:
+        description: 'urn:sovrin:agent:message_type:sovrin.org/credential_request'
+        type: string
+      message:
+        description: 'Credential Request as created by indy-sdk, fields may vary'
+        type: object
+        properties:
+          prover_did:
+            description: 'Prover Did'
+            type: string
+          cred_def_id:
+            description: 'Credential Definition Id'
+            type: string
+          blinded_ms:
+            description: 'Blinded Master Secret'
+            type: string
+          blinded_ms_correctness_proof:
+            description: 'Blinded Master Secret Correctness Proof'
+            type: string
+          nonce:
+            description: 'Request Nonce'
+            type: string
+  credential:
+    type: object
+    properites:
+      id:
+        description: 'request nonce'
+        type: string
+      origin:
+        description: "Sender's pairwise did"
+        type: string
+      type:
+        description: 'urn:sovrin:agent:message_type:sovrin.org/credential'
+        type: string
+      message:
+        $ref: '#/definitions/indy_credential'
+  proof_request:
+    type: object
+    properties:
+      id:
+        description: 'Request Nonce'
+        type: string
+      origin:
+        description: "Sender's pairwise did"
+        type: string
+      type:
+        description: 'urn:sovrin:agent:message_type:sovrin.org/proof_request'
+        type: string
+      message:
+        type: object
+        properties:
+          name:
+            description: 'Proof Request name'
+            type: string
+          version:
+            description: 'Proof Request Version'
+            type: string
+          nonce:
+            description: 'Request Nonce'
+            type: string
+          requested_attributes:
+            type: object
+            properties:
+              attr1_referent:
+                description: 'Attribute Id/Referent'
+                type: object
+                properties:
+                  name:
+                    description: 'Attribute Name'
+                    type: string
+                  restrictions:
+                    description: |-
+                      (Optional) Attribute Restrictions, e.g. which credential definition it is backed by.
+                      Leave empty to allow for self-attested attributes.
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        cred_def_id:
+                          description: 'Credential Definition Id'
+                          type: string
+          requested_predicates:
+            type: object
+            properties:
+              predicate1_referent:
+                type: object
+                properties:
+                  name:
+                    description: 'Predicate Name'
+                    type: string
+                  p_type:
+                    description: 'Predicate Type, e.g. ">="'
+                    type: string
+                  p_value:
+                    description: 'Value to check predicate against'
+                    type: string
+                  restrictions:
+                    description: |-
+                      (Optional) Attribute Restrictions, e.g. which credential definition it is backed by.
+                      Leave empty to allow for self-attested attributes.
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        cred_def_id:
+                          description: 'Credential Definition Id'
+                          type: string
+  proof:
+    type: object
+    properties:
+      id:
+        description: 'Request Nonce'
+        type: string
+      origin:
+        description: "Sender's pairwise did"
+        type: string
+      type:
+        description: 'urn:sovrin:agent:message_type:sovrin.org/proof'
+        type: string
+      message:
+        description: 'Proof as created by indy-sdk'
+        type: object
 
 paths:
   /api/login:
@@ -448,9 +1328,29 @@ paths:
             $ref: '#/definitions/login_post'
       responses:
         '200':
-          description: ''
+          description: 'Login successful'
+          schema:
+            type: object
+            properties:
+              token:
+                description: 'Bearer Token'
+                type: string
+        '400':
+          $ref: '#/responses/bad_request'
+        '401':
+          description: 'Login failed'
+          schema:
+            type: object
+            properties:
+              error:
+                description: 'Error message'
+                type: string
       tags:
         - user
+        - common
+        - issuer
+        - verifier
+        - prover
 
   /api/user:
     post:
@@ -465,18 +1365,24 @@ paths:
       responses:
         '201':
           description: 'User successfully created'
-          schema:
-            type: object
-            properties:
-              id:
-                type: string
-                description: 'Id of the new user'
           headers:
             Location:
               description: 'Path to created user, e.g. /user/userId'
               type: string
+          schema:
+            type: object
+            properties:
+              id:
+                description: 'A unique string value identifying a user'
+                type: string
+        '400':
+          $ref: '#/responses/bad_request'
       tags:
         - user
+        - common
+        - issuer
+        - verifier
+        - prover
 
   /api/user/{user}:
     parameters:
@@ -487,8 +1393,20 @@ paths:
       responses:
         '200':
           description: 'Success'
+          schema:
+            $ref: '#/definitions/user'
+        '400':
+          $ref: '#/responses/bad_request'
+        '401':
+          $ref: '#/responses/unauthorized'
+        '404':
+          $ref: '#/responses/not_found'
       tags:
         - user
+        - common
+        - issuer
+        - verifier
+        - prover
     put:
       summary: 'Update a User (at least one of the properties must be provided)'
       description: 'Update a User (at least one of the properties must be provided)'
@@ -500,18 +1418,38 @@ paths:
       responses:
         '200':
           description: 'Success'
+          schema:
+            $ref: '#/definitions/user'
+        '400':
+          $ref: '#/responses/bad_request'
+        '401':
+          $ref: '#/responses/unauthorized'
+        '404':
+          $ref: '#/responses/not_found'
       tags:
         - user
+        - common
+        - issuer
+        - verifier
+        - prover
     delete:
       summary: 'Delete a User'
       description: 'Delete a User'
-      parameters:
-        - $ref: '#/parameters/userParam'
       responses:
         '204':
-          description: ''
+          $ref: '#/responses/no_content'
+        '400':
+          $ref: '#/responses/bad_request'
+        '401':
+          $ref: '#/responses/unauthorized'
+        '404':
+          $ref: '#/responses/not_found'
       tags:
         - user
+        - common
+        - issuer
+        - verifier
+        - prover
 
   /api/wallet:
     get:
@@ -519,9 +1457,21 @@ paths:
       description: 'List all wallets of user'
       responses:
         '200':
-          description: ''
+          description: 'Success'
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/wallet'
+        '401':
+          $ref: '#/responses/unauthorized'
+        '404':
+          $ref: '#/responses/not_found'
       tags:
         - wallet
+        - common
+        - issuer
+        - verifier
+        - prover
     post:
       summary: 'Create a new Wallet (optionally with given name and settings)'
       description: 'Create a new Wallet (optionally with given name and settings)'
@@ -532,9 +1482,21 @@ paths:
             $ref: '#/definitions/wallet_post'
       responses:
         '201':
-          description: ''
+          description: 'Created'
+          schema:
+            $ref: '#/definitions/wallet'
+        '400':
+          $ref: '#/responses/bad_request'
+        '401':
+          $ref: '#/responses/unauthorized'
+        '404':
+          $ref: '#/responses/not_found'
       tags:
         - wallet
+        - common
+        - issuer
+        - verifier
+        - prover
 
   /api/wallet/{wallet}:
     parameters:
@@ -544,42 +1506,84 @@ paths:
       description: 'Retrieve a Wallet'
       responses:
         '200':
-          description: ''
+          description: 'Success'
+          schema:
+            $ref: '#/definitions/wallet'
+        '400':
+          $ref: '#/responses/bad_request'
+        '401':
+          $ref: '#/responses/unauthorized'
+        '404':
+          $ref: '#/responses/not_found'
       tags:
         - wallet
+        - common
+        - issuer
+        - verifier
+        - prover
     delete:
       summary: 'Delete a Wallet'
       description: 'Delete a Wallet'
       responses:
         '204':
-          description: ''
+          $ref: '#/responses/no_content'
+        '401':
+          $ref: '#/responses/unauthorized'
+        '404':
+          $ref: '#/responses/not_found'
       tags:
         - wallet
+        - common
+        - issuer
+        - verifier
+        - prover
 
   /api/wallet/{wallet}/connection/:
+    parameters:
+      - $ref: '#/parameters/walletParam'
     get:
       summary: 'List connections/pairwises stored in wallet'
       description: 'List connections/pairwises stored in wallet'
-      parameters:
-        - $ref: '#/parameters/walletParam'
       responses:
         '200':
-          description: ''
+          description: 'Success'
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/pairwise'
+        '401':
+          $ref: '#/responses/unauthorized'
+        '404':
+          $ref: '#/responses/not_found'
       tags:
         - wallet
+        - common
+        - issuer
+        - verifier
+        - prover
 
   /api/wallet/{wallet}/connection/{theirDid}:
+    parameters:
+      - $ref: '#/parameters/walletParam'
+      - $ref: '#/parameters/theirDidParam'
     get:
       summary: 'Retrieve connection/pairwise stored in wallet'
       description: 'Retrieve connection/pairwise stored in wallet'
-      parameters:
-        - $ref: '#/parameters/walletParam'
-        - $ref: '#/parameters/theirDidParam'
       responses:
         '200':
-          description: ''
+          description: 'Success'
+          schema:
+            $ref: '#/definitions/pairwise'
+        '401':
+          $ref: '#/responses/unauthorized'
+        '404':
+          $ref: '#/responses/not_found'
       tags:
         - wallet
+        - common
+        - issuer
+        - verifier
+        - prover
 
   /api/wallet/{wallet}/credential/:
     get:
@@ -613,22 +1617,36 @@ paths:
           description: '(Optional) cred_def_id to filter credentials'
       responses:
         '200':
-          description: ''
+          description: 'Success'
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/indy_credential'
+        '400':
+          $ref: '#/responses/bad_request'
+        '401':
+          $ref: '#/responses/unauthorized'
+        '404':
+          $ref: '#/responses/not_found'
       tags:
         - wallet
+        - prover
 
   /api/wallet/{wallet}/credential/{credential}:
-    get:
-      summary: 'Retrieve credential stored in wallet'
-      description: 'Retrieve credential stored in wallet'
     parameters:
       - $ref: '#/parameters/walletParam'
       - $ref: '#/parameters/credentialParam'
-    responses:
-      '200':
-        description: ''
-    tags:
-      - wallet
+    get:
+      summary: 'Retrieve credential stored in wallet'
+      description: 'Retrieve credential stored in wallet'
+      responses:
+        '200':
+          description: 'Success'
+          schema:
+            $ref: '#/definitions/indy_credential'
+      tags:
+        - wallet
+        - prover
 
   /api/connection/{myDid}:
     parameters:
@@ -657,10 +1675,14 @@ paths:
               acknowledged:
                 type: boolean
                 description: 'boolean value indicating if connection is acknowledged'
+        '401':
+          $ref: '#/responses/unauthorized'
         '404':
-          description: 'no matching connection found'
+          $ref: '#/responses/not_found'
       tags:
         - connection
+        - issuer
+        - verifier
 
   /api/connectionoffer:
     get:
@@ -670,9 +1692,19 @@ paths:
         - $ref: '#/parameters/walletHeader'
       responses:
         '200':
-          description: ''
+          description: 'Success'
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/connection_offer'
+        '401':
+          $ref: '#/responses/unauthorized'
+        '404':
+          $ref: '#/responses/not_found'
       tags:
         - connection
+        - issuer
+        - verifier
     post:
       summary: 'Create a new connection offer'
       description: 'Create a new connection offer'
@@ -683,9 +1715,19 @@ paths:
             $ref: '#/definitions/connectionoffer_post'
       responses:
         '201':
-          description: ''
+          description: 'Created'
+          schema:
+            $ref: '#/definitions/connection_offer'
+        '400':
+          $ref: '#/responses/bad_request'
+        '401':
+          $ref: '#/responses/unauthorized'
+        '404':
+          $ref: '#/responses/not_found'
       tags:
         - connection
+        - issuer
+        - verifier
 
   /api/connectionoffer/{connectionOfferId}:
     parameters:
@@ -700,17 +1742,35 @@ paths:
       description: 'Retrieve a connection offer by _id'
       responses:
         '200':
-          description: ''
+          description: 'Success'
+          schema:
+            $ref: '#/definitions/connection_offer'
+        '401':
+          $ref: '#/responses/unauthorized'
+        '404':
+          $ref: '#/responses/not_found'
       tags:
         - connection
+        - common
+        - issuer
+        - verifier
+        - prover
     delete:
       summary: 'Delete a connection offer by _id'
       description: 'Delete a connection offer by _id'
       responses:
         '204':
-          description: ''
+          $ref: '#/responses/no_content'
+        '401':
+          $ref: '#/responses/unauthorized'
+        '404':
+          $ref: '#/responses/not_found'
       tags:
         - connection
+        - common
+        - issuer
+        - verifier
+        - prover
 
   /api/connectionrequest:
     get:
@@ -720,9 +1780,21 @@ paths:
         - $ref: '#/parameters/walletHeader'
       responses:
         '200':
-          description: ''
+          description: 'Success'
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/connection_request'
+        '401':
+          $ref: '#/responses/unauthorized'
+        '404':
+          $ref: '#/responses/not_found'
       tags:
         - connection
+        - common
+        - issuer
+        - verifier
+        - prover
     post:
       summary: 'Accept a connection offer and/or send a connection request'
       description: 'Accept a connection offer and/or send a connection request'
@@ -734,8 +1806,20 @@ paths:
       responses:
         '200':
           description: 'Success'
+          schema:
+            $ref: '#/definitions/connection_request'
+        '400':
+          $ref: '#/responses/bad_request'
+        '401':
+          $ref: '#/responses/unauthorized'
+        '404':
+          $ref: '#/responses/not_found'
       tags:
         - connection
+        - common
+        - issuer
+        - verifier
+        - prover
 
   /api/connectionrequest/{connectionRequestId}:
     parameters:
@@ -750,17 +1834,35 @@ paths:
       description: 'Retrieve a connection request by _id'
       responses:
         '200':
-          description: ''
+          description: 'Success'
+          schema:
+            $ref: '#/definitions/connection_request'
+        '401':
+          $ref: '#/responses/unauthorized'
+        '404':
+          $ref: '#/responses/not_found'
       tags:
         - connection
+        - common
+        - issuer
+        - verifier
+        - prover
     delete:
       summary: 'Delete a connection request by _id'
       description: 'Delete a connection request by _id'
       responses:
         '204':
-          description: ''
+          $ref: '#/responses/no_content'
+        '401':
+          $ref: '#/responses/unauthorized'
+        '404':
+          $ref: '#/responses/not_found'
       tags:
         - connection
+        - common
+        - issuer
+        - verifier
+        - prover
 
   /api/connectionresponse:
     post:
@@ -774,21 +1876,44 @@ paths:
       responses:
         '200':
           description: 'Success'
+          schema:
+            $ref: '#/definitions/connection_response'
+        '400':
+          $ref: '#/responses/bad_request'
+        '401':
+          $ref: '#/responses/unauthorized'
+        '404':
+          $ref: '#/responses/not_found'
       tags:
         - connection
+        - common
+        - issuer
+        - verifier
+        - prover
 
   /api/indyschema:
     get:
-      summary: 'List schemas'
-      description: 'List schemas'
+      summary: 'List low-level indy schemas'
+      description: 'List low-level indy schemas'
+      parameters:
+        - $ref: '#/parameters/walletHeader'
       responses:
         '200':
-          description: ''
+          description: 'Success'
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/indy_schema_db'
+        '401':
+          $ref: '#/responses/unauthorized'
+        '404':
+          $ref: '#/responses/not_found'
       tags:
         - indyschema
+        - issuer
     post:
-      summary: 'Create a Schema'
-      description: 'Create a Schema'
+      summary: 'Create a low-level indy schema'
+      description: 'Create a low-level indy schema'
       parameters:
         - in: body
           name: data
@@ -796,9 +1921,18 @@ paths:
             $ref: '#/definitions/indyschema_post'
       responses:
         '201':
-          description: ''
+          description: 'Created'
+          schema:
+            $ref: '#/definitions/indy_schema_db'
+        '400':
+          $ref: '#/responses/bad_request'
+        '401':
+          $ref: '#/responses/unauthorized'
+        '404':
+          $ref: '#/responses/not_found'
       tags:
         - indyschema
+        - issuer
 
   /api/indyschema/{schemaid}:
     parameters:
@@ -809,18 +1943,27 @@ paths:
         type: string
       - $ref: '#/parameters/walletHeader'
     get:
-      summary: 'Retrieve a schema'
-      description: 'Retrieve a schema'
+      summary: 'Retrieve a low-level indy schema'
+      description: 'Retrieve a low-level indy schema'
       responses:
         '200':
-          description: ''
+          description: 'Success'
+          schema:
+            $ref: '#/definitions/indy_schema'
+        '401':
+          $ref: '#/responses/unauthorized'
+        '404':
+          $ref: '#/responses/not_found'
       tags:
         - indyschema
+        - issuer
+        - verifier
 
   /api/schema:
     get:
       tags:
         - schema
+        - issuer
       summary: 'List schemas'
       description: 'List schemas from the logged in user'
       parameters:
@@ -865,6 +2008,7 @@ paths:
     post:
       tags:
         - schema
+        - issuer
       summary: 'Create a Schema'
       description: 'Create a Schema, Credential Definition & Revocation Registry (if revocable) for the logged in user'
       parameters:
@@ -887,6 +2031,8 @@ paths:
     get:
       tags:
         - schema
+        - issuer
+        - verifier
       summary: 'Retrieve a schema'
       description: 'Retrieve a schema'
       parameters:
@@ -907,6 +2053,7 @@ paths:
     patch:
       tags:
         - schema
+        - issuer
       summary: 'Alter schema by the given operation'
       description: 'Alter schema by the given operation'
       parameters:
@@ -947,18 +2094,28 @@ paths:
               type: string
       tags:
         - schema
+        - issuer
 
   /api/credentialdef:
     get:
-      summary: 'List credential definitions of wallet'
-      description: 'List credential definitions of wallet'
+      summary: 'List credential definitions of wallet stored in DB'
+      description: 'List credential definitions of wallet stored in DB'
       parameters:
         - $ref: '#/parameters/walletHeader'
       responses:
         '200':
-          description: ''
+          description: 'Success'
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/credential_definition'
+        '401':
+          $ref: '#/responses/unauthorized'
+        '404':
+          $ref: '#/responses/not_found'
       tags:
         - credential
+        - issuer
     post:
       summary: 'Create a credential definition'
       description: 'Create a credential definition'
@@ -969,13 +2126,26 @@ paths:
             $ref: '#/definitions/credentialdef_post'
       responses:
         '201':
-          description: ''
+          description: 'Created'
+          schema:
+            type: object
+            properties:
+              credDefId:
+                description: 'A unique string value identifying a credential definition'
+                type: string
+        '400':
+          $ref: '#/responses/bad_request'
+        '401':
+          $ref: '#/responses/unauthorized'
+        '404':
+          $ref: '#/responses/not_found'
       tags:
         - credential
+        - issuer
 
   /api/credentialdef/{creddef}:
     parameters:
-      - description: A unique string value identifying this credential definition.
+      - description: A unique string value identifying a credential definition.
         in: path
         name: creddef
         required: true
@@ -986,17 +2156,16 @@ paths:
       description: 'Retrieve a credential definition from the ledger'
       responses:
         '200':
-          description: ''
+          description: 'Success'
+          schema:
+            $ref: '#/definitions/indy_credential_definition'
+        '401':
+          $ref: '#/responses/unauthorized'
+        '404':
+          $ref: '#/responses/not_found'
       tags:
         - credential
-    delete:
-      summary: 'Delete a credential definition'
-      description: 'Delete a credential definition'
-      responses:
-        '204':
-          description: ''
-      tags:
-        - credential
+        - issuer
 
   /api/credentialoffer:
     get:
@@ -1006,12 +2175,22 @@ paths:
         - $ref: '#/parameters/walletHeader'
       responses:
         '200':
-          description: ''
+          description: 'Success'
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/credential_offer'
+        '401':
+          $ref: '#/responses/unauthorized'
+        '404':
+          $ref: '#/responses/not_found'
       tags:
         - credential
+        - issuer
+        - prover
     post:
-      summary: 'Create a credential offer'
-      description: 'Create a credential offer'
+      summary: 'Create and send a credential offer'
+      description: 'Create and send a credential offer'
       parameters:
         - in: body
           name: data
@@ -1019,9 +2198,18 @@ paths:
             $ref: '#/definitions/credentialoffer_post'
       responses:
         '201':
-          description: ''
+          description: 'Created'
+          schema:
+            $ref: '#/definitions/credential_offer'
+        '400':
+          $ref: '#/responses/bad_request'
+        '401':
+          $ref: '#/responses/unauthorized'
+        '404':
+          $ref: '#/responses/not_found'
       tags:
         - credential
+        - issuer
 
   /api/credentialoffer/{id}:
     parameters:
@@ -1036,17 +2224,33 @@ paths:
       description: 'Retrieve a credential offer'
       responses:
         '200':
-          description: ''
+          description: 'Success'
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/credential_offer'
+        '401':
+          $ref: '#/responses/unauthorized'
+        '404':
+          $ref: '#/responses/not_found'
       tags:
         - credential
+        - issuer
+        - prover
     delete:
       summary: 'Delete a credential offer'
       description: 'Delete a credential offer'
       responses:
         '204':
-          description: ''
+          $ref: '#/responses/no_content'
+        '401':
+          $ref: '#/responses/unauthorized'
+        '404':
+          $ref: '#/responses/not_found'
       tags:
         - credential
+        - issuer
+        - prover
 
   /api/credentialrequest:
     get:
@@ -1056,9 +2260,17 @@ paths:
         - $ref: '#/parameters/walletHeader'
       responses:
         '200':
-          description: ''
+          description: 'Success'
+          schema:
+            $ref: '#/definitions/credential_request'
+        '401':
+          $ref: '#/responses/unauthorized'
+        '404':
+          $ref: '#/responses/not_found'
       tags:
         - credential
+        - issuer
+        - prover
     post:
       summary: 'Accept credential offer and create credential request'
       description: 'Accept credential offer and create credential request'
@@ -1069,9 +2281,18 @@ paths:
             $ref: '#/definitions/credentialrequest_post'
       responses:
         '201':
-          description: ''
+          description: 'Created'
+          schema:
+            $ref: '#/definitions/credential_request'
+        '400':
+          $ref: '#/responses/bad_request'
+        '401':
+          $ref: '#/responses/unauthorized'
+        '404':
+          $ref: '#/responses/not_found'
       tags:
         - credential
+        - issuer
 
   /api/credentialrequest/{id}:
     parameters:
@@ -1086,17 +2307,31 @@ paths:
       description: 'Retrieve a credential request'
       responses:
         '200':
-          description: ''
+          description: 'Success'
+          schema:
+            $ref: '#/definitions/credential_request'
+        '401':
+          $ref: '#/responses/unauthorized'
+        '404':
+          $ref: '#/responses/not_found'
       tags:
         - credential
+        - issuer
+        - prover
     delete:
       summary: 'Delete a credential request'
       description: 'Delete a credential request'
       responses:
         '204':
-          description: ''
+          $ref: '#/responses/no_content'
+        '401':
+          $ref: '#/responses/unauthorized'
+        '404':
+          $ref: '#/responses/not_found'
       tags:
         - credential
+        - issuer
+        - prover
 
   /api/credential/:
     get:
@@ -1110,9 +2345,18 @@ paths:
           description: '(Optional) recipientDid to filter by'
       responses:
         '200':
-          description: ''
+          description: 'Success'
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/credential_message'
+        '401':
+          $ref: '#/responses/unauthorized'
+        '404':
+          $ref: '#/responses/not_found'
       tags:
         - credential
+        - issuer
     post:
       summary: 'Issue/Create a credential and send to recipient'
       description: 'Issue/Create a credential and send to recipient'
@@ -1123,9 +2367,18 @@ paths:
             $ref: '#/definitions/credential_post'
       responses:
         '201':
-          description: ''
+          description: 'Created'
+          schema:
+            $ref: '#/definitions/credential_message'
+        '400':
+          $ref: '#/responses/bad_request'
+        '401':
+          $ref: '#/responses/unauthorized'
+        '404':
+          $ref: '#/responses/not_found'
       tags:
         - credential
+        - issuer
 
   /api/credential/{id}:
     parameters:
@@ -1140,10 +2393,18 @@ paths:
       description: 'Retrieve a credential message issued/sent by a wallet'
       responses:
         '200':
-          description: ''
+          description: 'Success'
+          schema:
+            $ref: '#/definitions/credential_message'
+        '401':
+          $ref: '#/responses/unauthorized'
+        '404':
+          $ref: '#/responses/not_found'
       tags:
         - credential
+        - issuer
 
+  # Endpoint is WIP
   /api/credential/{id}/revoke:
     parameters:
       - description: 'A unique string value identifying this credential.'
@@ -1161,12 +2422,21 @@ paths:
             type: object
             properties:
               wallet:
-                $ref: '#/definitions/wallet'
+                $ref: '#/definitions/walletId'
       responses:
         '200':
-          description: ''
+          description: 'Success'
+        '204':
+          $ref: '#/responses/no_content'
+        '400':
+          $ref: '#/responses/bad_request'
+        '401':
+          $ref: '#/responses/unauthorized'
+        '404':
+          $ref: '#/responses/not_found'
       tags:
         - credential
+        - issuer
 
   /api/proofrequesttemplate:
     get:
@@ -1176,9 +2446,18 @@ paths:
         - $ref: '#/parameters/walletHeader'
       responses:
         '200':
-          description: ''
+          description: 'Success'
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/proofrequest_template'
+        '401':
+          $ref: '#/responses/unauthorized'
+        '404':
+          $ref: '#/responses/not_found'
       tags:
         - proof
+        - verifier
     post:
       summary: 'Create a proof request templates'
       description: 'Create a proof request templates'
@@ -1189,9 +2468,18 @@ paths:
             $ref: '#/definitions/proofrequest_template_post'
       responses:
         '201':
-          description: ''
+          description: 'Created'
+          schema:
+            $ref: '#/definitions/proofrequest_template'
+        '400':
+          $ref: '#/responses/bad_request'
+        '401':
+          $ref: '#/responses/unauthorized'
+        '404':
+          $ref: '#/responses/not_found'
       tags:
         - proof
+        - verifier
 
   /api/proofrequesttemplate/{id}:
     parameters:
@@ -1206,17 +2494,29 @@ paths:
       description: 'Retrieve a proof request template'
       responses:
         '200':
-          description: ''
+          description: 'Success'
+          schema:
+            $ref: '#/definitions/proofrequest_template'
+        '401':
+          $ref: '#/responses/unauthorized'
+        '404':
+          $ref: '#/responses/not_found'
       tags:
         - proof
+        - verifier
     delete:
       summary: 'Delete a proof request template'
       description: 'Delete a proof request template'
       responses:
         '204':
-          description: ''
+          $ref: '#/responses/no_content'
+        '401':
+          $ref: '#/responses/unauthorized'
+        '404':
+          $ref: '#/responses/not_found'
       tags:
         - proof
+        - verifier
 
   /api/proofrequest:
     get:
@@ -1226,12 +2526,22 @@ paths:
         - $ref: '#/parameters/walletHeader'
       responses:
         '200':
-          description: ''
+          description: 'Success'
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/proofrequest_message'
+        '401':
+          $ref: '#/responses/unauthorized'
+        '404':
+          $ref: '#/responses/not_found'
       tags:
         - proof
+        - verifier
+        - prover
     post:
-      summary: 'Create a proof request'
-      description: 'Create a proof request'
+      summary: 'Create and send a proof request'
+      description: 'Create and send a proof request'
       parameters:
         - in: body
           name: data
@@ -1239,9 +2549,18 @@ paths:
             $ref: '#/definitions/proofrequest_post'
       responses:
         '201':
-          description: ''
+          description: 'Created'
+          schema:
+            $ref: '#/definitions/proofrequest_message'
+        '400':
+          $ref: '#/responses/bad_request'
+        '401':
+          $ref: '#/responses/unauthorized'
+        '404':
+          $ref: '#/responses/not_found'
       tags:
         - proof
+        - verifier
 
   /api/proofrequest/{id}:
     parameters:
@@ -1256,17 +2575,31 @@ paths:
       description: 'Retrieve a proof request'
       responses:
         '200':
-          description: ''
+          description: 'Success'
+          schema:
+            $ref: '#/definitions/proofrequest_message'
+        '401':
+          $ref: '#/responses/unauthorized'
+        '404':
+          $ref: '#/responses/not_found'
       tags:
         - proof
+        - verifier
+        - prover
     delete:
       summary: 'Delete a proof request'
       description: 'Delete a proof request'
       responses:
         '204':
-          description: ''
+          $ref: '#/responses/no_content'
+        '401':
+          $ref: '#/responses/unauthorized'
+        '404':
+          $ref: '#/responses/not_found'
       tags:
         - proof
+        - verifier
+        - prover
 
   /api/proof:
     get:
@@ -1276,12 +2609,21 @@ paths:
         - $ref: '#/parameters/walletHeader'
       responses:
         '200':
-          description: ''
+          description: 'Success'
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/proof'
+        '401':
+          $ref: '#/responses/unauthorized'
+        '404':
+          $ref: '#/responses/not_found'
       tags:
         - proof
+        - verifier
     post:
-      summary: 'Create a Proof'
-      description: 'Create a Proof'
+      summary: 'Create and send a Proof'
+      description: 'Create and send a Proof'
       parameters:
         - in: body
           name: data
@@ -1289,9 +2631,18 @@ paths:
             $ref: '#/definitions/proof_post'
       responses:
         '201':
-          description: ''
+          description: 'Created'
+          schema:
+            $ref: '#/definitions/proof_message'
+        '400':
+          $ref: '#/responses/bad_request'
+        '401':
+          $ref: '#/responses/unauthorized'
+        '404':
+          $ref: '#/responses/not_found'
       tags:
         - proof
+        - prover
 
   /api/proof/{id}:
     parameters:
@@ -1302,36 +2653,35 @@ paths:
         type: string
       - $ref: '#/parameters/walletHeader'
     get:
-      summary: 'Retrieve a proof'
-      description: 'Retrieve a proof'
+      summary: 'Retrieve a received proof (including whether it is valid)'
+      description: 'Retrieve a received proof (including whether it is valid)'
       responses:
         '200':
-          description: ''
+          description: 'Success'
+          schema:
+            $ref: '#/definitions/proof'
+        '400':
+          $ref: '#/responses/bad_request'
+        '401':
+          $ref: '#/responses/unauthorized'
+        '404':
+          $ref: '#/responses/not_found'
       tags:
         - proof
+        - verifier
     delete:
-      summary: 'Delete a proof'
-      description: 'Delete a proof'
+      summary: 'Delete a received proof'
+      description: 'Delete a received proof'
       responses:
         '204':
-          description: ''
+          $ref: '#/responses/no_content'
+        '401':
+          $ref: '#/responses/unauthorized'
+        '404':
+          $ref: '#/responses/not_found'
       tags:
         - proof
-
-  /api/proofverification:
-    post:
-      summary: 'Create a proof verification'
-      description: 'Create a proof verification'
-      parameters:
-        - in: body
-          name: data
-          schema:
-            $ref: '#/definitions/proofverification_post'
-      responses:
-        '200':
-          description: ''
-      tags:
-        - proof
+        - verifier
 
   /api/transactions:
     get:
@@ -1355,6 +2705,16 @@ paths:
       responses:
         '200':
           description: 'Returns list of transactions'
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/indy_transaction'
+        '400':
+          $ref: '#/responses/bad_request'
+        '401':
+          $ref: '#/responses/unauthorized'
+        '404':
+          $ref: '#/responses/not_found'
       tags:
         - transaction
 
@@ -1369,7 +2729,15 @@ paths:
             $ref: '#/definitions/nym_post'
       responses:
         '200':
-          description: ''
+          description: 'Success'
+          schema:
+            $ref: '#/definitions/indy_nym_result'
+        '400':
+          $ref: '#/responses/bad_request'
+        '401':
+          $ref: '#/responses/unauthorized'
+        '404':
+          $ref: '#/responses/not_found'
       tags:
         - transaction
 
@@ -1386,7 +2754,13 @@ paths:
           required: true
       responses:
         '200':
-          description: ''
+          description: 'Success'
+          schema:
+            $ref: '#/definitions/indy_nym'
+        '401':
+          $ref: '#/responses/unauthorized'
+        '404':
+          $ref: '#/responses/not_found'
       tags:
         - transaction
 
@@ -1402,7 +2776,11 @@ paths:
             $ref: '#/definitions/indy_post'
       responses:
         '202':
-          description: ''
+          description: 'Accepted'
+        '400':
+          $ref: '#/responses/bad_request'
+        '404':
+          $ref: '#/responses/not_found'
       tags:
         - message
 
@@ -1418,7 +2796,17 @@ paths:
           type: string
       responses:
         '200':
-          description: ''
+          description: 'Success'
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/message_db'
+        '400':
+          $ref: '#/responses/bad_request'
+        '401':
+          $ref: '#/responses/unauthorized'
+        '404':
+          $ref: '#/responses/not_found'
       tags:
         - message
     post:
@@ -1431,9 +2819,18 @@ paths:
             $ref: '#/definitions/message_post'
       responses:
         '200':
-          description: ''
+          description: 'Success'
+          schema:
+            description: 'Response'
+            type: object
         '202':
-          description: ''
+          description: 'Accepted'
+        '400':
+          $ref: '#/responses/bad_request'
+        '401':
+          $ref: '#/responses/unauthorized'
+        '404':
+          $ref: '#/responses/not_found'
       tags:
         - message
 
@@ -1450,7 +2847,13 @@ paths:
       description: 'Retrieve a message'
       responses:
         '200':
-          description: ''
+          description: 'Success'
+          schema:
+            $ref: '#/definitions/message_db'
+        '401':
+          $ref: '#/responses/unauthorized'
+        '404':
+          $ref: '#/responses/not_found'
       tags:
         - message
     delete:
@@ -1458,7 +2861,11 @@ paths:
       description: 'Delete a message'
       responses:
         '204':
-          description: ''
+          $ref: '#/responses/no_content'
+        '401':
+          $ref: '#/responses/unauthorized'
+        '404':
+          $ref: '#/responses/not_found'
       tags:
         - message
 
@@ -1475,6 +2882,12 @@ paths:
       security: []
       responses:
         '200':
-          description: ''
+          description: 'Success'
+        '400':
+          $ref: '#/responses/bad_request'
+        '404':
+          $ref: '#/responses/not_found'
       tags:
         - proof
+        - issuer
+        - prover
