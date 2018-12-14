@@ -350,6 +350,18 @@ definitions:
           '{ "name": "Ticket", "version": "0.1", "requested_attributes": { "attr1_referent": { "name": "firstname", "restrictions": [ { "cred_def_id": "{{ cred_def_id }}" }] }, "attr2_referent": { "name": "phone" } }, "requested_predicates": {} }'
     required:
       - template
+  proofrequest_template_put:
+    type: object
+    properties:
+      wallet:
+        $ref: '#/definitions/wallet'
+      template:
+        description: 'proof request template (optionally with mustache placeholders)'
+        type: string
+        example:
+          '{ "name": "Ticket", "version": "0.1", "requested_attributes": { "attr1_referent": { "name": "firstname", "restrictions": [ { "cred_def_id": "{{ cred_def_id }}" }] }, "attr2_referent": { "name": "phone" } }, "requested_predicates": {} }'
+    required:
+      - template
   proofrequest_post:
     type: object
     properties:
@@ -2501,6 +2513,22 @@ paths:
           $ref: '#/responses/unauthorized'
         '404':
           $ref: '#/responses/not_found'
+      tags:
+        - proof
+        - verifier
+    put:
+      summary: 'Update a proof request template'
+      description: 'Update a proof request template'
+      parameters:
+        - in: body
+          name: data
+          schema:
+            $ref: '#/definitions/proofrequest_template_put'
+      responses:
+        '200':
+          description: ''
+        '404':
+          description: 'Proof request template Id not found'
       tags:
         - proof
         - verifier
