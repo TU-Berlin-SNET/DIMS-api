@@ -35,6 +35,17 @@ router
             next();
         })
     )
+    .put(
+        wrap(async (req, res, next) => {
+            const data = await controller.template.update(
+                req.wallet,
+                req.params.proofRequestTemplateId,
+                req.body.template
+            );
+            res.locals.result = data ? APIResult.success(data) : APIResult.notFound();
+            next();
+        })
+    )
     .delete(
         wrap(async (req, res, next) => {
             const data = await controller.template.remove(req.wallet, req.params.proofRequestTemplateId);

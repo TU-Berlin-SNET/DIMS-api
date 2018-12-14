@@ -25,11 +25,27 @@ module.exports = {
      * @return {Promise<ProofRequestTemplate>}
      */
     async create(wallet, template) {
-        const doc = await new ProofRequestTemplate({
+        const prt = await new ProofRequestTemplate({
             wallet: wallet.id,
             template: template
         }).save();
-        return doc;
+        return prt;
+    },
+
+    /**
+     * Update a proof request template
+     * @param {Wallet} wallet
+     * @param {String} id tempalte _id
+     * @param {object} template
+     * @return {Promise<ProofRequestTemplate>}
+     */
+    async update(wallet, id, template) {
+        let prt = await ProofRequestTemplate.findOne({
+            _id: id,
+            wallet: wallet.id
+        }).exec();
+        prt.set({ template });
+        return await prt.save();
     },
 
     /**

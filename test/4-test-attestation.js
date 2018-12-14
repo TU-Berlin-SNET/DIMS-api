@@ -374,6 +374,42 @@ describe('attestation (schemas, credentials, and proofs)', function() {
             expect(res.body).to.eql(template);
         });
 
+        it('relying party should be able to update proof request template', async function() {
+            const payload = `{
+                "name": "Ticket",
+                "version": "0.2",
+                "requested_attributes": {
+                    "attr1_referent": {
+                        "name": "firstname",
+                        "restrictions": [{ "cred_def_id": "${credDefId}" }]
+                    },
+                    "attr2_referent": {
+                        "name": "lastname",
+                        "restrictions": [{ "cred_def_id": "${credDefId}" }]
+                    },
+                    "attr3_referent": {
+                        "name": "phone"
+                    }
+                },
+                "requested_predicates": {
+                    "predicate1_referent": {
+                        "name": "age",
+                        "p_type": ">=",
+                        "p_value": {{ age }},
+                        "restrictions": [{ "cred_def_id": "${credDefId}" }]
+                    }
+                }
+            }`;
+            const res = await agent
+                .put('/api/proofrequesttemplate/' + template.id)
+                .set(bothHeaders)
+                .set({ Authorization: rp.token })
+                .send({ template: payload })
+                .expect(200);
+            expect(res.body).to.contain.keys('id', 'wallet', 'template');
+            expect(res.body.template).to.eql(payload);
+        });
+
         it('relying party should create/send proof request using template and holder should receive it', async function() {
             const res = await agent
                 .post('/api/proofrequest')
