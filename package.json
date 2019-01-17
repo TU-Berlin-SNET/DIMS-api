@@ -5,7 +5,7 @@
   "description": "REST API Agent Implementation for the IdentityChain Project",
   "keywords": [],
   "author": "SNET TU-BERLIN",
-  "license": "",
+  "license": "Apache-2.0",
   "main": "app.js",
   "scripts": {
     "start": "node app.js",
