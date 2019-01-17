@@ -3,7 +3,7 @@
  * User Model
  */
 
-const SALTROUNDS = parseInt(process.env.SALTROUNDS);
+const SALTROUNDS = parseInt(process.env.IDC_API_SALTROUNDS);
 const bcrypt = require('bcrypt');
 const Mongoose = require('../db');
 const WalletProvider = require('../middleware/walletProvider');

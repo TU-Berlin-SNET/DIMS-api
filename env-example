@@ -7,33 +7,33 @@
 # ===============================================
 
 # host and port the API binds to
-APP_HOST=172.16.0.100
-APP_PORT=8000
+IDC_API_HOST=172.16.0.100
+IDC_API_PORT=8000
 
 # protocol (http/s), host, and port at which the API is
 # reachable from the outside
-APP_DOMAIN_PROTOCOL=http
-APP_DOMAIN_HOST=172.16.0.100
-APP_DOMAIN_PORT=8000
+IDC_API_DOMAIN_PROTOCOL=http
+IDC_API_DOMAIN_HOST=172.16.0.100
+IDC_API_DOMAIN_PORT=8000
 
 # wallet cache ttl, e.g. how long to wait before closing
 # a wallet after no request is using it anymore for processing
 # (in minutes)
-APP_WALLETCACHE_TTL=15
+IDC_API_WALLETCACHE_TTL=15
 
 # whether to always write pairwise dids onto the ledger per nym request
 # by default pairwise dids are only stored locally and not stored on the ledger
 # except when a role other than NONE is offered
-APP_NYM_ALWAYS=false
+IDC_API_NYM_ALWAYS=false
 
 # bcrypt saltOrRounds configuration
-SALTROUNDS=10
+IDC_API_SALTROUNDS=10
 
 # change this!
-JWT_SECRET=your_jwt_secret
+IDC_API_JWT_SECRET=your_jwt_secret
 
 # API logger log level
-LOG_LEVEL=debug
+IDC_API_LOG_LEVEL=debug
 
 # low-level rust indy-sdk/libindy log level
 RUST_LOG=debug
@@ -43,25 +43,25 @@ RUST_LOG=debug
 # ===============================================
 
 # host and port at which the database is reachable
-DB_HOST=mongodb
-DB_PORT=27017
+IDC_API_DB_HOST=mongodb
+IDC_API_DB_PORT=27017
 
 # database user username and password
-DB_USER=
-DB_PASSWORD=
+IDC_API_DB_USER=
+IDC_API_DB_PASSWORD=
 
 
 # Pool
 # ===============================================
 
 # ip at which the indy pool is reachable
-POOL_IP=172.16.0.200
+IDC_POOL_IP=172.16.0.200
 
 # name for the pool
-POOL_NAME=testPool
+IDC_POOL_NAME=testPool
 
 # path to pool_transactions_genesis
-GENESIS_TXN=./pool_transactions_genesis
+IDC_API_GENESIS_TXN=./pool_transactions_genesis
 
 # Schema compiler api
 # ===============================================
@@ -77,11 +77,11 @@ SCHEMA_COMP_PORT=8080
 # ===============================================
 
 # subnet for docker-compose network
-API_SUBNET=172.16.0.0/24
+IDC_API_SUBNET=172.16.0.0/24
 
 # port range which indy pool nodes bind to
-POOL_PORTS=9701-9708
+IDC_POOL_PORTS=9701-9708
 
-# (exclusive) initial port of POOL_PORTS range
+# (exclusive) initial port of IDC_POOL_PORTS range
 # i.e. at which port to start binding
-PORTSTART=9700
+IDC_PORT_START=9700

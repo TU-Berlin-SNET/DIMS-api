@@ -13,10 +13,10 @@ let connRetries = 0;
 
 Mongoose.Promise = global.Promise;
 
-if (process.env.DB_USER) {
-    connString += `${process.env.DB_USER}:${process.env.DB_PASSWORD}@`;
+if (process.env.IDC_API_DB_USER) {
+    connString += `${process.env.IDC_API_DB_USER}:${process.env.IDC_API_DB_PASSWORD}@`;
 }
-connString += `${process.env.DB_HOST}:${process.env.DB_PORT}/idchain`;
+connString += `${process.env.IDC_API_DB_HOST}:${process.env.IDC_API_DB_PORT}/idchain`;
 
 /**
  * Connect to MongoDB

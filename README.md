@@ -18,7 +18,7 @@
 
 -   A `pool_transactions_genesis` file for the running pool. It can be generated using the tools in [idchain-commons] or, if running the `idchain/test-pool` docker image, read from the test-pool container with
     ```
-    docker exec <CONTAINER_NAME> bash -c 'cat "/home/indy/.indy-cli/networks/$POOL_NAME/pool_transactions_genesis"' > pool_transactions_genesis
+    docker exec <CONTAINER_NAME> bash -c 'cat "/home/indy/.indy-cli/networks/$IDC_POOL_NAME/pool_transactions_genesis"' > pool_transactions_genesis
     ```
 -   The high-level schema compiler situated at [idchain-schema-api]. Follow the instructions on the `README.md` of that repository on how to build and run the schema compiler HTTP api.
 
@@ -52,7 +52,7 @@ This will build and run 4 services: Indy-Pool, MongoDB, Schema-Compiler, and thi
     docker-compose up pool
 
     # read and output the pool_transactions_genesis
-    docker exec api_pool_1 bash -c 'cat "/home/indy/.indy-cli/networks/$POOL_NAME/pool_transactions_genesis"' > pool_transactions_genesis
+    docker exec api_pool_1 bash -c 'cat "/home/indy/.indy-cli/networks/$IDC_POOL_NAME/pool_transactions_genesis"' > pool_transactions_genesis
     ```
 
 -   The docker image built using the [idchain-commons] repository.
