@@ -55,7 +55,7 @@ async function initialize() {
 
 initialize()
     .then(() => {
-        const server = app.listen(process.env.APP_PORT, process.env.APP_HOST, async () => {
+        const server = app.listen(process.env.IDC_API_PORT, process.env.IDC_API_HOST, async () => {
             log.info('IDChain API now up at %s:%s', server.address().address, server.address().port);
             log.info('Access APIDocs at /api/docs');
         });

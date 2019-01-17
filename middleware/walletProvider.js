@@ -9,7 +9,7 @@ const APIResult = require('../api-result');
 const { wrap, wrapEx } = require('../asyncwrap');
 const Wallet = require('../models/wallet');
 
-const CACHETTL = (process.env.APP_WALLETCACHE_TTL || 15) * 60 * 1000;
+const CACHETTL = (process.env.IDC_API_WALLETCACHE_TTL || 15) * 60 * 1000;
 
 const cache = {};
 

@@ -14,7 +14,7 @@ const User = require('../models/user');
 
 const jwtOptions = {
     jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-    secretOrKey: process.env.JWT_SECRET
+    secretOrKey: process.env.IDC_API_JWT_SECRET
 };
 
 passport.use(
@@ -71,7 +71,7 @@ module.exports.login = async (req, res, next) => {
             const payload = {
                 id: user.id
             };
-            let jwtsecret = process.env.JWT_SECRET;
+            let jwtsecret = process.env.IDC_API_JWT_SECRET;
             const token = jwt.sign(payload, jwtsecret, { expiresIn: '1h' });
 
             body = { user: user.displayName, token: 'Bearer ' + token };
