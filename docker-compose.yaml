@@ -42,7 +42,7 @@ services:
   api:
     build:
       context: .
-    image: idchain/api
+    image: idchain/iea-api:1.0
     container_name: idchain-api
     environment:
       - IDC_API_HOST
