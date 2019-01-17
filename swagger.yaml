@@ -244,6 +244,7 @@ definitions:
       supportRevocation:
         description: '(Optional) States if revocation should be supported for this credential definiton'
         type: boolean
+        default: false
     required:
       - schemaId
   credentialoffer_post:
