@@ -5,35 +5,20 @@
  */
 'use strict';
 
-const uuidv4 = require('uuid/v4');
 const mocha = require('mocha');
 const expect = require('chai').expect;
-
-const vars = require('./0-test-vars');
+const uuidv4 = require('uuid/v4');
 const core = require('./0-test-core');
 
-const { describe, before, after, it } = mocha;
-
-const agent = vars.agent;
-const bothHeaders = vars.bothHeaders;
+const { before, after, describe, it } = mocha;
 const testId = uuidv4();
-const user = {
-    username: 'user' + testId,
-    password: 'userPass',
-    wallet: {
-        name: 'wallet' + testId,
-        credentials: {
-            key: 'walletKey'
-        },
-        seed: vars.stewardSeed
-    }
-};
-let valuesToDelete = [];
+
+const valuesToDelete = [];
+let user;
 
 describe('transactions', function() {
     before(async function() {
-        user.id = await core.createUser(user);
-        user.token = await core.login(user.username, user.password);
+        user = await core.steward(testId);
         valuesToDelete.push({ id: user.id, token: user.token, path: 'user' });
     });
 
@@ -43,10 +28,8 @@ describe('transactions', function() {
 
     describe('given a valid user and wallet with a known DID in the ledger', function() {
         it('it should be able to query DOMAIN transactions', async function() {
-            const res = await agent
-                .get('/api/transactions')
-                .set(bothHeaders)
-                .set({ Authorization: user.token })
+            const res = await core
+                .getRequest('/api/transactions', user.token)
                 .query({ from: 1, to: 11, type: 'domain' })
                 .expect(200);
             expect(typeof res.body).to.equal('object');
@@ -56,10 +39,8 @@ describe('transactions', function() {
         });
 
         it('it should be able to query POOL transactions', async function() {
-            const res = await agent
-                .get('/api/transactions')
-                .set(bothHeaders)
-                .set({ Authorization: user.token })
+            const res = await core
+                .getRequest('/api/transactions', user.token)
                 .query({ from: 1, to: 6, type: 'pool' })
                 .expect(200);
             expect(typeof res.body).to.equal('object');
@@ -68,10 +49,8 @@ describe('transactions', function() {
         });
 
         it('it should be able to query CONFIG transactions', async function() {
-            const res = await agent
-                .get('/api/transactions')
-                .set(bothHeaders)
-                .set({ Authorization: user.token })
+            const res = await core
+                .getRequest('/api/transactions', user.token)
                 .query({ from: 1, to: 5, type: 'config' })
                 .expect(200);
             expect(typeof res.body).to.equal('object');
