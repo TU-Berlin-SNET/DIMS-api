@@ -46,6 +46,7 @@ RUN apt-get update && apt-get install -y libindy nodejs
 
 USER indy
 RUN mkdir /home/indy/app
+RUN mkdir /home/indy/.indy_client
 WORKDIR /home/indy/app
 
 # install app dependencies
@@ -54,6 +55,8 @@ RUN npm install
 
 # Copy rest of the app
 COPY --chown=indy:indy . /home/indy/app/
+
+VOLUME /home/indy/.indy_client
 
 ENTRYPOINT ["/home/indy/app/docker-entrypoint.sh"]
 CMD [ "npm", "start" ]
