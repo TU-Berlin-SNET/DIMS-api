@@ -10,7 +10,7 @@ networks:
 
 services:
   pool:
-    image: idchain/test-pool:1.2
+    image: idchain/test-pool:1.5
     ports:
       - ${IDC_POOL_PORTS-9701-9708}:${IDC_POOL_PORTS-9701-9708}
     environment:
@@ -42,7 +42,7 @@ services:
   api:
     build:
       context: .
-    image: idchain/iea-api:1.0
+    image: idchain/iea-api:1.1
     container_name: idchain-api
     environment:
       - IDC_API_HOST
