@@ -12,7 +12,7 @@ const RevocRegistry = require('../models/revocation-registry');
 const wrap = require('../asyncwrap').wrap;
 const APIResult = require('../api-result');
 
-const schemaCompilerUrl = `http://${process.env.SCHEMA_COMP_HOST}:${process.env.SCHEMA_COMP_PORT}`;
+const schemaCompilerUrl = `http://${process.env.IDC_SCHEMA_IP}:${process.env.IDC_SCHEMA_PORT}`;
 
 /**
  * CollectParentSchemas
