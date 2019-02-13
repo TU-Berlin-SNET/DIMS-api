@@ -7,100 +7,76 @@
 
 const mocha = require('mocha');
 const expect = require('chai').expect;
-
-const vars = require('./0-test-vars');
+const uuidv4 = require('uuid/v4');
 const core = require('./0-test-core');
-const { describe, it, before, after } = mocha;
 
-const agent = vars.agent;
-const bothHeaders = vars.bothHeaders;
-let valuesToDelete = [];
-const testId = require('uuid/v4')();
+const { before, after, describe, it } = mocha;
+const testId = uuidv4();
+
+const valuesToDelete = [];
 // seed must be 32 characters long
-const testSeed = 'testseed' + testId.substring(0, 24);
-
-const testuser = {
-    username: 'testuser' + testId,
-    password: 'testpassword'
-};
-const testwallet = {
-    name: 'testWallet' + testId,
-    seed: testSeed,
-    credentials: {
-        key: 'testkey'
+const seed = 'testseed' + testId.substring(0, 24);
+const data = {
+    user: {
+        username: 'testuser' + testId,
+        password: 'testpassword'
+    },
+    wallet: {
+        name: 'testWallet' + testId,
+        seed: seed,
+        credentials: {
+            key: 'testkey'
+        }
+    },
+    walletFail: {
+        name: 'testWalletFail' + testId,
+        seed: seed,
+        credentials: {
+            key: 'testkey'
+        }
     }
 };
-const testwalletFail = {
-    name: 'testWalletFail' + testId,
-    seed: testSeed,
-    credentials: {
-        key: 'testkey'
-    }
-};
+let user;
 
-describe('/api/wallet', function() {
+describe('wallet', function() {
     before(async function() {
-        testuser.id = await core.createUser(testuser);
-        testuser.token = await core.login(testuser.username, testuser.password);
-        valuesToDelete.push({ id: testuser.id, token: testuser.token, path: 'user' });
+        user = await core.prepareUser(data.user);
+        valuesToDelete.push({ id: user.id, token: user.token, path: 'user' });
     });
 
     after(async function() {
         await core.clean(valuesToDelete);
     });
 
-    it('POST / should create a wallet', async function() {
-        const res = await agent
-            .post('/api/wallet')
-            .set(bothHeaders)
-            .set({ Authorization: testuser.token })
-            .send(testwallet)
-            .expect(201);
+    it('should create a wallet', async function() {
+        const res = await core.postRequest('/api/wallet', user.token, data.wallet, 201);
         expect(res.body)
             .to.have.property('id')
-            .that.equals(testwallet.name);
+            .that.equals(data.wallet.name);
         expect(res.body).to.have.property('ownDid');
         expect(res.body)
             .to.have.property('owner')
-            .that.equals(testuser.id);
+            .that.equals(user.id);
     });
 
-    it('POST / should fail when using same seed and creating same ownDid', async function() {
-        await agent
-            .post('/api/wallet')
-            .set(bothHeaders)
-            .set({ Authorization: testuser.token })
-            .send(testwalletFail)
-            .expect(400);
+    it('create should fail when using same seed (thereby creating duplicate ownDid)', async function() {
+        await core.postRequest('/api/wallet', user.token, data.walletFail, 400);
     });
 
-    it('POST / should fail when using same wallet name', async function() {
-        await agent
-            .post('/api/wallet')
-            .set(bothHeaders)
-            .set({ Authorization: testuser.token })
-            .send(testwallet)
-            .expect(400);
+    it('create should fail when using same wallet name', async function() {
+        await core.postRequest('/api/wallet', user.token, data.wallet, 400);
     });
 
-    it('GET / should list wallets', async function() {
-        const res = await agent
-            .get('/api/wallet')
-            .set(bothHeaders)
-            .set({ Authorization: testuser.token })
-            .expect(200);
+    it('should list wallets', async function() {
+        const res = await core.getRequest('/api/wallet', user.token, 200);
         expect(res.body)
             .to.be.an('Array')
             .with.lengthOf(1);
         expect(res.body[0]).to.contain.keys('id', 'owner', 'users', 'credentials', 'ownDid');
     });
 
-    it('GET /:id should retrieve specific wallet', async function() {
-        const res = await agent
-            .get(`/api/wallet/${testwallet.name}`)
-            .set(bothHeaders)
-            .set({ Authorization: testuser.token })
-            .expect(200);
+    it('should retrieve specific wallet', async function() {
+        const res = await core.getRequest(`/api/wallet/${data.wallet.name}`, user.token, 200);
         expect(res.body).to.have.nested.property('credentials.key');
         expect(res.body)
             .to.have.property('dids')
@@ -112,11 +88,7 @@ describe('/api/wallet', function() {
             .with.lengthOf(0);
     });
 
-    it('DELETE /:id should delete specific wallet', async function() {
-        await agent
-            .delete(`/api/wallet/${testwallet.name}`)
-            .set(bothHeaders)
-            .set({ Authorization: testuser.token })
-            .expect(204);
+    it('should delete specific wallet', async function() {
+        await core.deleteRequest(`/api/wallet/${data.wallet.name}`, user.token, 204);
     });
 });

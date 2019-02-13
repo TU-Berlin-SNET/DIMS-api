@@ -7,17 +7,15 @@
 
 const mocha = require('mocha');
 const expect = require('chai').expect;
-
+const uuidv4 = require('uuid/v4');
 const core = require('./0-test-core');
-const vars = require('./0-test-vars');
 
-const testId = require('uuid/v4')();
 const { before, after, describe, it } = mocha;
-const agent = vars.agent;
-const bothHeaders = vars.bothHeaders;
+const testId = uuidv4();
 
-const users = [
-    {
+const valuesToDelete = [];
+const data = {
+    user1: {
         username: 'user' + testId,
         password: 'userPass',
         wallet: {
@@ -27,7 +25,7 @@ const users = [
             }
         }
     },
-    {
+    user2: {
         username: 'user2' + testId,
         password: 'userPass',
         wallet: {
@@ -36,79 +34,49 @@ const users = [
                 key: 'walletKey'
             }
         }
-    }
-];
-let valuesToDelete = [];
-
-describe('Default Wallet', function() {
-    before(async function() {
-        for (let i = 0; i < users.length; i++) {
-            const id = await core.createUser(users[i]);
-            const token = await core.login(users[i].username, users[i].password);
-            users[i].id = id;
-            users[i].token = token;
-            valuesToDelete.push({
-                id: id,
-                token: users[i].token,
-                auth: { username: users[i].username, password: users[i].password },
-                path: 'user'
-            });
+    },
+    failUser: {
+        username: 'noneuser' + testId,
+        password: 'nonepass' + testId,
+        wallet: {
+            name: 'default',
+            credentials: { key: 'defaultkey' }
         }
+    }
+};
+const users = [];
+
+describe('user with default wallet', function() {
+    before(async function() {
+        users[0] = await core.prepareUser(data.user1);
+        users[1] = await core.prepareUser(data.user2);
+        users.forEach(v => valuesToDelete.push({ id: v.id, token: v.token, path: 'user' }));
     });
 
     after(async function() {
         await core.clean(valuesToDelete);
     });
 
-    it('POST /user/ with wallet-name "default" should fail', async function() {
-        await agent
-            .post('/api/user')
-            .set(bothHeaders)
-            .send({
-                username: 'noneuser' + testId,
-                password: 'nonepass' + testId,
-                wallet: {
-                    name: 'default',
-                    credentials: { key: 'defaultkey' }
-                }
-            })
-            .expect(400);
+    it('should fail when trying to create wallet with wallet-name "default"', async function() {
+        await core.postRequest('/api/user', null, data.failUser, 400);
     });
 
-    it('GET /user/:id should return user and its default wallet', async function() {
-        const user = users[0];
-        const res = await agent
-            .get('/api/user/' + user.id)
-            .set(bothHeaders)
-            .set({ Authorization: user.token })
-            .expect(200);
+    it('should retrieve user and its default wallet', async function() {
+        const res = await core.getRequest('/api/user/' + users[0].id, users[0].token, 200);
         expect(res.body).to.have.all.keys('id', 'username', 'wallet');
-        expect(res.body.wallet).to.equal(user.wallet.name);
+        expect(res.body.wallet).to.equal(users[0].wallet.id);
     });
 
-    it('GET /wallet/default should return default wallet', async function() {
-        const user = users[0];
-        const res = await agent
-            .get('/api/wallet/default')
-            .set(bothHeaders)
-            .set({ Authorization: user.token })
-            .expect(200);
+    it('should retrieve default wallet', async function() {
+        const res = await core.getRequest('/api/wallet/default', users[0].token, 200);
         expect(res.body).to.contain.keys('id', 'owner', 'users', 'ownDid', 'dids', 'pairwise');
-        expect(res.body.owner).to.equal(user.id);
+        expect(res.body.owner).to.equal(users[0].id);
         expect(res.body.users)
             .to.be.an('Array')
             .with.lengthOf(0);
     });
 
-    it('PUT /user/:id should NOT be able to set other users wallet as default', async function() {
-        const user = users[1];
-        await agent
-            .put('/api/user/me')
-            .set(bothHeaders)
-            .set({ Authorization: user.token })
-            .send({
-                wallet: users[0].wallet.name
-            })
-            .expect(404);
+    it('should NOT be able to set other users wallet as default', async function() {
+        await core.putRequest('/api/user/me', users[1].token, { wallet: users[0].wallet.id }, 404);
     });
 });

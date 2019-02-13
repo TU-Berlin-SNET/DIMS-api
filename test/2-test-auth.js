@@ -5,19 +5,15 @@
  */
 'use strict';
 
-const uuidv4 = require('uuid/v4');
 const mocha = require('mocha');
 const expect = require('chai').expect;
-
+const uuidv4 = require('uuid/v4');
 const core = require('./0-test-core');
-const vars = require('./0-test-vars');
-const { describe, before, it, after } = mocha;
 
-const agent = vars.agent;
-const bothHeaders = vars.bothHeaders;
-const valuesToDelete = [];
-
+const { before, after, describe, it } = mocha;
 const testId = uuidv4();
+
+const valuesToDelete = [];
 const user = {
     username: 'authtestuser' + testId,
     password: 'authtestuserpassword'
@@ -35,25 +31,13 @@ describe('authentication layer', function() {
 
     describe('check login endpoint', function() {
         it('should login', async function() {
-            const res = await agent
-                .post('/api/login/')
-                .set(bothHeaders)
-                .send(user)
-                .expect(200);
-            let token = res.body.token;
-            expect(token).to.be.string;
-            user.token = token;
+            const res = await core.postRequest('/api/login', null, user, 200);
+            expect(res.body.token).to.be.string;
+            user.token = res.body.token;
         });
 
         it('should not login', async function() {
-            await agent
-                .post('/api/login/')
-                .set(bothHeaders)
-                .send({
-                    username: 'Gary',
-                    password: 'Morry'
-                })
-                .expect(401);
+            await core.postRequest('/api/login', null, { username: 'Gary', password: 'Morry' }, 401);
         });
     });
 });

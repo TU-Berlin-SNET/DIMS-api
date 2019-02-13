@@ -6,7 +6,7 @@ ARG indy_stream=stable
 ENV LC_ALL="C.UTF-8"
 ENV LANG="C.UTF-8"
 ENV SHELL="/bin/bash"
-ENV LIBINDY_VERSION="1.6.1"
+ENV LIBINDY_VERSION="1.8.1"
 ENV NODE_VERSION=8
 
 RUN apt-get update -y && apt-get install -y \
@@ -46,6 +46,7 @@ RUN apt-get update && apt-get install -y libindy nodejs
 
 USER indy
 RUN mkdir /home/indy/app
+RUN mkdir /home/indy/.indy_client
 WORKDIR /home/indy/app
 
 # install app dependencies
@@ -54,6 +55,8 @@ RUN npm install
 
 # Copy rest of the app
 COPY --chown=indy:indy . /home/indy/app/
+
+VOLUME /home/indy/.indy_client
 
 ENTRYPOINT ["/home/indy/app/docker-entrypoint.sh"]
 CMD [ "npm", "start" ]
