@@ -8,15 +8,13 @@ const agent = require('superagent');
 
 const lib = require('../../lib');
 const log = require('../../log').log;
-const pool = require('../../pool');
 const Mongoose = require('../../db');
 const APIResult = require('../../api-result');
 
-const Message = Mongoose.model('Message');
 const messageTypes = lib.message.messageTypes;
-
-const CredDef = require('../../models/credentialdef');
-const RevReg = require('../../models/revocation-registry');
+const Message = Mongoose.model('Message');
+const CredDef = Mongoose.model('CredentialDefinition');
+const RevReg = Mongoose.model('RevocationRegistry');
 
 module.exports = {
     /**
@@ -74,7 +72,7 @@ module.exports = {
             return accu;
         }, {});
 
-        const pairwise = await lib.pairwise.getPairwise(wallet.handle, credentialRequest.message.origin);
+        const pairwise = await lib.pairwise.retrieve(wallet.handle, credentialRequest.message.origin);
 
         // find credential definition
         const credDefId = credentialRequest.message.message['cred_def_id'];
@@ -94,7 +92,7 @@ module.exports = {
             }
         }
 
-        const [credential, credRevocId, revocRegDelta] = await lib.credential.issuerCreateCredential(
+        const [credential, credRevocId, revocRegDelta] = await lib.credential.issue(
             wallet.handle,
             wallet.ownDid,
             credentialRequest,
@@ -120,7 +118,7 @@ module.exports = {
             message,
             meta
         );
-        await lib.message.sendAuthcryptMessage(wallet.handle, credentialRequest.message.origin, message);
+        await lib.message.sendAuthcrypt(wallet.handle, credentialRequest.message.origin, message);
         await credentialRequest.remove();
 
         return doc;
@@ -160,7 +158,7 @@ module.exports = {
         }
 
         // returns revoc_registry_delta
-        return await lib.credential.issuerRevokeCredential(wallet.handle, wallet.ownDid, credRevocId, revocReg);
+        return await lib.credential.revoke(wallet.handle, wallet.ownDid, credRevocId, revocReg);
     },
 
     /**
@@ -170,7 +168,7 @@ module.exports = {
      */
     async handle(wallet, message) {
         log.debug('credential received');
-        const innerMessage = await lib.message.authdecryptMessage(wallet.handle, message.origin, message.message);
+        const innerMessage = await lib.message.authdecrypt(wallet.handle, message.origin, message.message);
         message.message = innerMessage;
         let credential = innerMessage;
         log.debug('credential', credential);
@@ -182,12 +180,12 @@ module.exports = {
         if (!credentialRequest || credentialRequest.senderDid !== wallet.ownDid) {
             throw APIResult.badRequest('no corresponding credential request found');
         }
-        const pairwise = await lib.pairwise.getPairwise(wallet.handle, message.origin);
-        const [, credentialDefinition] = await pool.getCredDef(pairwise['my_did'], message.message.cred_def_id);
+        const pairwise = await lib.pairwise.retrieve(wallet.handle, message.origin);
+        const [, credentialDefinition] = await lib.ledger.getCredDef(pairwise['my_did'], message.message.cred_def_id);
 
         let revocRegDefinition = null;
         if (credential.rev_reg_id)
-            [, revocRegDefinition] = await pool.getRevocRegDef(pairwise['my_did'], credential.rev_reg_id);
+            [, revocRegDefinition] = await lib.ledger.getRevocRegDef(pairwise['my_did'], credential.rev_reg_id);
         await lib.sdk.proverStoreCredential(
             wallet.handle,
             null, // credId

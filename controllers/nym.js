@@ -3,7 +3,7 @@
  * Nym Controller for sending and retrieving nym requests manually
  */
 
-const pool = require('../pool');
+const ledger = require('../lib').ledger;
 
 module.exports = {
     /**
@@ -13,7 +13,7 @@ module.exports = {
      * @return {Promise<Object>}
      */
     async get(wallet, did) {
-        const result = await pool.getNym(wallet.ownDid, did);
+        const result = await ledger.getNym(wallet.ownDid, did);
         result.result.data = JSON.parse(result.result.data);
         return result.result;
     },
@@ -28,7 +28,7 @@ module.exports = {
      * @return {Promise<Object>}
      */
     async post(wallet, did, verkey, alias, role) {
-        const result = await pool.nymRequest(
+        const result = await ledger.nymRequest(
             wallet.handle,
             wallet.ownDid,
             did,

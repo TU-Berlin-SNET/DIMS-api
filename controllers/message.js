@@ -3,10 +3,8 @@
  * Message Controller
  */
 
-const indy = require('indy-sdk');
 const log = require('../log').log;
 const wrap = require('../asyncwrap').wrap;
-const pool = require('../pool');
 const lib = require('../lib');
 const APIResult = require('../api-result');
 const Wallet = require('../models/wallet');
@@ -43,7 +41,7 @@ async function tryAnonDecrypt(encryptedMessage) {
         try {
             decryptedMessage = await lib.crypto.anonDecryptJSON(
                 w.handle,
-                await indy.keyForLocalDid(w.handle, w.ownDid),
+                await lib.sdk.keyForLocalDid(w.handle, w.ownDid),
                 encryptedMessage
             );
             wallet = w;
@@ -114,18 +112,17 @@ module.exports = {
         let endpointDid = did;
 
         try {
-            const pairwise = await indy.getPairwise(wallet.handle, did);
-            if (pairwise) {
-                const metadata = JSON.parse(pairwise.metadata);
-                endpointDid = metadata.theirEndpointDid || did;
-            }
+            const pairwise = await lib.pairwise.retrieve(wallet.handle, did);
+            endpointDid = pairwise.metadata.theirEndpointDid || did;
         } catch (err) {
             log.info('no pairwise found ', err);
         }
 
+        const [endpoint, endpointVk] = await lib.sdk.getEndpointForDid(wallet.handle, lib.ledger.handle, endpointDid);
+
         let result;
         try {
-            result = await lib.message.sendAnoncryptMessage(pool.handle, wallet.handle, endpointDid, message);
+            result = await lib.message.sendAnoncrypt(endpointVk, endpoint, message);
         } catch (err) {
             if (err.status && err.response && err.response.text) {
                 result = {

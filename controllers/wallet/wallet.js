@@ -51,16 +51,7 @@ module.exports = {
         });
 
         try {
-            await lib.sdk.createWallet(wallet.config, wallet.credentials);
-            await wallet.open();
-            const didJSON = seed ? { seed: seed } : {};
-            const [did] = await lib.sdk.createAndStoreMyDid(wallet.handle, didJSON);
-            wallet.ownDid = did;
-            const masterSecretId = await lib.sdk.proverCreateMasterSecret(wallet.handle);
-            await lib.did.setDidMetaJSON(wallet.handle, wallet.ownDid, {
-                primary: true,
-                masterSecretId: masterSecretId
-            });
+            await wallet.create({ seed });
             wallet = await wallet.save();
         } catch (err) {
             log.warn('walletController createWallet error');
@@ -91,9 +82,9 @@ module.exports = {
      * @param {Wallet} wallet
      */
     async getPopulated(wallet) {
-        const walletObj = wallet.toMinObject();
+        const walletObj = wallet.toJSON();
         walletObj.dids = await lib.sdk.listMyDidsWithMeta(wallet.handle);
-        walletObj.pairwise = await lib.sdk.listPairwise(wallet.handle);
+        walletObj.pairwise = await lib.pairwise.list(wallet.handle);
         return walletObj;
     }
 };

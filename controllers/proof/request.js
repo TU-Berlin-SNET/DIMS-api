@@ -37,7 +37,7 @@ module.exports = {
      * @return {Promise<Message>}
      */
     async create(wallet, recipientDid, proofRequest, templateValues) {
-        if (!(await lib.sdk.isPairwiseExists(wallet.handle, recipientDid))) {
+        if (!(await lib.pairwise.exists(wallet.handle, recipientDid))) {
             throw APIResult.badRequest('invalid recipientDid, no pairwise exists');
         }
 
@@ -52,7 +52,7 @@ module.exports = {
         if (!proofRequest) {
             throw APIResult.badRequest('invalid proof request or no applicable proof request template found');
         }
-        const message = await lib.proof.createProofRequest(wallet.handle, recipientDid, proofRequest);
+        const message = await lib.proof.buildRequest(wallet.handle, recipientDid, proofRequest);
 
         // create placeholder for expected proof, this will allow for checking the status later on
         const proof = await new Proof({
@@ -70,7 +70,7 @@ module.exports = {
             message,
             meta
         );
-        await lib.message.sendAuthcryptMessage(wallet.handle, recipientDid, message);
+        await lib.message.sendAuthcrypt(wallet.handle, recipientDid, message);
 
         return doc;
     },
@@ -106,7 +106,7 @@ module.exports = {
      */
     async handle(wallet, message) {
         log.debug('received proof request');
-        const innerMessage = await lib.message.authdecryptMessage(wallet.handle, message.origin, message.message);
+        const innerMessage = await lib.message.authdecrypt(wallet.handle, message.origin, message.message);
         message.message = innerMessage;
 
         // message was successfully auth-decrypted which means we have a pairwise with the sender and

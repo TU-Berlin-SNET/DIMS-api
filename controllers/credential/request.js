@@ -5,7 +5,6 @@
 'use strict';
 
 const lib = require('../../lib');
-const pool = require('../../pool');
 const log = require('../../log').log;
 const Mongoose = require('../../db');
 const APIResult = require('../../api-result');
@@ -43,10 +42,13 @@ module.exports = {
             throw APIResult.badRequest('invalid credential offer or no applicable credential offer found');
         }
 
-        const pairwise = await lib.pairwise.getPairwise(wallet.handle, credentialOffer.origin);
-        const [, credentialDefinition] = await pool.getCredDef(pairwise['my_did'], credentialOffer.message.cred_def_id);
-        const masterSecretId = await lib.did.getDidMetaAttribute(wallet.handle, wallet.ownDid, 'masterSecretId');
-        const [message, requestMeta] = await lib.credential.createCredentialRequest(
+        const pairwise = await lib.pairwise.retrieve(wallet.handle, credentialOffer.origin);
+        const [, credentialDefinition] = await lib.ledger.getCredDef(
+            pairwise['my_did'],
+            credentialOffer.message.cred_def_id
+        );
+        const masterSecretId = await wallet.getMasterSecretId();
+        const [message, requestMeta] = await lib.credential.buildRequest(
             wallet.handle,
             pairwise['my_did'],
             credentialOffer.message,
@@ -64,7 +66,7 @@ module.exports = {
         );
         offerDoc && (await offerDoc.remove());
 
-        await lib.message.sendAuthcryptMessage(wallet.handle, credentialOffer.origin, message);
+        await lib.message.sendAuthcrypt(wallet.handle, credentialOffer.origin, message);
 
         return doc;
     },
@@ -100,7 +102,7 @@ module.exports = {
      */
     async handle(wallet, message) {
         log.debug('received credential request');
-        const innerMessage = await lib.message.authdecryptMessage(wallet.handle, message.origin, message.message);
+        const innerMessage = await lib.message.authdecrypt(wallet.handle, message.origin, message.message);
         message.message = innerMessage;
 
         // find corresponding credential offer (use nonce for querying -> nonce match is established)

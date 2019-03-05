@@ -5,12 +5,13 @@
 'use strict';
 
 const fs = require('fs');
-const indy = require('indy-sdk');
+const path = require('path');
+const uuidv4 = require('uuid/v4');
 
 const config = require('../config');
+const log = require('../log').log;
 const lib = require('../lib');
 const wrap = require('../asyncwrap').wrap;
-const pool = require('../pool');
 const APIResult = require('../api-result');
 const CredDef = require('../models/credentialdef');
 const RevocRegistry = require('../models/revocation-registry');
@@ -18,73 +19,44 @@ const RevocRegistry = require('../models/revocation-registry');
 module.exports = {
     create: wrap(async (req, res, next) => {
         const schemaId = req.body.schemaId;
-        const supportRevocation = req.body.supportRevocation || false;
-        const tag = req.body.tag || 'TAG1';
+        const tag = req.body.tag === undefined ? uuidv4() : req.body.tag;
+
         const [credDefId, credDef] = await lib.credentialdefinition.create(
             req.wallet.handle,
-            pool,
             req.wallet.ownDid,
             schemaId,
             tag,
-            supportRevocation
+            req.body.supportRevocation
         );
 
-        let doc = {
+        let credDefDoc = await new CredDef({
             credDefId: credDefId,
-            wallet: req.wallet.id,
+            wallet: req.wallet,
             data: credDef
-        };
+        }).save();
 
-        let tailsdoc = {};
-
-        if (supportRevocation) {
-            const blobStorageConfig = { base_dir: lib.revocationRegistry.tailsBaseDir, uri_pattern: '' };
-            // TODO: investigate the purpose of uri_pattern
-
-            const blobStorageWriter = await lib.revocationRegistry.openBlobStorageWriter(blobStorageConfig);
-            // supported config keys depend on credential type
-            // currently, indy only supports CL_ACCUM as credential type
-            // the max_cred_num is set to 100 to prevent this code from taking too long to generate tails
-            // note that tails occupy  256 * max_cred_num bytes + 130 bytes of the header
-            const revocRegConfig = {
-                issuance_type: 'ISSUANCE_ON_DEMAND',
-                max_cred_num: 100
-            };
-            const [revocRegDefId, revocRegDef, revocRegEntry] = await indy.issuerCreateAndStoreRevocReg(
+        if (req.body.supportRevocation) {
+            const [revocRegDefId, revocRegDef] = await lib.revocation.createDef(
                 req.wallet.handle,
                 req.wallet.ownDid,
-                null,
-                'TAG1',
                 credDefId,
-                revocRegConfig,
-                blobStorageWriter
+                uuidv4(),
+                { maxCredNum: 100 },
+                revDef => (revDef.value.tailsLocation = config.APP_TAILS_ENDPOINT + revDef.value.tailsHash)
             );
 
-            // set full URL in tailsLocation
-            revocRegDef.value.tailsLocation = config.APP_TAILS_ENDPOINT + revocRegDef.value.tailsHash;
-
-            await pool.revocRegDefRequest(req.wallet.handle, req.wallet.ownDid, revocRegDef);
-            // store first value of the accumulator
-            await pool.revocRegEntryRequest(
-                req.wallet.handle,
-                req.wallet.ownDid,
+            await new RevocRegistry({
                 revocRegDefId,
-                lib.revocationRegistry.revocationType,
-                revocRegEntry
-            );
-            doc.revocRegDefId = revocRegDefId;
-            doc.revocRegType = revocRegDef.revocDefType;
+                credDefId,
+                revocationType: revocRegDef.revocDefType,
+                hash: revocRegDef.value.tailsHash
+            }).save();
 
-            tailsdoc.revocRegDefId = revocRegDefId;
-            tailsdoc.hash = revocRegDef.value.tailsHash;
-            // foreign key
-            tailsdoc.credDefId = credDefId;
+            credDefDoc.revocRegDefId = revocRegDefId;
+            credDefDoc.revocRegType = revocRegDef.revocDefType;
+            await credDefDoc.save();
         }
 
-        const credDefDoc = await new CredDef(doc).save();
-        if (supportRevocation) {
-            await new RevocRegistry(tailsdoc).save();
-        }
         next(new APIResult(201, { credDefId: credDefDoc.credDefId }));
     }),
 
@@ -94,13 +66,13 @@ module.exports = {
     }),
 
     retrieve: wrap(async (req, res, next) => {
-        const [, credDef] = await pool.getCredDef(req.wallet.ownDid, req.params.credDefId);
+        const [, credDef] = await lib.ledger.getCredDef(req.wallet.ownDid, req.params.credDefId);
         next(APIResult.success(credDef));
     }),
 
     retrieveTails: wrap(async (req, res, next) => {
         const data = await new Promise((resolve, reject) => {
-            fs.readFile(lib.revocationRegistry.tailsBaseDir + '/' + req.params.tailsHash, 'base64', (err, data) => {
+            fs.readFile(path.join(lib.blobStorage.config.base_dir, req.params.tailsHash), 'base64', (err, data) => {
                 if (err) {
                     reject(err);
                 } else {
