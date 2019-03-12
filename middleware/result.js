@@ -192,10 +192,10 @@ module.exports = {
         }
     },
     errorHandler: function(err, req, res, next) {
-        log.error(err);
         if (err instanceof APIResult) {
             return handleAPIResult(err, res);
         }
+        log.error(err);
         if (err.indyCode && indyCodes[err.indyCode]) {
             err.status = indyCodes[err.indyCode];
         }

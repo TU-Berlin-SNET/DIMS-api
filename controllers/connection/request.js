@@ -7,7 +7,6 @@
 const config = require('../../config');
 const lib = require('../../lib');
 const Mongoose = require('../../db');
-const pool = require('../../pool');
 const log = require('../../log').log;
 const APIResult = require('../../api-result');
 const ConnectionResponse = require('./response');
@@ -40,9 +39,8 @@ module.exports = {
      * @return {Promise<Message>} Message - connection request object
      */
     async create(wallet, myEndpoint = config.APP_AGENT_ENDPOINT, theirDid, theirVk, theirEndpoint, connectionOffer) {
-        const [theirEndpointDid, theirEndpointVk, theirEndpointAddress] = await lib.did.ensureDidInfo(
+        const [theirEndpointDid, theirEndpointVk, theirEndpointAddress] = await lib.did.ensureInfo(
             wallet.handle,
-            pool,
             (connectionOffer && connectionOffer.message.did) || theirDid,
             (connectionOffer && connectionOffer.message.verkey) || theirVk,
             (connectionOffer && connectionOffer.message.endpoint) || theirEndpoint
@@ -50,15 +48,9 @@ module.exports = {
         const offerNonce = (connectionOffer && connectionOffer.message.nonce) || null;
         // create my pairwise did and the connection request
         const [myDid, myVk] = await lib.sdk.createAndStoreMyDid(wallet.handle, {});
-        const [ownDid, ownVk] = await wallet.getPrimaryDid();
-        const connectionRequest = await lib.connection.createConnectionRequest(
-            ownDid,
-            ownVk,
-            myDid,
-            myVk,
-            myEndpoint,
-            offerNonce
-        );
+        const ownDid = await wallet.getEndpointDid();
+        const ownVk = await lib.did.localKeyOf(wallet, ownDid);
+        const connectionRequest = await lib.connection.buildRequest(ownDid, ownVk, myDid, myVk, myEndpoint, offerNonce);
         const meta = {
             myDid: myDid,
             theirEndpointDid: theirEndpointDid,
@@ -74,7 +66,7 @@ module.exports = {
             connectionRequest,
             meta
         );
-        await lib.message.sendAnoncryptMessage(theirEndpointVk, theirEndpointAddress, connectionRequest);
+        await lib.message.sendAnoncrypt(theirEndpointVk, theirEndpointAddress, connectionRequest);
         return message;
     },
 

@@ -7,6 +7,7 @@
 const config = require('../../config');
 const lib = require('../../lib');
 const Mongoose = require('../../db');
+
 const Message = Mongoose.model('Message');
 
 module.exports = {
@@ -32,13 +33,14 @@ module.exports = {
      * @return {Promise<Message>} Message object including the connection offer
      */
     async create(wallet, data, meta = {}, role, endpoint = config.APP_AGENT_ENDPOINT) {
-        const [did, vk] = await wallet.getPrimaryDid();
+        const did = await wallet.getEndpointDid();
+        const verkey = await lib.did.localKeyOf(wallet, did);
         const [myDid] = await lib.sdk.createAndStoreMyDid(wallet.handle, {});
-        const offer = await lib.connection.createConnectionOffer(did, vk, endpoint);
+        const offer = await lib.connection.buildOffer(did, verkey, endpoint);
         if (data && typeof data === 'object') offer.message.data = data;
         if (role && typeof role === 'string') meta.role = role;
         meta.myDid = myDid;
-        const message = await Message.store(wallet.id, offer.id, offer.type, wallet.ownDid, null, offer, meta);
+        const message = await Message.store(wallet.id, offer.id, offer.type, did, null, offer, meta);
         return message;
     },
 

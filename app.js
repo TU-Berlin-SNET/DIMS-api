@@ -3,7 +3,8 @@
  * Main
  */
 
-require('./config');
+const config = require('./config');
+
 const express = require('express');
 const YAML = require('yamljs');
 const swaggerUi = require('swagger-ui-express');
@@ -13,14 +14,17 @@ const swaggerUi = require('swagger-ui-express');
 // through Mongoose.model later on
 require('./db');
 require('./models');
+
+const lib = require('./lib');
 const log = require('./log').log;
-const pool = require('./pool');
 const middleware = require('./middleware');
 const routes = require('./routes');
 const message = require('./controllers/message');
 const credentialDefinition = require('./controllers/credentialdef');
 const APIResult = require('./api-result');
 const swaggerDoc = YAML.load('./swagger.yaml');
+
+lib.setup(config.LIB_OPTIONS);
 
 const app = express();
 
@@ -31,7 +35,8 @@ app.get('/tails/:tailsHash', credentialDefinition.retrieveTails);
 app.post('/indy', message.receiveMessage);
 
 app.get('/healthcheck', (req, res, next) => {
-    return next(APIResult.success({ healthy: true }));
+    res.locals.result = APIResult.success({ healthy: true });
+    next();
 });
 
 app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerDoc));
@@ -45,17 +50,17 @@ app.use(middleware.after);
  */
 async function initialize() {
     try {
-        await pool.createConfig();
+        await lib.ledger.createConfig();
     } catch (err) {
         log.warn(err);
     }
-
-    await pool.openLedger();
+    await lib.ledger.open();
+    await lib.blobStorage.open();
 }
 
 initialize()
     .then(() => {
-        const server = app.listen(process.env.IDC_API_PORT, process.env.IDC_API_HOST, async () => {
+        const server = app.listen(config.APP_PORT, config.APP_HOST, async () => {
             log.info('IDChain API now up at %s:%s', server.address().address, server.address().port);
             log.info('Access APIDocs at /api/docs');
         });

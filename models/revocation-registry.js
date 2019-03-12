@@ -18,6 +18,9 @@ const schema = new Mongoose.Schema({
         type: String,
         index: true
     },
+    revocationType: {
+        type: String
+    },
     hash: {
         type: String
     }

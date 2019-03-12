@@ -22,9 +22,9 @@ module.exports = {
      */
     async create(wallet, myDid, myVk, theirDid, theirVk, theirEndpointVk, theirEndpoint) {
         // create connection acknowledgement, authcrypt inner message and send it
-        const ack = await lib.connection.createConnectionAcknowledgement(myDid);
+        const ack = await lib.connection.buildAcknowledgement(myDid);
         const encryptedMessage = await lib.crypto.authCrypt(wallet.handle, myVk, theirVk, ack.message);
-        await lib.message.sendAnoncryptMessage(
+        await lib.message.sendAnoncrypt(
             theirEndpointVk,
             theirEndpoint,
             Object.assign({}, ack, { message: encryptedMessage })
@@ -39,10 +39,10 @@ module.exports = {
      */
     async handle(wallet, message) {
         const theirDid = message.id;
-        if (!(await lib.sdk.isPairwiseExists(wallet.handle, theirDid))) {
+        if (!(await lib.pairwise.exists(wallet.handle, theirDid))) {
             throw APIResult.badRequest('unknown sender did');
         }
-        const pairwise = await lib.pairwise.getPairwise(wallet.handle, theirDid);
+        const pairwise = await lib.pairwise.retrieve(wallet.handle, theirDid);
         const myVk = await lib.sdk.keyForLocalDid(wallet.handle, pairwise['my_did']);
         const ackMessage = await lib.crypto.authDecrypt(wallet.handle, myVk, message.message);
         const compareMessage = ackMessage.toLowerCase();
@@ -51,6 +51,6 @@ module.exports = {
             throw APIResult.badRequest('invalid message string in connection acknowledgement');
         }
         pairwise.metadata.acknowledged = true;
-        await lib.pairwise.setPairwiseMetadata(wallet.handle, theirDid, pairwise.metadata);
+        await lib.pairwise.setMetadata(wallet.handle, theirDid, pairwise.metadata);
     }
 };

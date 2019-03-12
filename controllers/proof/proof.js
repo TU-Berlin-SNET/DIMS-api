@@ -5,14 +5,13 @@
 'use strict';
 
 const lib = require('../../lib');
-const pool = require('../../pool');
 const log = require('../../log').log;
 const Mongoose = require('../../db');
 const APIResult = require('../../api-result');
 
+const messageTypes = lib.message.messageTypes;
 const Message = Mongoose.model('Message');
 const Proof = Mongoose.model('Proof');
-const messageTypes = lib.message.messageTypes;
 
 module.exports = {
     /**
@@ -39,16 +38,9 @@ module.exports = {
             throw APIResult.badRequest('invalid proof request id');
         }
         const proofRequest = requestDoc.message.message;
-        const masterSecretId = await lib.did.getDidMetaAttribute(wallet.handle, wallet.ownDid, 'masterSecretId');
+        const masterSecretId = await wallet.getMasterSecretId();
         const recipientDid = requestDoc.senderDid;
-        const message = await lib.proof.createProof(
-            wallet.handle,
-            pool,
-            masterSecretId,
-            recipientDid,
-            proofRequest,
-            values
-        );
+        const message = await lib.proof.create(wallet.handle, masterSecretId, recipientDid, proofRequest, values);
         const doc = await Message.store(
             wallet.id,
             message.id,
@@ -58,7 +50,7 @@ module.exports = {
             message
         );
 
-        await lib.message.sendAuthcryptMessage(wallet.handle, recipientDid, message);
+        await lib.message.sendAuthcrypt(wallet.handle, recipientDid, message);
 
         return doc;
     },
@@ -80,20 +72,7 @@ module.exports = {
         }
         if (proof.proof) {
             log.debug('verifying proof');
-            // fetch verification-related information from ledger
-            const [schemas, credentialDefinitions, revRegDefs, revRegs] = await pool.verifierGetEntitiesFromLedger(
-                wallet.ownDid,
-                proof.proof.identifiers
-            );
-            // verify proof
-            proof.isValid = await lib.sdk.verifierVerifyProof(
-                proof.meta.proofRequest,
-                proof.proof,
-                schemas,
-                credentialDefinitions,
-                revRegDefs,
-                revRegs
-            );
+            proof.isValid = await lib.proof.verify(wallet.ownDid, proof.meta.proofRequest, proof.proof);
         }
         log.debug('retrieved proof');
         return proof;
@@ -123,7 +102,7 @@ module.exports = {
      */
     async handle(wallet, message) {
         log.debug('received proof');
-        const innerMessage = await lib.message.authdecryptMessage(wallet.handle, message.origin, message.message);
+        const innerMessage = await lib.message.authdecrypt(wallet.handle, message.origin, message.message);
         message.message = innerMessage;
 
         // find corresponding proof request

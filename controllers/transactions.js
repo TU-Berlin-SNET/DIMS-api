@@ -3,7 +3,7 @@
  * Transactions Controller
  */
 const wrap = require('../asyncwrap').wrap;
-const pool = require('../pool');
+const ledger = require('../lib').ledger;
 const APIResult = require('../api-result');
 
 module.exports = {
@@ -13,7 +13,7 @@ module.exports = {
         const from = Number(req.query.from);
         const to = Number(req.query.to);
         const type = req.query.type || 'DOMAIN';
-        const response = await pool.getLedgerTransactions(walletHandle, submitterDid, from, to, type);
+        const response = await ledger.getLedgerTransactions(walletHandle, submitterDid, from, to, type);
         next(new APIResult(200, response));
     })
 };

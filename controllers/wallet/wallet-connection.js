@@ -13,11 +13,7 @@ module.exports = {
      * @return {Promise<object[]>}
      */
     async list(wallet) {
-        const pairwise = await lib.sdk.listPairwise(wallet.handle);
-        return pairwise.map(v => {
-            v.metadata = v.metadata ? JSON.parse(v.metadata) : {};
-            return v;
-        });
+        return lib.pairwise.list(wallet.handle);
     },
 
     /**
@@ -26,13 +22,6 @@ module.exports = {
      * @param {string} id
      */
     async retrieve(wallet, id) {
-        const pairwise = await lib.pairwise.getPairwise(wallet.handle, id);
-        if (pairwise) {
-            // indy-sdk does not return their_did when pairwise
-            // is retrieved using their_did
-            // add it to the object to keep output consistent
-            pairwise['their_did'] = id;
-        }
-        return pairwise;
+        return lib.pairwise.retrieve(wallet.handle, id);
     }
 };

@@ -69,6 +69,7 @@ services:
     ports:
       - ${IDC_API_PORT-8000}:${IDC_API_PORT-8000}
     depends_on:
+      - pool
       - mongodb
       - schema
     networks:

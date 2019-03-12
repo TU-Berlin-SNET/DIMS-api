@@ -7,6 +7,7 @@
 const log = require('../../log').log;
 const lib = require('../../lib');
 const Mongoose = require('../../db');
+
 const Message = Mongoose.model('Message');
 const messageTypes = lib.message.messageTypes;
 
@@ -32,7 +33,7 @@ module.exports = {
      * @return {Promise<Message>} Credential Offer object
      */
     async create(wallet, recipientDid, credDefId, credentialLocation) {
-        const message = await lib.credential.createCredentialOffer(wallet.handle, credDefId, recipientDid);
+        const message = await lib.credential.buildOffer(wallet.handle, credDefId, recipientDid);
 
         // store and send message
         const meta = credentialLocation ? { credentialLocation: credentialLocation } : {};
@@ -45,7 +46,7 @@ module.exports = {
             message,
             meta
         );
-        await lib.message.sendAuthcryptMessage(wallet.handle, recipientDid, message);
+        await lib.message.sendAuthcrypt(wallet.handle, recipientDid, message);
 
         return doc;
     },
@@ -81,7 +82,7 @@ module.exports = {
      */
     async handle(wallet, message) {
         log.debug('credential offer received');
-        const offer = await lib.message.authdecryptMessage(wallet.handle, message.origin, message.message);
+        const offer = await lib.message.authdecrypt(wallet.handle, message.origin, message.message);
         message.message = offer;
         await Message.store(wallet.id, message.id, message.type, message.origin, wallet.ownDid, message);
     }

@@ -13,7 +13,7 @@ router
     .route('/')
     .get(
         wrap(async (req, res, next) => {
-            const data = (await controller.wallet.list(req.user)).map(v => v.toMinObject());
+            const data = await controller.wallet.list(req.user);
             res.locals.result = APIResult.success(data || []);
             next();
         })
@@ -21,7 +21,7 @@ router
     .post(
         wrap(async (req, res, next) => {
             const data = await controller.wallet.create(req.user, req.body.name, req.body.credentials, req.body.seed);
-            res.locals.result = APIResult.created(data.toMinObject());
+            res.locals.result = APIResult.created(data);
             next();
         })
     );

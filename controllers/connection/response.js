@@ -8,9 +8,9 @@ const config = require('../../config');
 const lib = require('../../lib');
 const log = require('../../log').log;
 const Mongoose = require('../../db');
-const pool = require('../../pool');
 const APIResult = require('../../api-result');
 const ConnectionAcknowledgement = require('./acknowledgement');
+
 const Message = Mongoose.model('Message');
 
 module.exports = {
@@ -29,10 +29,9 @@ module.exports = {
             throw APIResult.badRequest('no corresponding connection request found');
         }
         const message = request.message.message;
-        const [theirDid, theirVk] = await lib.did.ensureDidInfo(wallet.handle, pool, message.did, message.verkey, true);
-        const [theirEndpointDid, theirEndpointVk, theirEndpoint] = await lib.did.ensureDidInfo(
+        const [theirDid, theirVk] = await lib.did.ensureInfo(wallet.handle, message.did, message.verkey, true);
+        const [theirEndpointDid, theirEndpointVk, theirEndpoint] = await lib.did.ensureInfo(
             wallet.handle,
-            pool,
             message.endpointDid,
             null, // endpointVk must be on the ledger
             message.endpoint
@@ -47,8 +46,8 @@ module.exports = {
 
         // create or retrieve myDid and myVk
         const [myDid, myVk] = !meta.myDid
-            ? await lib.sdk.createAndStoreMyDid(wallet.handle, {})
-            : [meta.myDid, await lib.sdk.keyForLocalDid(wallet.handle, meta.myDid)];
+            ? await lib.did.create(wallet.handle, {})
+            : [meta.myDid, await lib.did.localKeyOf(wallet, meta.myDid)];
 
         // delete meta.myDid so we do not store redundant information in pairwise meta
         delete meta.myDid;
@@ -61,22 +60,22 @@ module.exports = {
         if (config.NYM_ALWAYS || (meta && meta.role)) {
             // then write their did on the ledger with that role
             // (this might have implications for GDPR)
-            await pool.nymRequest(wallet.handle, wallet.ownDid, theirDid, theirVk, null, meta.role);
+            await lib.ledger.nymRequest(wallet.handle, wallet.ownDid, theirDid, theirVk, null, meta.role);
             // and if NYM_ALWAYS flag is set, write my did on the ledger as well
             if (config.NYM_ALWAYS) {
-                await pool.nymRequest(wallet.handle, wallet.ownDid, myDid, myVk, null, 'NONE');
+                await lib.ledger.nymRequest(wallet.handle, wallet.ownDid, myDid, myVk, null, 'NONE');
             }
         }
 
         // store their did and create pairwise
-        await lib.connection.createRelationship(wallet.handle, myDid, theirDid, theirVk, meta);
+        await lib.connection.store(wallet.handle, myDid, theirDid, theirVk, meta);
 
         // create the connection response, anoncrypt inner message for pairwise recipient
-        const response = await lib.connection.createConnectionResponse(myDid, myVk, theirDid, requestNonce);
-        const encryptedMessage = await lib.crypto.anonCryptJSON(theirVk, response.message);
+        const response = await lib.connection.buildResponse(myDid, myVk, theirDid, requestNonce);
+        const encryptedMessage = await lib.crypto.anonCrypt(theirVk, response.message);
 
         // anoncrypt whole message for endpoint and send it
-        await lib.message.sendAnoncryptMessage(
+        await lib.message.sendAnoncrypt(
             theirEndpointVk,
             theirEndpoint,
             Object.assign({}, response, { message: encryptedMessage })
@@ -118,9 +117,8 @@ module.exports = {
         const myDid = request.senderDid;
         const myVk = await lib.sdk.keyForLocalDid(wallet.handle, myDid);
         const response = await lib.crypto.anonDecryptJSON(wallet.handle, myVk, message.message);
-        const [theirDid, theirVk] = await lib.did.ensureDidInfo(
+        const [theirDid, theirVk] = await lib.did.ensureInfo(
             wallet.handle,
-            pool,
             response.did,
             response.verkey,
             request.meta.theirEndpoint
@@ -129,7 +127,7 @@ module.exports = {
         // create the relationship, e.g. store their did and create a pairwise
         delete request.meta.myDid;
         request.meta.acknowledged = true;
-        await lib.connection.createRelationship(wallet.handle, myDid, theirDid, theirVk, request.meta);
+        await lib.connection.store(wallet.handle, myDid, theirDid, theirVk, request.meta);
 
         return await ConnectionAcknowledgement.create(
             wallet,

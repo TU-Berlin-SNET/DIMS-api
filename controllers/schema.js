@@ -1,9 +1,8 @@
-const pool = require('../pool');
-const lib = require('../lib');
-const indy = require('indy-sdk');
-const config = require('../config');
-const log = require('../log').log;
 const agent = require('superagent');
+
+const config = require('../config');
+const lib = require('../lib');
+const log = require('../log').log;
 
 const Schema = require('../models/schema');
 const CredDef = require('../models/credentialdef');
@@ -101,7 +100,6 @@ module.exports = {
         // publish schema on the ledger
         const [schemaId, schema] = await lib.schema.create(
             wallet.handle,
-            pool,
             wallet.ownDid,
             generatedSchema.name,
             generatedSchema.version,
@@ -127,68 +125,40 @@ module.exports = {
             // publish creddef on the ledger
             const [credDefId, credDef] = await lib.credentialdefinition.create(
                 wallet.handle,
-                pool,
                 wallet.ownDid,
                 schemaId,
                 'TAG1',
                 isRevocable
             );
 
-            let doc = {
+            const credDefDoc = await new CredDef({
                 credDefId: credDefId,
                 wallet: wallet.id,
                 data: credDef
-            };
-
-            let tailsdoc = {};
+            }).save();
 
             if (isRevocable) {
-                const blobStorageConfig = { base_dir: lib.revocationRegistry.tailsBaseDir, uri_pattern: '' };
-                // TODO: investigate the purpose of uri_pattern
-
-                const blobStorageWriter = await lib.revocationRegistry.openBlobStorageWriter(blobStorageConfig);
-                // supported config keys depend on credential type
-                // currently, indy only supports CL_ACCUM as credential type
-                // the max_cred_num is set to 100 to prevent this code from taking too long to generate tails
-                // note that tails occupy  256 * max_cred_num bytes + 130 bytes of the header
-                const revocRegConfig = {
-                    issuance_type: 'ISSUANCE_ON_DEMAND',
-                    max_cred_num: 100
-                };
-                const [revocRegId, revocRegDef, revocRegEntry] = await indy.issuerCreateAndStoreRevocReg(
+                const [revocRegDefId, revocRegDef] = await lib.revocation.createDef(
                     wallet.handle,
                     wallet.ownDid,
-                    null,
-                    'TAG1',
                     credDefId,
-                    revocRegConfig,
-                    blobStorageWriter
+                    'TAG1',
+                    { maxCredNum: 100 },
+                    revDef => (revDef.value.tailsLocation = config.APP_TAILS_ENDPOINT + revDef.value.tailsHash)
                 );
 
-                // set full URL in tailsLocation
-                revocRegDef.value.tailsLocation = config.APP_TAILS_ENDPOINT + revocRegDef.value.tailsHash;
+                await new RevocRegistry({
+                    revocRegDefId,
+                    credDefId,
+                    revocationType: revocRegDef.revocDefType,
+                    hash: revocRegDef.value.tailsHash
+                }).save();
 
-                await pool.revocRegDefRequest(wallet.handle, wallet.ownDid, revocRegDef);
-                // store first value of the accumulator
-                await pool.revocRegEntryRequest(
-                    wallet.handle,
-                    wallet.ownDid,
-                    revocRegId,
-                    lib.revocationRegistry.revocationType,
-                    revocRegEntry
-                );
-                doc.revocRegId = revocRegId;
-                doc.revocRegType = revocRegDef.revocDefType;
+                credDefDoc.revocRegDefId = revocRegDefId;
+                credDefDoc.revocRegType = revocRegDef.revocDefType;
+                await credDefDoc.save();
+            }
 
-                tailsdoc.revocRegId = revocRegId;
-                tailsdoc.hash = revocRegDef.value.tailsHash;
-                // foreign key
-                tailsdoc.credDefId = credDefId;
-            }
-            await new CredDef(doc).save();
-            if (isRevocable) {
-                await new RevocRegistry(tailsdoc).save();
-            }
             schemaDoc.credentialDefinitionId = credDefId;
         }
         return new Schema(schemaDoc).save();
