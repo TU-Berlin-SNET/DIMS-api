@@ -4,7 +4,7 @@
         "node": true
     },
     "parserOptions": {
-        "ecmaVersion": 8
+        "ecmaVersion": 10
     },
     "extends": ["eslint:recommended", "google", "plugin:prettier/recommended"],
     "rules": {
