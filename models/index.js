@@ -11,6 +11,7 @@ const Schema = require('./schema');
 const CredentialDefinition = require('./credentialdef');
 const Proof = require('./proof');
 const ProofRequestTemplate = require('./proof-request-template');
+const RevocationRegistry = require('./revocation-registry');
 
 module.exports = {
     User,
@@ -20,5 +21,6 @@ module.exports = {
     Schema,
     CredentialDefinition,
     Proof,
-    ProofRequestTemplate
+    ProofRequestTemplate,
+    RevocationRegistry
 };

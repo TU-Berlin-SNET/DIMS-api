@@ -11,34 +11,32 @@ const uuidv4 = require('uuid/v4');
 const config = require('../config');
 const log = require('../log').log;
 const lib = require('../lib');
-const wrap = require('../asyncwrap').wrap;
-const APIResult = require('../api-result');
 const CredDef = require('../models/credentialdef');
 const RevocRegistry = require('../models/revocation-registry');
 
 module.exports = {
-    create: wrap(async (req, res, next) => {
-        const schemaId = req.body.schemaId;
-        const tag = req.body.tag === undefined ? uuidv4() : req.body.tag;
+    async create(wallet, options) {
+        const schemaId = options.schemaId;
+        const tag = options.tag === undefined ? uuidv4() : options.tag;
 
         const [credDefId, credDef] = await lib.credentialdefinition.create(
-            req.wallet.handle,
-            req.wallet.ownDid,
+            wallet.handle,
+            wallet.ownDid,
             schemaId,
             tag,
-            req.body.supportRevocation
+            options.supportRevocation
         );
 
         let credDefDoc = await new CredDef({
             credDefId: credDefId,
-            wallet: req.wallet,
+            wallet: wallet,
             data: credDef
         }).save();
 
-        if (req.body.supportRevocation) {
+        if (options.supportRevocation) {
             const [revocRegDefId, revocRegDef] = await lib.revocation.createDef(
-                req.wallet.handle,
-                req.wallet.ownDid,
+                wallet.handle,
+                wallet.ownDid,
                 credDefId,
                 uuidv4(),
                 { maxCredNum: 100 },
@@ -57,22 +55,21 @@ module.exports = {
             await credDefDoc.save();
         }
 
-        next(new APIResult(201, { credDefId: credDefDoc.credDefId }));
-    }),
+        return { credDefId: credDefDoc.credDefId };
+    },
 
-    list: wrap(async (req, res, next) => {
-        const w = await CredDef.find({ wallet: req.wallet.id }).exec();
-        next(new APIResult(200, w));
-    }),
+    async list(wallet) {
+        return CredDef.find({ wallet: wallet.id }).exec();
+    },
 
-    retrieve: wrap(async (req, res, next) => {
-        const [, credDef] = await lib.ledger.getCredDef(req.wallet.ownDid, req.params.credDefId);
-        next(APIResult.success(credDef));
-    }),
+    async retrieve(wallet, id) {
+        const [, credDef] = await lib.ledger.getCredDef(wallet.ownDid, id);
+        return credDef;
+    },
 
-    retrieveTails: wrap(async (req, res, next) => {
-        const data = await new Promise((resolve, reject) => {
-            fs.readFile(path.join(lib.blobStorage.config.base_dir, req.params.tailsHash), 'base64', (err, data) => {
+    async retrieveTails(hash) {
+        return new Promise((resolve, reject) => {
+            fs.readFile(path.join(lib.blobStorage.config.base_dir, hash), 'base64', (err, data) => {
                 if (err) {
                     reject(err);
                 } else {
@@ -80,6 +77,5 @@ module.exports = {
                 }
             });
         });
-        next(new APIResult(200, data));
-    })
+    }
 };

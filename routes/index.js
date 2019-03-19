@@ -7,7 +7,6 @@ const router = require('express').Router();
 const auth = require('../middleware/auth');
 const walletProvider = require('../middleware/walletProvider');
 const user = require('../controllers/user');
-const creddef = require('../controllers/credentialdef');
 const transactions = require('../controllers/transactions');
 const message = require('../controllers/message');
 const schemaController = require('../controllers/schema');
@@ -20,6 +19,7 @@ const connectionResponse = require('./connection-response');
 const connection = require('./connection');
 const indySchema = require('./indy-schema');
 const schema = require('./schema');
+const credentialDefinition = require('./credential-definition');
 const credentialOffer = require('./credential-offer');
 const credentialRequest = require('./credential-request');
 const credential = require('./credential');
@@ -64,12 +64,7 @@ router.use('/credentialrequest', credentialRequest);
 
 router.use('/credential', credential);
 
-router
-    .route('/credentialdef/')
-    .get(creddef.list)
-    .post(creddef.create);
-
-router.route('/credentialdef/:credDefId/').get(creddef.retrieve);
+router.use('/credentialdef', credentialDefinition);
 
 router.use('/proofrequesttemplate', proofRequestTemplate);
 
