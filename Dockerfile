@@ -7,7 +7,7 @@ ENV LC_ALL="C.UTF-8"
 ENV LANG="C.UTF-8"
 ENV SHELL="/bin/bash"
 ENV LIBINDY_VERSION="1.8.1"
-ENV NODE_VERSION=8
+ENV NODE_VERSION=10
 
 RUN apt-get update -y && apt-get install -y \
     apt-transport-https \
