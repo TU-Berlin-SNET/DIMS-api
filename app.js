@@ -17,6 +17,7 @@ require('./models');
 
 const lib = require('./lib');
 const log = require('./log').log;
+const wrap = require('./asyncwrap').wrap;
 const middleware = require('./middleware');
 const routes = require('./routes');
 const message = require('./controllers/message');
@@ -30,9 +31,16 @@ const app = express();
 
 app.use(middleware.before);
 
-app.get('/tails/:tailsHash', credentialDefinition.retrieveTails);
-
 app.post('/indy', message.receiveMessage);
+
+app.get(
+    '/tails/:tailsHash',
+    wrap(async (req, res, next) => {
+        const data = await credentialDefinition.retrieveTails(req.params.tailsHash);
+        res.locals.result = new APIResult(200, data);
+        next();
+    })
+);
 
 app.get('/healthcheck', (req, res, next) => {
     res.locals.result = APIResult.success({ healthy: true });

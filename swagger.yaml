@@ -2898,20 +2898,23 @@ paths:
       tags:
         - message
 
-  /tails/{revocRegDefId}:
+  /tails/{tailsHash}:
     parameters:
       - in: path
-        name: revocRegDefId
-        description: 'unique id of revocation registry'
+        name: tailsHash
+        description: 'tailsHash as provided in tailsLocation'
         required: true
         type: string
     get:
       summary: 'Agent Revocation Tails Endpoint'
-      description: 'Public immutable shared blob linked to given revocation registry definition'
+      description: 'Public immutable shared blob linked to a revocation registry definition'
       security: []
       responses:
         '200':
           description: 'Success'
+          schema:
+            description: 'tails file as base64 encoded string'
+            type: string
         '400':
           $ref: '#/responses/bad_request'
         '404':
