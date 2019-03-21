@@ -69,11 +69,18 @@ schema
         this.__handle = value;
     });
 
+// keep references to original methods of class in lib
+// these are not supposed to be called directly but are used
+// to passthrough values to the wallet when the proper method is used
+schema.methods._setEndpointDid = schema.methods.setEndpointDid;
+schema.methods._setMasterSecretId = schema.methods.setMasterSecretId;
+
 schema.methods.getEndpointDid = async function() {
     return this.ownDid;
 };
 
 schema.methods.setEndpointDid = async function(value) {
+    await this._setEndpointDid(value);
     this.ownDid = value;
 };
 
@@ -82,6 +89,7 @@ schema.methods.getMasterSecretId = async function() {
 };
 
 schema.methods.setMasterSecretId = async function(value) {
+    await this._setMasterSecretId(value);
     this.masterSecretId = value;
 };
 
