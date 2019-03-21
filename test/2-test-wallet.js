@@ -28,6 +28,12 @@ const data = {
             key: 'testkey'
         }
     },
+    wallet2: {
+        name: 'testWallet2' + testId,
+        credentials: {
+            key: 'testkey'
+        }
+    },
     walletFail: {
         name: 'testWalletFail' + testId,
         seed: seed,
@@ -59,6 +65,13 @@ describe('wallet', function() {
             .that.equals(user.id);
     });
 
+    it('should create a second wallet', async function() {
+        const res = await core.postRequest('/api/wallet', user.token, data.wallet2, 201);
+        expect(res.body)
+            .to.have.property('id')
+            .that.equals(data.wallet2.name);
+    });
+
     it('create should fail when using same seed (thereby creating duplicate ownDid)', async function() {
         await core.postRequest('/api/wallet', user.token, data.walletFail, 400);
     });
@@ -71,13 +84,13 @@ describe('wallet', function() {
         const res = await core.getRequest('/api/wallet', user.token, 200);
         expect(res.body)
             .to.be.an('Array')
-            .with.lengthOf(1);
+            .with.lengthOf(2);
         expect(res.body[0]).to.contain.keys('id', 'owner', 'users', 'credentials', 'ownDid');
     });
 
-    it('should retrieve specific wallet', async function() {
-        const res = await core.getRequest(`/api/wallet/${data.wallet.name}`, user.token, 200);
-        expect(res.body).to.have.nested.property('credentials.key');
+    it('should retrieve default wallet', async function() {
+        const res = await core.getRequest('/api/wallet/default', user.token, 200);
+        expect(res.body).to.have.property('id', data.wallet.name);
         expect(res.body)
             .to.have.property('dids')
             .to.be.an('array')
@@ -86,6 +99,21 @@ describe('wallet', function() {
             .to.have.property('pairwise')
             .to.be.an('array')
             .with.lengthOf(0);
+        expect(res.body).to.have.nested.property('credentials.key');
+    });
+
+    it('should retrieve specific wallet', async function() {
+        const res = await core.getRequest(`/api/wallet/${data.wallet2.name}`, user.token, 200);
+        expect(res.body).to.have.property('id', data.wallet2.name);
+        expect(res.body)
+            .to.have.property('dids')
+            .to.be.an('array')
+            .with.lengthOf(1);
+        expect(res.body)
+            .to.have.property('pairwise')
+            .to.be.an('array')
+            .with.lengthOf(0);
+        expect(res.body).to.have.nested.property('credentials.key');
     });
 
     it('should delete specific wallet', async function() {

@@ -30,8 +30,9 @@ router
     .route('/:wallet')
     .get(
         wrap(async (req, res, next) => {
-            const data = await controller.wallet.getPopulated(req.wallet);
-            res.locals.result = APIResult.success(data);
+            const walletId = req.params.wallet === 'default' ? req.user.wallet : req.params.wallet;
+            const data = await controller.wallet.retrieveInfo(req.user, walletId);
+            res.locals.result = data ? APIResult.success(data) : APIResult.notFound('wallet not found');
             next();
         })
     )

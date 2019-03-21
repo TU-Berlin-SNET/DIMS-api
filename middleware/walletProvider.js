@@ -17,7 +17,7 @@ const cache = {};
 module.exports = {
     before: wrap(async (req, res, next) => {
         log.debug('walletProvider before');
-        let walletId = req.body.wallet || req.params.wallet || req.header('wallet') || (req.user && req.user.wallet);
+        let walletId = req.body.wallet || req.header('wallet') || (req.user && req.user.wallet);
         if (!walletId || !req.user) {
             return next();
         }

@@ -8,6 +8,7 @@ const lib = require('../../lib');
 const log = require('../../log').log;
 const Mongoose = require('../../db');
 const APIResult = require('../../util/api-result');
+const WalletProvider = require('../../middleware/walletProvider');
 
 const Wallet = Mongoose.model('Wallet');
 
@@ -79,12 +80,25 @@ module.exports = {
     /**
      * Retrieve wallet as object with additional info
      * (like dids, did metadata, and pairwises)
-     * @param {Wallet} wallet
+     * @param {User} user
+     * @param {string} walletId id
      */
-    async getPopulated(wallet) {
-        const walletObj = wallet.toJSON();
-        walletObj.dids = await lib.sdk.listMyDidsWithMeta(wallet.handle);
-        walletObj.pairwise = await lib.pairwise.list(wallet.handle);
-        return walletObj;
+    async retrieveInfo(user, walletId) {
+        let result = null;
+        let wallet = await Wallet.findById(walletId).exec();
+        if (!wallet || !wallet.usableBy(user)) {
+            return result;
+        }
+
+        wallet = await WalletProvider.provideHandle(wallet);
+        try {
+            result = wallet.toJSON();
+            result.dids = await lib.sdk.listMyDidsWithMeta(wallet.handle);
+            result.pairwise = await lib.pairwise.list(wallet.handle);
+        } finally {
+            await WalletProvider.returnHandle(wallet);
+        }
+
+        return result;
     }
 };
