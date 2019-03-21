@@ -4,11 +4,10 @@
  */
 'use strict';
 
-const YAML = require('yamljs');
 const ajv = require('ajv')({ removeAdditional: true });
-const wrap = require('../asyncwrap').wrap;
-const APIResult = require('../api-result');
-const swaggerDoc = YAML.load('./swagger.yaml');
+const wrap = require('../util/asyncwrap').wrap;
+const APIResult = require('../util/api-result');
+const swaggerDoc = require('../swagger');
 
 ajv.addSchema(swaggerDoc, 'swagger.json');
 const rx = /^\/api\/(\w+)$/;

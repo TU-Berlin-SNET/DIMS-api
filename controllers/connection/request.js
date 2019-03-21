@@ -8,7 +8,7 @@ const config = require('../../config');
 const lib = require('../../lib');
 const Mongoose = require('../../db');
 const log = require('../../log').log;
-const APIResult = require('../../api-result');
+const APIResult = require('../../util/api-result');
 const ConnectionResponse = require('./response');
 
 const Message = Mongoose.model('Message');

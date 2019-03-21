@@ -4,9 +4,9 @@
  */
 
 const log = require('../log').log;
-const wrap = require('../asyncwrap').wrap;
+const wrap = require('../util/asyncwrap').wrap;
 const lib = require('../lib');
-const APIResult = require('../api-result');
+const APIResult = require('../util/api-result');
 const Wallet = require('../models/wallet');
 const Message = require('../models/message');
 

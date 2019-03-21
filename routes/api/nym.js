@@ -1,7 +1,7 @@
 const router = require('express').Router();
-const nym = require('../controllers/nym');
-const APIResult = require('../api-result');
-const wrap = require('../asyncwrap').wrap;
+const nym = require('../../controllers/nym');
+const APIResult = require('../../util/api-result');
+const wrap = require('../../util/asyncwrap').wrap;
 
 router.post(
     '/',

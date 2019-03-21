@@ -8,8 +8,8 @@ const Schema = require('../models/schema');
 const CredDef = require('../models/credentialdef');
 const RevocRegistry = require('../models/revocation-registry');
 
-const wrap = require('../asyncwrap').wrap;
-const APIResult = require('../api-result');
+const wrap = require('../util/asyncwrap').wrap;
+const APIResult = require('../util/api-result');
 
 const schemaCompilerUrl = `http://${process.env.IDC_SCHEMA_IP}:${process.env.IDC_SCHEMA_PORT}`;
 

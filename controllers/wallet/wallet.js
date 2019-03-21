@@ -7,7 +7,7 @@
 const lib = require('../../lib');
 const log = require('../../log').log;
 const Mongoose = require('../../db');
-const APIResult = require('../../api-result');
+const APIResult = require('../../util/api-result');
 
 const Wallet = Mongoose.model('Wallet');
 

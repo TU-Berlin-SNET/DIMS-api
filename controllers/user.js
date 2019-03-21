@@ -1,6 +1,6 @@
-const APIResult = require('../api-result');
+const APIResult = require('../util/api-result');
 const WalletController = require('./wallet/index');
-const wrap = require('../asyncwrap').wrap;
+const wrap = require('../util/asyncwrap').wrap;
 
 const User = require('../models/user');
 const Wallet = require('../models/wallet');

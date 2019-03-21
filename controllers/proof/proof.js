@@ -7,7 +7,7 @@
 const lib = require('../../lib');
 const log = require('../../log').log;
 const Mongoose = require('../../db');
-const APIResult = require('../../api-result');
+const APIResult = require('../../util/api-result');
 
 const messageTypes = lib.message.messageTypes;
 const Message = Mongoose.model('Message');

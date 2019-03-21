@@ -2,9 +2,9 @@
  * IDChain Agent REST API
  * Transactions Controller
  */
-const wrap = require('../asyncwrap').wrap;
+const wrap = require('../util/asyncwrap').wrap;
 const ledger = require('../lib').ledger;
-const APIResult = require('../api-result');
+const APIResult = require('../util/api-result');
 
 module.exports = {
     list: wrap(async (req, res, next) => {
