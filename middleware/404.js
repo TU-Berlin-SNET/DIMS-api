@@ -1,5 +1,5 @@
 const log = require('../log').log;
-const apiResult = new (require('../api-result'))(404, { message: 'Sorry, there is nothing here.' });
+const apiResult = new (require('../util/api-result'))(404, { message: 'Sorry, there is nothing here.' });
 
 module.exports = (req, res, next) => {
     if (!res.locals.result) {

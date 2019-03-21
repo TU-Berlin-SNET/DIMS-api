@@ -6,8 +6,8 @@
 
 const log = require('../log').log;
 const config = require('../config');
-const APIResult = require('../api-result');
-const { wrap, wrapEx } = require('../asyncwrap');
+const APIResult = require('../util/api-result');
+const { wrap, wrapEx } = require('../util/asyncwrap');
 const Wallet = require('../models/wallet');
 
 const CACHETTL = config.WALLETCACHE_TTL * 60 * 1000;

@@ -6,8 +6,6 @@
 const config = require('./config');
 
 const express = require('express');
-const YAML = require('yamljs');
-const swaggerUi = require('swagger-ui-express');
 
 // require db at start to establish connection
 // and all models so they are available
@@ -17,41 +15,13 @@ require('./models');
 
 const lib = require('./lib');
 const log = require('./log').log;
-const wrap = require('./asyncwrap').wrap;
-const middleware = require('./middleware');
-const routes = require('./routes');
-const message = require('./controllers/message');
-const credentialDefinition = require('./controllers/credentialdef');
-const APIResult = require('./api-result');
-const swaggerDoc = YAML.load('./swagger.yaml');
+const routes = require('./routes/index');
 
 lib.setup(config.LIB_OPTIONS);
 
 const app = express();
 
-app.use(middleware.before);
-
-app.post('/indy', message.receiveMessage);
-
-app.get(
-    '/tails/:tailsHash',
-    wrap(async (req, res, next) => {
-        const data = await credentialDefinition.retrieveTails(req.params.tailsHash);
-        res.locals.result = new APIResult(200, data);
-        next();
-    })
-);
-
-app.get('/healthcheck', (req, res, next) => {
-    res.locals.result = APIResult.success({ healthy: true });
-    next();
-});
-
-app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerDoc));
-
-app.use('/api/', routes);
-
-app.use(middleware.after);
+app.use('/', routes);
 
 /**
  * Initializes pool and db connection

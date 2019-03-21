@@ -4,7 +4,7 @@
  */
 
 const log = require('../log').log;
-const APIResult = require('../api-result');
+const APIResult = require('../util/api-result');
 
 const internalServerError = 500;
 const notFound = 404;

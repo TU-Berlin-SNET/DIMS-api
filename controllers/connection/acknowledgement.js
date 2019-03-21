@@ -6,7 +6,7 @@
 
 const lib = require('../../lib');
 const log = require('../../log').log;
-const APIResult = require('../../api-result');
+const APIResult = require('../../util/api-result');
 
 module.exports = {
     /**

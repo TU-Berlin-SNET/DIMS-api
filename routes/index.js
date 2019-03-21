@@ -1,91 +1,16 @@
-/**
- * IDChain Agent REST API Routes
- */
-
 const router = require('express').Router();
 
-const auth = require('../middleware/auth');
-const walletProvider = require('../middleware/walletProvider');
-const user = require('../controllers/user');
-const transactions = require('../controllers/transactions');
-const message = require('../controllers/message');
-const schemaController = require('../controllers/schema');
-const nym = require('./nym');
+const middleware = require('../middleware/index');
+const apiRouter = require('./api/index');
+const agentRouter = require('./indy');
+const tailsRouter = require('./tails');
+const healthRouter = require('./health-check');
 
-const wallet = require('./wallet');
-const connectionOffer = require('./connection-offer');
-const connectionRequest = require('./connection-request');
-const connectionResponse = require('./connection-response');
-const connection = require('./connection');
-const indySchema = require('./indy-schema');
-const schema = require('./schema');
-const credentialDefinition = require('./credential-definition');
-const credentialOffer = require('./credential-offer');
-const credentialRequest = require('./credential-request');
-const credential = require('./credential');
-const proofRequestTemplate = require('./proof-request-template');
-const proofRequest = require('./proof-request');
-const proof = require('./proof');
-
-router
-    .route('/user')
-    // TODO rate-limiting?
-    .post(user.create);
-
-router.post('/login', auth.login);
-
-router.use(auth);
-router.use(walletProvider.before);
-
-router
-    .route('/user/:user')
-    .get(user.retrieve)
-    .put(user.update)
-    .delete(user.delete);
-
-router.use('/wallet', wallet);
-
-router.use('/connectionoffer', connectionOffer);
-
-router.use('/connectionrequest', connectionRequest);
-
-router.use('/connectionresponse', connectionResponse);
-
-router.use('/connection', connection);
-
-router.use('/indyschema', indySchema);
-
-router.use('/schema', schema);
-router.route('/attribute/type').get(schemaController.types); // it does not need auth middleware, but I keep it here to be treated the same as schemas
-
-router.use('/credentialoffer', credentialOffer);
-
-router.use('/credentialrequest', credentialRequest);
-
-router.use('/credential', credential);
-
-router.use('/credentialdef', credentialDefinition);
-
-router.use('/proofrequesttemplate', proofRequestTemplate);
-
-router.use('/proofrequest', proofRequest);
-
-router.use('/proof', proof);
-
-router.route('/transactions').get(transactions.list);
-
-router
-    .route('/message')
-    .get(message.list)
-    .post(message.sendMessage);
-
-router
-    .route('/message/:messageId')
-    .get(message.retrieve)
-    .delete(message.delete);
-
-router.use('/nym', nym);
-
-router.use(walletProvider.after);
+router.use(middleware.before);
+router.use('/healthcheck', healthRouter);
+router.use('/tails', tailsRouter);
+router.use('/indy', agentRouter);
+router.use('/api', apiRouter);
+router.use(middleware.after);
 
 module.exports = router;

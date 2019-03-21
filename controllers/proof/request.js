@@ -8,7 +8,7 @@ const Mustache = require('mustache');
 const lib = require('../../lib');
 const log = require('../../log').log;
 const Mongoose = require('../../db');
-const APIResult = require('../../api-result');
+const APIResult = require('../../util/api-result');
 
 const Proof = Mongoose.model('Proof');
 const Message = Mongoose.model('Message');
