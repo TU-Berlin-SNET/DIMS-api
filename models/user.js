@@ -46,6 +46,7 @@ schema.pre('remove', async function() {
                     : w.remove()
         )
     );
+    await Wallet.update({ users: this._id }, { $pull: { users: this._id } }, { multi: true }).exec();
 });
 
 schema.methods.checkPassword = async function(password) {
