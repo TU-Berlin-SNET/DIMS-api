@@ -66,6 +66,9 @@ services:
       - IDC_POOL_INFO_PORT=${IDC_POOL_INFO_PORT-8001}
       - IDC_SCHEMA_IP=${IDC_SCHEMA_IP-172.16.0.150}
       - IDC_SCHEMA_PORT=${IDC_SCHEMA_PORT-9000}
+      - API_WALLET_ID
+      - API_WALLET_KEY
+      - API_WALLET_SEED
     ports:
       - ${IDC_API_PORT-8000}:${IDC_API_PORT-8000}
     depends_on:
