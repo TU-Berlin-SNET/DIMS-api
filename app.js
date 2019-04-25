@@ -15,6 +15,7 @@ require('./models');
 
 const lib = require('./lib');
 const log = require('./log').log;
+const domainWallet = require('./domain-wallet');
 const routes = require('./routes/index');
 
 lib.setup(config.LIB_OPTIONS);
@@ -32,6 +33,7 @@ async function initialize() {
     } catch (err) {
         log.warn(err);
     }
+    await domainWallet.init();
     await lib.ledger.open();
     await lib.blobStorage.open();
 }

@@ -46,11 +46,20 @@ IDC_API_PORT=8000
 ## Protocol, host & port (Reachable by other agents)
 ##  These values will be shared in the connection offer messages
 ##  sent to connect with other agents
+##
+## Wallet Id, Key, and Seed
+##  These values are used to create and/or open a wallet
+##  for use by the domain endpoint / routing agent
 ## ↓↓↓↓-------------------------------------------------------------------------------
 
 IDC_API_DOMAIN_PROTOCOL=http
 IDC_API_DOMAIN_HOST=172.16.0.100
 IDC_API_DOMAIN_PORT=8000
+
+API_WALLET_ID=api-wallet
+API_WALLET_KEY=api-wallet-key
+API_WALLET_SEED=
+
 
 ## ------------------------------------------------------------------------------------
 ## JSON Web Token Secret
