@@ -48,7 +48,7 @@ router
 
 router.use('/wallet', wallet);
 
-router.use('/connectionoffer', connectionOffer);
+router.use('/connectionoffer', connectionOffer.router);
 
 router.use('/connectionrequest', connectionRequest);
 

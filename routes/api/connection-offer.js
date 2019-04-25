@@ -5,30 +5,21 @@
 'use strict';
 
 const router = require('express').Router();
+const wrap = require('../../util/asyncwrap').wrapNext;
 const controller = require('../../controllers/connection');
-const wrap = require('../../util/asyncwrap').wrap;
-const APIResult = require('../../util/api-result');
+
+module.exports = exports = { router };
 
 router
     .route('/')
     .get(
         wrap(async (req, res, next) => {
-            const data = await controller.offer.list(req.wallet);
-            res.locals.result = APIResult.success(data || []);
-            next();
+            return controller.offer.list(req.wallet);
         })
     )
     .post(
         wrap(async (req, res, next) => {
-            const data = await controller.offer.create(
-                req.wallet,
-                req.body.data,
-                req.body.meta,
-                req.body.role,
-                req.body.endpoint
-            );
-            res.locals.result = APIResult.created(data);
-            next();
+            return controller.offer.create(req.wallet, req.body.data, req.body.meta, req.body.role, req.body.endpoint);
         })
     );
 
@@ -36,17 +27,11 @@ router
     .route('/:connectionOfferId')
     .get(
         wrap(async (req, res, next) => {
-            const data = await controller.offer.retrieve(req.wallet, req.params.connectionOfferId);
-            res.locals.result = data ? APIResult.success(data) : APIResult.notFound();
-            next();
+            return controller.offer.retrieve(req.wallet, req.params.connectionOfferId);
         })
     )
     .delete(
         wrap(async (req, res, next) => {
-            const data = await controller.offer.remove(req.wallet, req.params.connectionOfferId);
-            res.locals.result = data ? APIResult.noContent() : APIResult.notFound();
-            next();
+            return controller.offer.remove(req.wallet, req.params.connectionOfferId);
         })
     );
-
-module.exports = router;

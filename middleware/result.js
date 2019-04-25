@@ -184,12 +184,23 @@ function handleAPIResult(apiResult, res) {
 
 module.exports = {
     resultHandler: function(req, res, next) {
-        const result = res.locals.result;
-        if (result && result instanceof APIResult) {
-            handleAPIResult(result, res);
-        } else {
-            next();
+        let result = res.locals.result;
+        if (!result && typeof result !== 'boolean') {
+            return next();
         }
+        if (result instanceof APIResult) {
+            return handleAPIResult(result, res);
+        }
+        if (['GET', 'PUT'].includes(req.method)) {
+            result = result ? APIResult.success(res.locals.result) : APIResult.notFound();
+        }
+        if (req.method === 'POST') {
+            result = APIResult.created(res.locals.result);
+        }
+        if (req.method === 'DELETE') {
+            result = result ? APIResult.noContent() : APIResult.notFound();
+        }
+        handleAPIResult(result, res);
     },
     errorHandler: function(err, req, res, next) {
         if (err instanceof APIResult) {
