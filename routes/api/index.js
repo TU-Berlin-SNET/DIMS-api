@@ -8,7 +8,6 @@ const auth = require('../../middleware/auth');
 const walletProvider = require('../../middleware/walletProvider');
 const user = require('../../controllers/user');
 const transactions = require('../../controllers/transactions');
-const message = require('../../controllers/message');
 const schemaController = require('../../controllers/schema');
 const nym = require('./nym');
 
@@ -76,16 +75,6 @@ router.use('/proofrequest', proofRequest);
 router.use('/proof', proof);
 
 router.route('/transactions').get(transactions.list);
-
-router
-    .route('/message')
-    .get(message.list)
-    .post(message.sendMessage);
-
-router
-    .route('/message/:messageId')
-    .get(message.retrieve)
-    .delete(message.delete);
 
 router.use('/nym', nym);
 
