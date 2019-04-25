@@ -4,16 +4,16 @@
  */
 
 const log = require('../log').log;
-const wrap = require('../util/asyncwrap').wrap;
 const lib = require('../lib');
 const APIResult = require('../util/api-result');
 const Wallet = require('../models/wallet');
-const Message = require('../models/message');
 
 const WalletProvider = require('../middleware/walletProvider');
 const connection = require('./connection/index');
 const credential = require('./credential/index');
 const proof = require('./proof/index');
+
+module.exports = exports = {};
 
 const handlers = {};
 handlers[lib.message.messageTypes.CONNECTIONOFFER] = connection.offer.handle;
@@ -55,116 +55,25 @@ async function tryAnonDecrypt(encryptedMessage) {
     return [wallet, decryptedMessage];
 }
 
-module.exports = {
-    list: wrap(async (req, res, next) => {
-        let query = { wallet: req.wallet.id };
-        if (req.query.type) query.messageType = req.query.type;
-        const result = await Message.find(query).exec();
-        return next(new APIResult(200, result));
-    }),
+exports.receiveMessage = async encryptedMessage => {
+    const [wallet, message] = await tryAnonDecrypt(encryptedMessage);
+    if (!wallet || !message) {
+        return new APIResult(400, { message: 'could not decrypt' });
+    }
 
-    retrieve: wrap(async (req, res, next) => {
-        const result = await Message.findOne({
-            _id: req.params.messageId,
-            wallet: req.wallet.id
-        }).exec();
-        if (!result) {
-            return next(APIResult.notFound());
-        } else {
-            return next(new APIResult(200, result));
+    const handler = handlers[message.type];
+    try {
+        if (handler) {
+            await handler(wallet, message);
+            return APIResult.accepted();
         }
-    }),
-
-    delete: wrap(async (req, res, next) => {
-        const message = await Message.findOne({
-            _id: req.params.messageId,
-            wallet: req.wallet.id
-        }).exec();
-        if (!message) {
-            return next(APIResult.notFound());
+        return APIResult.badRequest('unknown message type ' + message.type);
+    } catch (err) {
+        if (err instanceof APIResult) {
+            return err;
         }
-        await message.remove();
-        return next(APIResult.noContent());
-    }),
-
-    sendMessage: wrap(async (req, res, next) => {
-        const wallet = req.wallet;
-        const did = req.body.did;
-        const message = req.body.message;
-        const apiResult = await module.exports.anoncryptSendMessage(wallet, did, message);
-        return next(apiResult);
-    }),
-
-    receiveMessage: wrap(async (req, res, next) => {
-        const apiResult = await module.exports.receiveAnoncryptMessage(req.body.message);
-        return next(apiResult);
-    }),
-
-    /**
-     * Send anoncrypted message, only anoncrypts full message,
-     * any additional anon-/authcrypt has to be done before manually
-     * @param {Object} wallet
-     * @param {String} did recipient did
-     * @param {Object} message
-     * @return {APIResult} apiresult
-     */
-    async anoncryptSendMessage(wallet, did, message) {
-        let endpointDid = did;
-
-        try {
-            const pairwise = await lib.pairwise.retrieve(wallet.handle, did);
-            endpointDid = pairwise.metadata.theirEndpointDid || did;
-        } catch (err) {
-            log.info('no pairwise found ', err);
-        }
-
-        const [endpoint, endpointVk] = await lib.sdk.getEndpointForDid(wallet.handle, lib.ledger.handle, endpointDid);
-
-        let result;
-        try {
-            result = await lib.message.sendAnoncrypt(endpointVk, endpoint, message);
-        } catch (err) {
-            if (err.status && err.response && err.response.text) {
-                result = {
-                    status: err.status,
-                    data: JSON.parse(err.response.text).message
-                };
-            } else {
-                log.err(err);
-                result = {
-                    status: 500,
-                    data: { message: 'unexpected error' }
-                };
-            }
-        }
-        return new APIResult(result.status, result.data);
-    },
-
-    /**
-     * Anondecrypt message and forward to its handler
-     * @param {String} encryptedMessage anoncrypted message
-     * @return {APIResult} apiresult
-     */
-    async receiveAnoncryptMessage(encryptedMessage) {
-        const [wallet, message] = await tryAnonDecrypt(encryptedMessage);
-        if (!wallet || !message) {
-            return new APIResult(400, { message: 'could not decrypt' });
-        }
-
-        const handler = handlers[message.type];
-        try {
-            if (handler) {
-                await handler(wallet, message);
-                return APIResult.accepted();
-            }
-            return APIResult.badRequest('unknown message type ' + message.type);
-        } catch (err) {
-            if (err instanceof APIResult) {
-                return err;
-            }
-            return APIResult.create(err.status || 500, err.message || null);
-        } finally {
-            await WalletProvider.returnHandle(wallet);
-        }
+        return APIResult.create(err.status || 500, err.message || null);
+    } finally {
+        await WalletProvider.returnHandle(wallet);
     }
 };

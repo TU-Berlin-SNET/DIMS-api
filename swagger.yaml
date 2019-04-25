@@ -489,20 +489,6 @@ definitions:
           lowLevelSchema: {}
           credentialDefinitionId: 'Th7MpTaRZVRYnPiabds81Y:3:CL:15:TAG1'
           revocationRegistryId: ''
-  message_post:
-    type: object
-    properties:
-      wallet:
-        $ref: '#/definitions/walletId'
-      did:
-        description: 'Recipient DID'
-        type: string
-      message:
-        description: 'authcrypted, base64-encoded message to send'
-        type: string
-    required:
-      - did
-      - message
   indy_post:
     type: object
     properties:
@@ -2808,91 +2794,6 @@ paths:
           description: 'Accepted'
         '400':
           $ref: '#/responses/bad_request'
-        '404':
-          $ref: '#/responses/not_found'
-      tags:
-        - message
-
-  /api/message/:
-    get:
-      summary: 'List messages'
-      description: 'List messages'
-      parameters:
-        - $ref: '#/parameters/walletHeader'
-        - in: query
-          name: type
-          description: '(Optional) A single message type to filter by'
-          type: string
-      responses:
-        '200':
-          description: 'Success'
-          schema:
-            type: array
-            items:
-              $ref: '#/definitions/message_db'
-        '400':
-          $ref: '#/responses/bad_request'
-        '401':
-          $ref: '#/responses/unauthorized'
-        '404':
-          $ref: '#/responses/not_found'
-      tags:
-        - message
-    post:
-      summary: 'Send message'
-      description: 'Send message'
-      parameters:
-        - in: body
-          name: data
-          schema:
-            $ref: '#/definitions/message_post'
-      responses:
-        '200':
-          description: 'Success'
-          schema:
-            description: 'Response'
-            type: object
-        '202':
-          description: 'Accepted'
-        '400':
-          $ref: '#/responses/bad_request'
-        '401':
-          $ref: '#/responses/unauthorized'
-        '404':
-          $ref: '#/responses/not_found'
-      tags:
-        - message
-
-  /api/message/{messageId}:
-    parameters:
-      - $ref: '#/parameters/walletHeader'
-      - in: path
-        name: messageId
-        description: 'A unique string value identifying a message.'
-        required: true
-        type: string
-    get:
-      summary: 'Retrieve a message'
-      description: 'Retrieve a message'
-      responses:
-        '200':
-          description: 'Success'
-          schema:
-            $ref: '#/definitions/message_db'
-        '401':
-          $ref: '#/responses/unauthorized'
-        '404':
-          $ref: '#/responses/not_found'
-      tags:
-        - message
-    delete:
-      summary: 'Delete a message'
-      description: 'Delete a message'
-      responses:
-        '204':
-          $ref: '#/responses/no_content'
-        '401':
-          $ref: '#/responses/unauthorized'
         '404':
           $ref: '#/responses/not_found'
       tags:
