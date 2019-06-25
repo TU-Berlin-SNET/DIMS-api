@@ -11,10 +11,15 @@ const log = require('../../log').log;
 const Mongoose = require('../../db');
 const APIResult = require('../../util/api-result');
 
-const messageTypes = lib.message.messageTypes;
 const Message = Mongoose.model('Message');
 const CredDef = Mongoose.model('CredentialDefinition');
 const RevReg = Mongoose.model('RevocationRegistry');
+const Services = require('../../services');
+
+const ConnectionService = Services.ConnectionService;
+const MessageService = Services.MessageService;
+
+const CREDENTIAL_MESSAGE_TYPE = 'urn:sovrin:agent:message_type:sovrin.org/credential';
 
 module.exports = {
     /**
@@ -26,7 +31,7 @@ module.exports = {
     async list(wallet, query = {}) {
         const search = Message.find({
             wallet: wallet._id,
-            type: messageTypes.CREDENTIAL
+            type: CREDENTIAL_MESSAGE_TYPE
         });
         if (query) {
             search.find(query);
@@ -46,7 +51,7 @@ module.exports = {
             credentialRequest = await Message.findTypeById(
                 wallet,
                 credentialRequest,
-                messageTypes.CREDENTIALREQUEST
+                lib.message.messageTypes.CREDENTIALREQUEST
             ).exec();
         }
         if (!credentialRequest || credentialRequest.senderDid === wallet.ownDid) {
@@ -72,7 +77,7 @@ module.exports = {
             return accu;
         }, {});
 
-        const pairwise = await lib.pairwise.retrieve(wallet.handle, credentialRequest.message.origin);
+        const connection = await ConnectionService.findOne(wallet, { theirDid: credentialRequest.message.origin });
 
         // find credential definition
         const credDefId = credentialRequest.message.message['cred_def_id'];
@@ -105,8 +110,8 @@ module.exports = {
 
         const message = {
             id: credentialRequest.messageId,
-            origin: pairwise['my_did'],
-            type: messageTypes.CREDENTIAL,
+            origin: connection.myDid,
+            type: CREDENTIAL_MESSAGE_TYPE,
             message: credential
         };
         const doc = await Message.store(
@@ -118,7 +123,7 @@ module.exports = {
             message,
             meta
         );
-        await lib.message.sendAuthcrypt(wallet.handle, credentialRequest.message.origin, message);
+        await MessageService.send(wallet, message, connection.endpoint);
         await credentialRequest.remove();
 
         return doc;
@@ -134,7 +139,7 @@ module.exports = {
         return Message.findOne({
             _id: id,
             wallet: wallet._id,
-            type: messageTypes.CREDENTIAL
+            type: CREDENTIAL_MESSAGE_TYPE
         }).exec();
     },
 
@@ -145,7 +150,7 @@ module.exports = {
      * @return {Promise<Message>}
      */
     async revoke(wallet, id) {
-        const message = await Message.findTypeById(wallet, id, messageTypes.CREDENTIAL).exec();
+        const message = await Message.findTypeById(wallet, id, CREDENTIAL_MESSAGE_TYPE).exec();
         if (!message) {
             return null;
         }
@@ -168,24 +173,22 @@ module.exports = {
      */
     async handle(wallet, message) {
         log.debug('credential received');
-        const innerMessage = await lib.message.authdecrypt(wallet.handle, message.origin, message.message);
-        message.message = innerMessage;
-        let credential = innerMessage;
+        let credential = message.message;
         log.debug('credential', credential);
         const credentialRequest = await Message.findTypeByMessageId(
             wallet,
             message.id,
-            messageTypes.CREDENTIALREQUEST
+            lib.message.messageTypes.CREDENTIALREQUEST
         ).exec();
         if (!credentialRequest || credentialRequest.senderDid !== wallet.ownDid) {
             throw APIResult.badRequest('no corresponding credential request found');
         }
-        const pairwise = await lib.pairwise.retrieve(wallet.handle, message.origin);
-        const [, credentialDefinition] = await lib.ledger.getCredDef(pairwise['my_did'], message.message.cred_def_id);
+        const connection = await ConnectionService.findOne(wallet, { theirDid: message.origin });
+        const [, credentialDefinition] = await lib.ledger.getCredDef(connection.myDid, message.message.cred_def_id);
 
         let revocRegDefinition = null;
         if (credential.rev_reg_id)
-            [, revocRegDefinition] = await lib.ledger.getRevocRegDef(pairwise['my_did'], credential.rev_reg_id);
+            [, revocRegDefinition] = await lib.ledger.getRevocRegDef(connection.myDid, credential.rev_reg_id);
         await lib.sdk.proverStoreCredential(
             wallet.handle,
             null, // credId
@@ -196,3 +199,5 @@ module.exports = {
         );
     }
 };
+
+MessageService.registerHandler(CREDENTIAL_MESSAGE_TYPE, module.exports.handle);

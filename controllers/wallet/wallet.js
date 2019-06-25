@@ -11,6 +11,7 @@ const APIResult = require('../../util/api-result');
 const WalletProvider = require('../../middleware/walletProvider');
 
 const Wallet = Mongoose.model('Wallet');
+const Routing = Mongoose.model('Routing');
 
 module.exports = {
     /**
@@ -54,6 +55,11 @@ module.exports = {
         try {
             await wallet.create({ seed });
             wallet = await wallet.save();
+            // create new routing entry
+            await new Routing({
+                _id: await lib.did.localKeyOf(wallet, wallet.ownDid),
+                wallet: wallet
+            }).save();
         } catch (err) {
             log.warn('walletController createWallet error');
             log.warn(err);

@@ -275,13 +275,13 @@ definitions:
         type: string
     required:
       - credentialOfferId
-  connectionoffer_post:
+  connectioninvitation_post:
     type: object
     properties:
       wallet:
         $ref: '#/definitions/walletId'
-      endpoint:
-        description: '(Optional) Response endpoint for connection response - my endpoint'
+      label:
+        description: '(Optional) Label for this connection'
         type: string
       role:
         description: '(Optional) Role offered to the connection invitee'
@@ -303,42 +303,25 @@ definitions:
     properties:
       wallet:
         $ref: '#/definitions/walletId'
-      endpoint:
-        description: '(Optional) Response endpoint for connection response - my endpoint'
+      label:
+        description: a label for this connection
         type: string
-      theirDid:
-        description: '(Optional) Their (endpoint) did, required if there is no connection offer'
-        type: string
-      theirVk:
-        description:
-          '(Optional) Their (endpoint) did verification key, required if there is no connection offer or verkey not on ledger.'
-        type: string
-      theirEndpoint:
-        description:
-          '(Optional) Their endpoint address, required if no there is no connection offer or address not on ledger.'
-        type: string
-      connectionOffer:
-        description: '(Optional) A connection offer object'
+      invitation:
+        description: 'A connection invitation object'
         type: object
         example:
-          id: 09348295728957894752397589247589247589
-          type: 'urn:sovrin:agent:message_type:sovrin.org/connection_offer'
-          message:
-            did: endpointDid
-            verkey: endpointVk
-            endpoint: endpointAddress
-            nonce: 09348295728957894752397589247589247589
-  connectionresponse_post:
-    type: object
-    properties:
-      wallet:
-        $ref: '#/definitions/walletId'
-      connectionRequestId:
-        description: 'A unique string value identifying the connection request to respond to'
-        type: string
-        example: '5b7ddce00000000000000000'
+          '@id': 'a983-3829-f834-kfj3'
+          '@type': 'did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/didexchange/1.0/invitation'
+          'label': 'suggested label'
+          'recipientKeys': ['8HH5gYEeNc3z7PYXmd54d4x6qAfCNrqQqEB3nS7Zfu7K']
+          'serviceEndpoint': 'http://example.com/indy'
+          'routingKeys': ['K7ufZ7Sn3BEqQqrNCfAq6x4d45dmXYP7z3cNeEYg5HH8']
     required:
-      - connectionRequestId
+      - invitation
+  # currently unsupported
+  # did:
+  #   description: '(currently unsupported) a public did with diddoc on the ledger'
+  #   type: string
   proofrequest_template_post:
     type: object
     properties:
@@ -538,6 +521,76 @@ definitions:
       message:
         description: 'Informational Message'
         type: string
+  connection:
+    type: object
+    properties:
+      wallet:
+        description: 'Wallet name'
+        type: string
+      label:
+        description: 'Connection Label'
+        type: string
+      initiator:
+        description: 'Connection Initiator'
+        type: string
+        enum:
+          - ME
+          - OTHER
+      state:
+        description: 'Connection State'
+        type: string
+        enum:
+          - 'NULL'
+          - INVITED
+          - REQUESTED
+          - RESPONDED
+          - COMPLETE
+          - ERRORED
+      stateDirection:
+        description: 'Connection State Direction'
+        type: string
+        enum:
+          - IN
+          - OUT
+      threadId:
+        description: 'Connection Messages Thread Id'
+        type: string
+      invitation:
+        description: 'Connection Invitation'
+        type: object
+      request:
+        description: 'Connection Request'
+        type: object
+      response:
+        description: 'Connection Response'
+        type: object
+      error:
+        description: 'Connection Error'
+        type: object
+      myDid:
+        description: 'My Did for this connection'
+        type: string
+      myKey:
+        description: 'My key for this connection'
+        type: string
+      myDidDoc:
+        description: 'My Did Document for this connection'
+        type: object
+      theirDid:
+        description: 'Their Did for this connection'
+        type: string
+      theirKey:
+        description: 'Their Key for this connection'
+        type: string
+      theirDidDoc:
+        description: 'Their Did Document for this connection'
+        type: object
+      endpoint:
+        description: 'Their recipientKeys, routingKeys, and serviceEndpoint parsed for their did doc'
+        type: object
+      meta:
+        description: 'Additional Metadata'
+        type: object
   connection_offer:
     type: object
     properties:
@@ -1647,76 +1700,92 @@ paths:
         - wallet
         - prover
 
-  /api/connection/{myDid}:
-    parameters:
-      - name: myDid
-        in: path
-        description: 'A unique did used in a pairwise'
-        type: string
-        required: true
+  /api/connection/:
     get:
-      summary: 'Retrieve a (pending) connection'
-      description: 'Retrieve a (pending) connection'
+      summary: 'List connections'
+      description: 'List connections'
       parameters:
+        - name: state
+          in: query
+          description: '(Optional) Connection state'
+          required: false
+          type: string
+          enum:
+            - 'NULL'
+            - INVITED
+            - REQUESTED
+            - RESPONDED
+            - COMPLETE
+            - ERRORED
+        - name: label
+          in: query
+          description: '(Optional) Connection label'
+          type: string
+        - name: myDid
+          in: query
+          description: '(Optional) Connection myDid'
+          type: string
+        - name: theirDid
+          in: query
+          description: '(Optional) Connection theirDid'
+          type: string
         - $ref: '#/parameters/walletHeader'
       responses:
         '200':
           description: ''
           schema:
-            type: object
-            properties:
-              myDid:
-                type: string
-                description: 'my pairwise did for this connection'
-              theirDid:
-                type: string
-                description: 'their pairwise did for this connection'
-              acknowledged:
-                type: boolean
-                description: 'boolean value indicating if connection is acknowledged'
-        '401':
-          $ref: '#/responses/unauthorized'
-        '404':
-          $ref: '#/responses/not_found'
-      tags:
-        - connection
-        - issuer
-        - verifier
-
-  /api/connectionoffer:
-    get:
-      summary: 'List all my connection offers'
-      description: 'List all my connection offers'
-      parameters:
-        - $ref: '#/parameters/walletHeader'
-      responses:
-        '200':
-          description: 'Success'
-          schema:
             type: array
             items:
-              $ref: '#/definitions/connection_offer'
+              $ref: '#/definitions/connection'
+        '401':
+          $ref: '#/responses/unauthorized'
+      tags:
+        - connection
+        - common
+        - issuer
+        - verifier
+        - prover
+
+  /api/connection/{connectionId}:
+    parameters:
+      - name: connectionId
+        in: path
+        description: 'Connection Id'
+        type: string
+        required: true
+    get:
+      summary: 'Retrieve a connection'
+      description: 'Retrieve a connection'
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/connection'
         '401':
           $ref: '#/responses/unauthorized'
         '404':
           $ref: '#/responses/not_found'
       tags:
         - connection
+        - common
         - issuer
         - verifier
+        - prover
+
+  /api/connectioninvitation:
     post:
-      summary: 'Create a new connection offer'
-      description: 'Create a new connection offer'
+      summary: 'Create a new connection invitation'
+      description: 'Create a new connection invitation'
       parameters:
         - in: body
           name: data
           schema:
-            $ref: '#/definitions/connectionoffer_post'
+            $ref: '#/definitions/connectioninvitation_post'
       responses:
         '201':
           description: 'Created'
           schema:
-            $ref: '#/definitions/connection_offer'
+            $ref: '#/definitions/connection'
         '400':
           $ref: '#/responses/bad_request'
         '401':
@@ -1728,72 +1797,7 @@ paths:
         - issuer
         - verifier
 
-  /api/connectionoffer/{connectionOfferId}:
-    parameters:
-      - $ref: '#/parameters/walletHeader'
-      - in: path
-        name: connectionOfferId
-        description: connection offer _id
-        type: string
-        required: true
-    get:
-      summary: 'Retrieve a connection offer by _id'
-      description: 'Retrieve a connection offer by _id'
-      responses:
-        '200':
-          description: 'Success'
-          schema:
-            $ref: '#/definitions/connection_offer'
-        '401':
-          $ref: '#/responses/unauthorized'
-        '404':
-          $ref: '#/responses/not_found'
-      tags:
-        - connection
-        - common
-        - issuer
-        - verifier
-        - prover
-    delete:
-      summary: 'Delete a connection offer by _id'
-      description: 'Delete a connection offer by _id'
-      responses:
-        '204':
-          $ref: '#/responses/no_content'
-        '401':
-          $ref: '#/responses/unauthorized'
-        '404':
-          $ref: '#/responses/not_found'
-      tags:
-        - connection
-        - common
-        - issuer
-        - verifier
-        - prover
-
   /api/connectionrequest:
-    get:
-      summary: 'List all my connection requests'
-      description: 'List all my connection requests'
-      parameters:
-        - $ref: '#/parameters/walletHeader'
-      responses:
-        '200':
-          description: 'Success'
-          schema:
-            type: array
-            items:
-              $ref: '#/definitions/connection_request'
-        '401':
-          $ref: '#/responses/unauthorized'
-        '404':
-          $ref: '#/responses/not_found'
-      tags:
-        - connection
-        - common
-        - issuer
-        - verifier
-        - prover
     post:
       summary: 'Accept a connection offer and/or send a connection request'
       description: 'Accept a connection offer and/or send a connection request'
@@ -1803,80 +1807,10 @@ paths:
           schema:
             $ref: '#/definitions/connectionrequest_post'
       responses:
-        '200':
-          description: 'Success'
+        '201':
+          description: 'Created'
           schema:
-            $ref: '#/definitions/connection_request'
-        '400':
-          $ref: '#/responses/bad_request'
-        '401':
-          $ref: '#/responses/unauthorized'
-        '404':
-          $ref: '#/responses/not_found'
-      tags:
-        - connection
-        - common
-        - issuer
-        - verifier
-        - prover
-
-  /api/connectionrequest/{connectionRequestId}:
-    parameters:
-      - in: path
-        name: connectionRequestId
-        description: 'connection request _id'
-        type: string
-        required: true
-      - $ref: '#/parameters/walletHeader'
-    get:
-      summary: 'Retrieve a connection request by _id'
-      description: 'Retrieve a connection request by _id'
-      responses:
-        '200':
-          description: 'Success'
-          schema:
-            $ref: '#/definitions/connection_request'
-        '401':
-          $ref: '#/responses/unauthorized'
-        '404':
-          $ref: '#/responses/not_found'
-      tags:
-        - connection
-        - common
-        - issuer
-        - verifier
-        - prover
-    delete:
-      summary: 'Delete a connection request by _id'
-      description: 'Delete a connection request by _id'
-      responses:
-        '204':
-          $ref: '#/responses/no_content'
-        '401':
-          $ref: '#/responses/unauthorized'
-        '404':
-          $ref: '#/responses/not_found'
-      tags:
-        - connection
-        - common
-        - issuer
-        - verifier
-        - prover
-
-  /api/connectionresponse:
-    post:
-      summary: 'Accept a connection request and send a connection response'
-      description: 'Accept a connection request and send a connection response'
-      parameters:
-        - in: body
-          name: data
-          schema:
-            $ref: '#/definitions/connectionresponse_post'
-      responses:
-        '200':
-          description: 'Success'
-          schema:
-            $ref: '#/definitions/connection_response'
+            $ref: '#/definitions/connection'
         '400':
           $ref: '#/responses/bad_request'
         '401':

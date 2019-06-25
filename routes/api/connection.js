@@ -5,24 +5,26 @@
 'use strict';
 
 const router = require('express').Router();
-const controller = require('../../controllers/connection');
-const wrap = require('../../util/asyncwrap').wrap;
-const APIResult = require('../../util/api-result');
+const wrap = require('../../util/asyncwrap').wrapNext;
+const controller = require('../../controllers/connection/index');
 
-router.route('/:myDid').get(
+router.route('/').get(
     wrap(async (req, res, next) => {
-        const data = await controller.retrieve(req.wallet, req.params.myDid);
-        if (data) {
-            res.locals.result = APIResult.success({
-                myDid: data['my_did'],
-                theirDid: data['their_did'],
-                acknowledged: data.metadata.acknowledged
-            });
-        } else {
-            res.locals.result = APIResult.notFound('no matching connection found');
-        }
-        next();
+        return await controller.list(req.wallet, req.query);
     })
 );
 
-module.exports = router;
+router
+    .route('/:connectionId')
+    .get(
+        wrap(async (req, res, next) => {
+            return await controller.retrieve(req.wallet, req.params.connectionId);
+        })
+    )
+    .delete(
+        wrap(async (req, res, next) => {
+            return await controller.remove(req.wallet, req.params.connectionId);
+        })
+    );
+
+module.exports = { router };

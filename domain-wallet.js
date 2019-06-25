@@ -26,6 +26,11 @@ exports.getServiceEndpoint = () => {
     return config.APP_AGENT_ENDPOINT;
 };
 
+exports.getServiceEndpointDid = async () => {
+    return await wallet.getEndpointDid();
+};
+
 exports.getServiceEndpointKey = async () => {
-    return await lib.did.localKeyOf(await wallet.getEndpointDid());
+    const serviceEndpointDid = await exports.getServiceEndpointDid();
+    return await lib.did.localKeyOf(wallet, serviceEndpointDid);
 };

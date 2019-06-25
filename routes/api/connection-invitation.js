@@ -1,24 +1,24 @@
 /**
- * IDChain Agent REST API Routes
- * Connection Request Routes
+ * Connection Invitation Routes
  */
 'use strict';
 
 const router = require('express').Router();
-const controller = require('../../controllers/connection/index');
 const wrap = require('../../util/asyncwrap').wrapNext;
+const controller = require('../../controllers/connection/index');
+
+module.exports = exports = { router };
 
 router.route('/').post(
     wrap(async (req, res, next) => {
-        const connection = await controller.createRequest(
+        const connection = await controller.createInvitation(
             req.wallet,
-            req.body.label,
-            req.body.invitation,
-            req.body.did
+            req.body.data,
+            req.body.meta,
+            req.body.role,
+            req.body.label
         );
         res.set('Location', '/api/connection/' + connection.id);
         return connection;
     })
 );
-
-module.exports = router;

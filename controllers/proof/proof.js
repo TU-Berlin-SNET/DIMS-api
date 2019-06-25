@@ -12,6 +12,10 @@ const APIResult = require('../../util/api-result');
 const messageTypes = lib.message.messageTypes;
 const Message = Mongoose.model('Message');
 const Proof = Mongoose.model('Proof');
+const Services = require('../../services');
+
+const ConnectionService = Services.ConnectionService;
+const MessageService = Services.MessageService;
 
 module.exports = {
     /**
@@ -50,7 +54,8 @@ module.exports = {
             message
         );
 
-        await lib.message.sendAuthcrypt(wallet.handle, recipientDid, message);
+        const connection = await ConnectionService.findOne(wallet, { theirDid: recipientDid });
+        await MessageService.send(wallet, message, connection.endpoint);
 
         return doc;
     },
@@ -102,8 +107,6 @@ module.exports = {
      */
     async handle(wallet, message) {
         log.debug('received proof');
-        const innerMessage = await lib.message.authdecrypt(wallet.handle, message.origin, message.message);
-        message.message = innerMessage;
 
         // find corresponding proof request
         const requestDoc = await Message.findTypeByMessageId(wallet, message.id, messageTypes.PROOFREQUEST).exec();
@@ -131,3 +134,5 @@ module.exports = {
         await proofDoc.save();
     }
 };
+
+MessageService.registerHandler(lib.message.messageTypes.PROOF, module.exports.handle);

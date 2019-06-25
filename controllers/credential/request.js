@@ -11,7 +11,13 @@ const APIResult = require('../../util/api-result');
 const Credential = require('./credential');
 
 const Message = Mongoose.model('Message');
-const messageTypes = lib.message.messageTypes;
+const CredentialOfferController = require('./offer');
+const Services = require('../../services');
+
+const ConnectionService = Services.ConnectionService;
+const MessageService = Services.MessageService;
+
+const REQUEST_MESSAGE_TYPE = 'urn:sovrin:agent:message_type:sovrin.org/credential_request';
 
 module.exports = {
     /**
@@ -22,7 +28,7 @@ module.exports = {
     async list(wallet) {
         return Message.find({
             wallet: wallet.id,
-            type: messageTypes.CREDENTIALREQUEST
+            type: REQUEST_MESSAGE_TYPE
         }).exec();
     },
 
@@ -35,22 +41,25 @@ module.exports = {
     async create(wallet, credentialOffer) {
         let offerDoc;
         if (typeof credentialOffer === 'string') {
-            offerDoc = await Message.findTypeById(wallet, credentialOffer, messageTypes.CREDENTIALOFFER).exec();
+            offerDoc = await Message.findTypeById(
+                wallet,
+                credentialOffer,
+                CredentialOfferController.OFFER_MESSAGE_TYPE
+            ).exec();
             credentialOffer = offerDoc ? offerDoc.message : null;
         }
         if (!credentialOffer) {
             throw APIResult.badRequest('invalid credential offer or no applicable credential offer found');
         }
-
-        const pairwise = await lib.pairwise.retrieve(wallet.handle, credentialOffer.origin);
+        const connection = await ConnectionService.findOne(wallet, { theirDid: credentialOffer.origin });
         const [, credentialDefinition] = await lib.ledger.getCredDef(
-            pairwise['my_did'],
+            connection.myDid,
             credentialOffer.message.cred_def_id
         );
         const masterSecretId = await wallet.getMasterSecretId();
         const [message, requestMeta] = await lib.credential.buildRequest(
             wallet.handle,
-            pairwise['my_did'],
+            connection.myDid,
             credentialOffer.message,
             credentialDefinition,
             masterSecretId
@@ -66,7 +75,7 @@ module.exports = {
         );
         offerDoc && (await offerDoc.remove());
 
-        await lib.message.sendAuthcrypt(wallet.handle, credentialOffer.origin, message);
+        await MessageService.send(wallet, message, connection.endpoint);
 
         return doc;
     },
@@ -78,7 +87,7 @@ module.exports = {
      * @return {Promise<Message>}
      */
     async retrieve(wallet, id) {
-        return Message.findTypeById(wallet, id, messageTypes.CREDENTIALREQUEST).exec();
+        return Message.findTypeById(wallet, id, REQUEST_MESSAGE_TYPE).exec();
     },
 
     /**
@@ -102,11 +111,13 @@ module.exports = {
      */
     async handle(wallet, message) {
         log.debug('received credential request');
-        const innerMessage = await lib.message.authdecrypt(wallet.handle, message.origin, message.message);
-        message.message = innerMessage;
 
         // find corresponding credential offer (use nonce for querying -> nonce match is established)
-        const offer = await Message.findTypeByMessageId(wallet, message.id, messageTypes.CREDENTIALOFFER).exec();
+        const offer = await Message.findTypeByMessageId(
+            wallet,
+            message.id,
+            CredentialOfferController.OFFER_MESSAGE_TYPE
+        ).exec();
 
         // 2018-10-19: we (and indy-sdk) currently do not support credential requests as the
         // first message in the credential issue flow, a credential offer must always exist
@@ -138,3 +149,5 @@ module.exports = {
         }
     }
 };
+
+MessageService.registerHandler(REQUEST_MESSAGE_TYPE, module.exports.handle);
