@@ -55,36 +55,6 @@ schema.set('toJSON', {
 });
 
 /**
- * Find ConnectionOffer belonging to wallet by Id
- * @param {Wallet} wallet
- * @param {string} _id
- * @return {Query} Mongoose Query Object
- */
-schema.statics.findConnectionOfferById = function findConnectionOfferById(wallet, _id) {
-    return this.findTypeById(wallet, _id, MessageTypes.CONNECTIONOFFER);
-};
-
-/**
- * Find ConnectionRequest belonging to wallet by Id
- * @param {Wallet} wallet
- * @param {string} _id
- * @return {Query} Mongoose Query Object
- */
-schema.statics.findConnectionRequestById = function findConnectionRequestById(wallet, _id) {
-    return this.findTypeById(wallet, _id, MessageTypes.CONNECTIONREQUEST);
-};
-
-/**
- * Find ConnectionResponse belonging to wallet by Id
- * @param {Wallet} wallet
- * @param {string} _id
- * @return {Query} Mongoose Query Object
- */
-schema.statics.findConnectionResponseById = function findConnectionResponseById(wallet, _id) {
-    return this.findTypeById(wallet, _id, MessageTypes.CONNECTIONRESPONSE);
-};
-
-/**
  * Find Message with type belonging to wallet by Id
  * @param {Wallet} wallet
  * @param {string} _id

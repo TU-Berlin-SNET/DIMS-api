@@ -7,7 +7,7 @@ const notFound = require('./404');
 const { resultHandler, errorHandler } = require('./result');
 
 module.exports = {
-    before: [cors(), logMiddleware, bodyParser.json(), validation],
+    before: [cors(), logMiddleware, bodyParser.json({ limit: '200kb' }), validation],
 
     after: [notFound, resultHandler, errorHandler]
 };

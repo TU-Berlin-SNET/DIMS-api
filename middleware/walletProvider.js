@@ -85,11 +85,11 @@ module.exports = {
 
     async returnHandle(wallet) {
         log.debug('walletProvider return handle');
-        const name = wallet.id;
-        if (!cache[name]) {
-            log.debug('walletProvider return Handle cache miss', name);
+        if (!wallet || !cache[wallet.id]) {
+            log.debug('walletProvider return handle cache miss', wallet ? wallet.id : wallet);
             return;
         }
+        const name = wallet.id;
         const isDeleted = wallet.isDeleted ? wallet.isDeleted() : false;
         cache[name].counter -= 1;
         if (cache[name].counter <= 0 && !cache[name].timer && !isDeleted) {

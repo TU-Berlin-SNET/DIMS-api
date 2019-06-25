@@ -14,6 +14,10 @@ const Proof = Mongoose.model('Proof');
 const Message = Mongoose.model('Message');
 const ProofRequestTemplate = Mongoose.model('ProofRequestTemplate');
 const messageTypes = lib.message.messageTypes;
+const Services = require('../../services');
+
+const ConnectionService = Services.ConnectionService;
+const MessageService = Services.MessageService;
 
 module.exports = {
     /**
@@ -70,7 +74,9 @@ module.exports = {
             message,
             meta
         );
-        await lib.message.sendAuthcrypt(wallet.handle, recipientDid, message);
+
+        const connection = await ConnectionService.findOne(wallet, { theirDid: recipientDid });
+        await MessageService.send(wallet, message, connection.endpoint);
 
         return doc;
     },
@@ -106,8 +112,6 @@ module.exports = {
      */
     async handle(wallet, message) {
         log.debug('received proof request');
-        const innerMessage = await lib.message.authdecrypt(wallet.handle, message.origin, message.message);
-        message.message = innerMessage;
 
         // message was successfully auth-decrypted which means we have a pairwise with the sender and
         // proof request can be the initial message in the flow so there is no further checking necessary
@@ -116,3 +120,5 @@ module.exports = {
         await Message.store(wallet.id, message.message.nonce, message.type, message.origin, wallet.ownDid, message);
     }
 };
+
+MessageService.registerHandler(lib.message.messageTypes.PROOFREQUEST, module.exports.handle);

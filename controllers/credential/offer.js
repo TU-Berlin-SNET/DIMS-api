@@ -9,9 +9,17 @@ const lib = require('../../lib');
 const Mongoose = require('../../db');
 
 const Message = Mongoose.model('Message');
-const messageTypes = lib.message.messageTypes;
+
+const Services = require('../../services');
+
+const ConnectionService = Services.ConnectionService;
+const MessageService = Services.MessageService;
+
+const OFFER_MESSAGE_TYPE = 'urn:sovrin:agent:message_type:sovrin.org/credential_offer';
 
 module.exports = {
+    OFFER_MESSAGE_TYPE,
+
     /**
      * List credential offers belonging to wallet
      * @param {Wallet} wallet
@@ -20,7 +28,7 @@ module.exports = {
     async list(wallet) {
         return Message.find({
             wallet: wallet.id,
-            type: messageTypes.CREDENTIALOFFER
+            type: OFFER_MESSAGE_TYPE
         }).exec();
     },
 
@@ -33,6 +41,7 @@ module.exports = {
      * @return {Promise<Message>} Credential Offer object
      */
     async create(wallet, recipientDid, credDefId, credentialLocation) {
+        const connection = await ConnectionService.findOne(wallet, { theirDid: recipientDid });
         const message = await lib.credential.buildOffer(wallet.handle, credDefId, recipientDid);
 
         // store and send message
@@ -46,7 +55,7 @@ module.exports = {
             message,
             meta
         );
-        await lib.message.sendAuthcrypt(wallet.handle, recipientDid, message);
+        await MessageService.send(wallet, message, connection.endpoint);
 
         return doc;
     },
@@ -58,7 +67,7 @@ module.exports = {
      * @return {Promise<Message>} credential offer or null
      */
     async retrieve(wallet, id) {
-        return Message.findTypeById(wallet, id, messageTypes.CREDENTIALOFFER).exec();
+        return Message.findTypeById(wallet, id, OFFER_MESSAGE_TYPE).exec();
     },
 
     /**
@@ -79,11 +88,13 @@ module.exports = {
      * Handle reception of credential offer through agent to agent communication
      * @param {Wallet} wallet
      * @param {object} message credential offer
+     * @param {*} senderVk
+     * @param {*} recipientVk
      */
-    async handle(wallet, message) {
+    async handle(wallet, message, senderVk, recipientVk) {
         log.debug('credential offer received');
-        const offer = await lib.message.authdecrypt(wallet.handle, message.origin, message.message);
-        message.message = offer;
         await Message.store(wallet.id, message.id, message.type, message.origin, wallet.ownDid, message);
     }
 };
+
+MessageService.registerHandler(OFFER_MESSAGE_TYPE, module.exports.handle);

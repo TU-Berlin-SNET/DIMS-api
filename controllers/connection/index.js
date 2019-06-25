@@ -1,18 +1,23 @@
-const lib = require('../../lib');
+/**
+ * Connection
+ * Base Controller
+ */
+'use strict';
 
-module.exports = {
-    offer: require('./offer'),
-    request: require('./request'),
-    response: require('./response'),
-    acknowledgement: require('./acknowledgement'),
+const Invitation = require('./invitation');
+const Request = require('./request');
+const Response = require('./response');
+const ConnectionService = require('../../services').ConnectionService;
 
-    /**
-     * Filter pairwises with myDid and return first object
-     * @param {Wallet} wallet
-     * @param {string} myDid
-     * @return {Promise<object>} pairwise or null
-     */
-    async retrieve(wallet, myDid) {
-        return await lib.pairwise.find(wallet.handle, myDid);
-    }
-};
+module.exports = exports = {};
+
+exports.list = ConnectionService.find;
+exports.create = ConnectionService.create;
+exports.retrieve = ConnectionService.findById;
+exports.remove = ConnectionService.remove;
+exports.createInvitation = Invitation.create;
+exports.receiveInvitation = Invitation.handle;
+exports.createRequest = Request.create;
+exports.receiveRequest = Request.handle;
+exports.createResponse = Response.create;
+exports.receiveResponse = Response.handle;

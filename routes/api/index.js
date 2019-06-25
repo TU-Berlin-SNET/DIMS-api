@@ -13,9 +13,8 @@ const nym = require('./nym');
 
 const docs = require('./docs');
 const wallet = require('./wallet');
-const connectionOffer = require('./connection-offer');
+const connectionInvitation = require('./connection-invitation');
 const connectionRequest = require('./connection-request');
-const connectionResponse = require('./connection-response');
 const connection = require('./connection');
 const indySchema = require('./indy-schema');
 const schema = require('./schema');
@@ -47,13 +46,11 @@ router
 
 router.use('/wallet', wallet);
 
-router.use('/connectionoffer', connectionOffer.router);
+router.use('/connectioninvitation', connectionInvitation.router);
 
 router.use('/connectionrequest', connectionRequest);
 
-router.use('/connectionresponse', connectionResponse);
-
-router.use('/connection', connection);
+router.use('/connection', connection.router);
 
 router.use('/indyschema', indySchema);
 

@@ -188,15 +188,14 @@ async function onboard(token, did, verkey, role) {
  * @return {Promise<object>} pairwise from user1
  */
 async function connect(user1token, user2token) {
-    const offer = await postRequest('/api/connectionoffer', user1token, {}, 201);
-    const request = await postRequest(
-        '/api/connectionrequest',
-        user2token,
-        { connectionOffer: offer.body.message },
-        200
-    );
-    const res = await getRequest('/api/wallet/default', user1token, 200);
-    const pairwise = res.body.pairwise.find(v => v['their_did'] === request.body.senderDid);
+    const offer = await postRequest('/api/connectioninvitation', user1token, {}, 201);
+    await postRequest('/api/connectionrequest', user2token, { invitation: offer.body.invitation }, 201);
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    const res = await getRequest('/api/connection/' + offer.body.id, user1token, 200);
+    const pairwise = {
+        my_did: res.body.myDid,
+        their_did: res.body.theirDid
+    };
     return pairwise;
 }
 

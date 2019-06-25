@@ -4,131 +4,101 @@
  */
 'use strict';
 
-const config = require('../../config');
+module.exports = exports = {};
+
+const uuidv4 = require('uuid/v4');
+
 const lib = require('../../lib');
-const Mongoose = require('../../db');
 const log = require('../../log').log;
 const APIResult = require('../../util/api-result');
-const ConnectionResponse = require('./response');
+const domainWallet = require('../../domain-wallet');
+const Invitation = require('./invitation');
+const Response = require('./response');
 
-const Message = Mongoose.model('Message');
+const ConnectionService = require('../../services').ConnectionService;
+const MessageService = require('../../services').MessageService;
 
-module.exports = {
-    /**
-     * List connection requests belonging to wallet
-     * @param {Wallet} wallet
-     * @return {Promise<Message[]>} array of connection requests
-     */
-    async list(wallet) {
-        return Message.find({
-            wallet: wallet.id,
-            type: lib.message.messageTypes.CONNECTIONREQUEST
-        }).exec();
-    },
+const REQUEST_MESSAGE_TYPE = 'did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/didexchange/1.0/request';
 
-    /**
-     * Create and send a connection request,
-     * i.e. send a initial request (with theirDid/Vk/Endpoint)
-     * or accept a connection offer (with connectionOffer)
-     * @param {Wallet} wallet
-     * @param {string} myEndpoint
-     * @param {string} [theirDid]
-     * @param {string} [theirVk]
-     * @param {string} [theirEndpoint]
-     * @param {object} [connectionOffer]
-     * @return {Promise<Message>} Message - connection request object
-     */
-    async create(wallet, myEndpoint = config.APP_AGENT_ENDPOINT, theirDid, theirVk, theirEndpoint, connectionOffer) {
-        const [theirEndpointDid, theirEndpointVk, theirEndpointAddress] = await lib.did.ensureInfo(
-            wallet.handle,
-            (connectionOffer && connectionOffer.message.did) || theirDid,
-            (connectionOffer && connectionOffer.message.verkey) || theirVk,
-            (connectionOffer && connectionOffer.message.endpoint) || theirEndpoint
-        );
-        const offerNonce = (connectionOffer && connectionOffer.message.nonce) || null;
-        // create my pairwise did and the connection request
-        const [myDid, myVk] = await lib.sdk.createAndStoreMyDid(wallet.handle, {});
-        const ownDid = await wallet.getEndpointDid();
-        const ownVk = await lib.did.localKeyOf(wallet, ownDid);
-        const connectionRequest = await lib.connection.buildRequest(ownDid, ownVk, myDid, myVk, myEndpoint, offerNonce);
-        const meta = {
-            myDid: myDid,
-            theirEndpointDid: theirEndpointDid,
-            theirEndpointVk: theirEndpointVk,
-            theirEndpoint: theirEndpointAddress
-        };
-        const message = await Message.store(
-            wallet.id,
-            connectionRequest.message.nonce,
-            connectionRequest.type,
-            connectionRequest.message.did,
-            theirEndpointDid,
-            connectionRequest,
-            meta
-        );
-        await lib.message.sendAnoncrypt(theirEndpointVk, theirEndpointAddress, connectionRequest);
-        return message;
-    },
+/**
+ * Create and send a connection request,
+ * one of invitation, diddoc, or public did MUST be present
+ * @param {Wallet} wallet
+ * @param {string} [label]
+ * @param {object} [invitation]
+ * @param {string} [did]
+ * @return {Promise<object>} connection
+ */
+exports.create = async (wallet, label = uuidv4(), invitation, did) => {
+    let conn;
+    if (invitation) {
+        conn = await Invitation.handle(wallet, invitation);
+    } else if (did) {
+        // implicit invitation through public did currently not supported
+        throw APIResult.create(501, 'not implemented');
+    } else {
+        throw APIResult.badRequest('one of invitation or did must be present');
+    }
 
-    /**
-     * Retrieve a connection request
-     * @param {Wallet} wallet
-     * @param {String} id request _id (not message.id or nonce)
-     * @return {Promise<Message>} connection request
-     */
-    async retrieve(wallet, id) {
-        return Message.findConnectionRequestById(wallet, id).exec();
-    },
-
-    /**
-     * Remove a connection request
-     * @param {Wallet} wallet
-     * @param {String} id request _id (not message.id or nonce)
-     * @return {Promise<Message>} removed connection request
-     */
-    async remove(wallet, id) {
-        const request = await Message.findConnectionRequestById(wallet, id).exec();
-        if (request) {
-            await request.remove();
+    const [myDid, myVk] = await lib.did.create(wallet.handle);
+    // currently only did:peer: method is supported
+    const myDidDoc = await lib.diddoc.buildPeerDidDoc(myDid, wallet, domainWallet);
+    const request = {
+        '@id': uuidv4(),
+        '@type': REQUEST_MESSAGE_TYPE,
+        label,
+        connection: {
+            did: myDidDoc.id,
+            did_doc: myDidDoc
         }
-        return request;
-    },
+    };
+    conn.myDid = myDid;
+    conn.myKey = myVk;
+    conn.myDidDoc = myDidDoc;
+    conn.request = request;
+    conn.threadId = request['@id'];
+    conn.state = lib.connection.STATE.REQUESTED;
+    conn.stateDirection = lib.connection.STATE_DIRECTION.OUT;
 
-    /**
-     * Handle reception of connection request through agent to agent communication
-     * @param {Wallet} wallet
-     * @param {object} message connection request
-     */
-    async handle(wallet, message) {
-        log.debug('received connection request');
-        const offer = await Message.findOne({
-            messageId: message.id,
-            type: lib.message.messageTypes.CONNECTIONOFFER,
-            wallet: wallet.id
-        }).exec();
-        // the nonce is used to query, so no additional check is needed
+    const result = await ConnectionService.save(wallet, conn);
+    await MessageService.send(wallet, conn.request, conn.endpoint);
 
-        // we must be the sender of the connection request
-        if (offer && offer.senderDid !== wallet.ownDid) {
-            throw APIResult.badRequest('invalid connection offer nonce');
-        }
+    return result;
+};
 
-        // valid request, at least store it
-        const request = await Message.store(
-            wallet.id,
-            message.message.nonce,
-            message.type,
-            message.message.did,
-            wallet.ownDid,
-            message,
-            offer ? offer.meta : {}
-        );
+/**
+ * Handle reception of connection request through agent to agent communication
+ * @param {Wallet} wallet
+ * @param {object} message connection request
+ * @param {*} senderVk
+ * @param {*} recipientVk
+ */
+exports.handle = async (wallet, message, senderVk, recipientVk) => {
+    log.debug('received connection request', wallet.id, message);
+    let conn = await ConnectionService.findOne(wallet, {
+        myKey: recipientVk,
+        state: lib.connection.STATE.INVITED,
+        stateDirection: lib.connection.STATE_DIRECTION.OUT
+    });
+    if (!conn) {
+        log.info('invalid connection request, no invitation found');
+        throw APIResult.badRequest('invalid connection request, no invitation found');
+    }
+    conn.state = lib.connection.STATE.REQUESTED;
+    conn.stateDirection = lib.connection.STATE_DIRECTION.IN;
+    conn.request = message;
+    conn.threadId = message['@id'];
+    conn.theirLabel = message.label;
+    [, conn.theirDid] = lib.diddoc.parseDidWithMethod(message.connection.did);
+    conn.theirDidDoc = message.connection.did_doc;
+    conn.endpoint = await lib.diddoc.getDidcommService(wallet, message.connection.did_doc);
+    conn.theirKey = conn.endpoint.recipientKeys[0];
 
-        // and if there is a corresponding connection offer
-        // automatically accept it
-        if (offer) {
-            await ConnectionResponse.create(wallet, request);
-            await offer.remove();
-        }
+    if (conn.invitation) {
+        await Response.create(wallet, await ConnectionService.save(wallet, conn));
+    } else {
+        await ConnectionService.save(wallet, conn);
     }
 };
+
+MessageService.registerHandler(REQUEST_MESSAGE_TYPE, exports.handle);

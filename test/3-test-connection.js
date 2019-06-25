@@ -29,6 +29,7 @@ const data = {
         meta: {
             metaId: 'test' + testId
         },
+        label: 'label-' + testId,
         data: {
             name: 'STEWARD',
             logo: 'https://www.snet.tu-berlin.de/fileadmin/_processed_/f/fd/csm_logo_gro__4fc44bd1db.jpg'
@@ -38,10 +39,10 @@ const data = {
 
 let steward;
 let user;
-let connectionOffer;
-let connectionOfferToDelete;
-let connectionRequest;
-let pairwise;
+
+let stewardConnection;
+let userConnection;
+let connectionToDelete;
 
 describe('connection', function() {
     before(async function() {
@@ -64,137 +65,102 @@ describe('connection', function() {
     });
 
     it('should create a connection offer with meta and data', async function() {
-        const res = await core.postRequest('/api/connectionoffer', steward.token, data.offer, 201);
-        expect(res.body).to.contain.keys(
-            'id',
-            'wallet',
-            'messageId',
-            'type',
-            'senderDid',
-            'recipientDid',
-            'message',
-            'meta'
-        );
-        expect(res.body.message).to.contain.keys('id', 'type', 'message');
-        expect(res.body.message.message).to.contain.keys('did', 'verkey', 'endpoint', 'nonce', 'data');
-        expect(res.body.meta).to.have.property('myDid');
-        expect(res.body.meta).to.have.property('metaId', data.offer.meta.metaId);
-        expect(res.body.messageId).to.equal(res.body.message.message.nonce);
-        connectionOffer = res.body;
+        const res = await core.postRequest('/api/connectioninvitation', steward.token, data.offer, 201);
+        stewardConnection = res.body;
+        expect(res.body).to.have.property('state', 'INVITED');
+        expect(res.body)
+            .to.have.property('meta')
+            .with.property('metaId', data.offer.meta.metaId);
+        expect(res.body).to.have.property('invitation');
+        expect(res.body.invitation)
+            .to.have.property('~attach')
+            .that.eqls(data.offer.data);
+        expect(res.body).to.have.property('label', data.offer.label);
     });
 
     it('should create a connection offer with empty request body', async function() {
-        const res = await core.postRequest('/api/connectionoffer', steward.token, {}, 201);
-        expect(res.body.message).to.contain.keys('id', 'type', 'message');
-        expect(res.body.message.message).to.contain.keys('did', 'verkey', 'endpoint', 'nonce');
-        expect(res.body.messageId).to.equal(res.body.message.message.nonce);
-        connectionOfferToDelete = res.body.message;
+        const res = await core.postRequest('/api/connectioninvitation', steward.token, {}, 201);
+        expect(res.body).to.have.property('state', 'INVITED');
+        expect(res.body).to.have.property('invitation');
+        connectionToDelete = res.body;
     });
 
-    it('should return 404 if retrieving a connection where the pairwise does not exist yet', async function() {
-        await core.getRequest('/api/connection/' + connectionOffer.meta.myDid, steward.token, 404);
-    });
-
-    it('should return 404 if retrieving a connection where the did does not exist', async function() {
-        await core.getRequest('/api/connection/0000DoesNotExist', steward.token, 404);
-    });
-
-    it('should list connection offers', async function() {
-        const res = await core.getRequest('/api/connectionoffer', steward.token, 200);
+    it('should query connections in INVITED state', async function() {
+        const res = await core.getRequest('/api/connection?state=INVITED', steward.token, 200);
         expect(res.body)
             .to.be.an('Array')
             .with.lengthOf.at.least(1);
-        connectionOfferToDelete = res.body.find(v => v.messageId === connectionOfferToDelete.id);
     });
 
-    it('should delete a connectionOffer', async function() {
-        await core.deleteRequest('/api/connectionoffer/' + connectionOfferToDelete.id, steward.token, 204);
+    it('should delete a connection', async function() {
+        await core.deleteRequest('/api/connection/' + connectionToDelete.id, steward.token, 204);
     });
 
-    it('should accept a connection offer', async function() {
-        const postBody = { connectionOffer: connectionOffer.message };
-        connectionRequest = (await core.postRequest('/api/connectionrequest', user.token, postBody, 200)).body;
-    });
-
-    it('should retrieve established connections', async function() {
-        const stewardConn = await core.getRequest('/api/connection/' + connectionOffer.meta.myDid, steward.token, 200);
-        const userConn = await core.getRequest('/api/connection/' + connectionRequest.senderDid, user.token, 200);
-        expect(stewardConn.body).to.have.property('myDid', connectionOffer.meta.myDid);
-        expect(stewardConn.body).to.have.property('theirDid', connectionRequest.senderDid);
-        expect(stewardConn.body).to.have.property('acknowledged', true);
-
-        expect(userConn.body).to.have.property('myDid', connectionRequest.senderDid);
-        expect(userConn.body).to.have.property('theirDid', connectionOffer.meta.myDid);
-        expect(userConn.body).to.have.property('acknowledged', true);
-    });
-
-    it('should send initial connection request', async function() {
-        const postBody = { theirDid: steward.wallet.ownDid, theirEndpoint: core.AGENT_ENDPOINT };
-        const res = await core.postRequest('/api/connectionrequest', user.token, postBody, 200);
-        expect(res.body.message).to.contain.keys('id', 'type', 'message');
-        expect(res.body.message.message).to.contain.keys(
-            'did',
-            'verkey',
-            'endpointDid',
-            'endpointVk',
-            'endpoint',
-            'nonce'
-        );
-        connectionRequest = res.body.message;
-    });
-
-    it('should list connection requests', async function() {
-        const res = await core.getRequest('/api/connectionrequest', steward.token, 200);
-        expect(res.body)
-            .to.be.an('Array')
-            .with.lengthOf(1);
-        expect(res.body[0].message).to.eql(connectionRequest);
-        connectionRequest = res.body[0];
-    });
-
-    it('should retrieve a connection request with id', async function() {
-        const res = await core.getRequest('/api/connectionrequest/' + connectionRequest.id, steward.token, 200);
-        expect(res.body).to.eql(connectionRequest);
-    });
-
-    it('should accept a connection request', async function() {
-        const postBody = { connectionRequestId: connectionRequest.id };
-        const res = await core.postRequest('/api/connectionresponse', steward.token, postBody, 200);
-        expect(res.body).to.contain.keys('id', 'aud', 'type', 'message');
-        expect(res.body.message).to.contain.keys('did', 'verkey', 'nonce');
-
-        pairwise = (await core.getRequest(
-            '/api/wallet/default/connection/' + connectionRequest.message.message.did,
-            steward.token,
-            200
-        )).body;
-        expect(pairwise).to.be.an('Object');
-        expect(pairwise).to.contain.keys('my_did', 'their_did', 'metadata');
-        expect(pairwise.metadata).to.be.an('Object');
-        expect(pairwise.metadata).to.contain.keys(
-            'theirEndpointDid',
-            'theirEndpointVk',
-            'theirEndpoint',
-            'acknowledged'
-        );
-        expect(pairwise.metadata.acknowledged).to.be.true;
+    it('should accept a connection invitation', async function() {
+        const postBody = { invitation: stewardConnection.invitation };
+        const res = await core.postRequest('/api/connectionrequest', user.token, postBody, 201);
+        userConnection = res.body;
+        expect(res.body).to.have.property('state', 'REQUESTED');
+        expect(res.body).to.contain.keys('myDid', 'myKey', 'invitation', 'request');
     });
 
     it('should list connections', async function() {
-        const res = await core.getRequest('/api/wallet/default/connection', steward.token, 200);
-        expect(res.body)
-            .to.be.an('Array')
-            .with.lengthOf(2);
-        const conn = res.body.find(v => v['my_did'] === pairwise['my_did']);
-        expect(conn).to.eql(pairwise);
+        const stewardConns = (await core.getRequest('/api/connection/', steward.token, 200)).body;
+        expect(stewardConns)
+            .to.be.an('array')
+            .with.lengthOf(1);
+        expect(stewardConns[0]).to.contain.keys('id', 'state', 'stateDirection', 'initiator');
     });
 
-    it('should retrieve a connection with theirDid', async function() {
-        const res = await core.getRequest(
-            '/api/wallet/default/connection/' + pairwise['their_did'],
-            steward.token,
-            200
-        );
-        expect(res.body).to.eql(pairwise);
+    it('should retrieve a connection by id', async function() {
+        const res = await core.getRequest('/api/connection/' + stewardConnection.id, steward.token, 200);
+        expect(res.body).to.have.property('id', stewardConnection.id);
+        expect(res.body).to.contain.keys('id', 'state', 'stateDirection', 'initiator');
+    });
+
+    it('should return 404 if retrieving a connection that does not exist', async function() {
+        await core.getRequest('/api/connection/DoesNotExist0000', steward.token, 404);
+    });
+
+    it('should have established', async function() {
+        let userConn;
+        for (let i = 1; i <= 3; i++) {
+            userConn = await core.getRequest('/api/connection/' + userConnection.id, user.token, 200);
+            if (userConn.body.state === 'COMPLETE') {
+                break;
+            }
+            await new Promise(resolve => setTimeout(resolve, 333 * i));
+        }
+        userConn = userConn.body;
+        const stewardConn = (await core.getRequest('/api/connection/' + stewardConnection.id, steward.token, 200)).body;
+        const connValues = ['state', 'myDid', 'myKey', 'myDidDoc', 'theirDid', 'theirKey', 'theirDidDoc', 'endpoint'];
+        expect(userConn).to.have.property('state', 'COMPLETE');
+        expect(stewardConn).to.have.property('state', 'RESPONDED');
+        expect(userConn).to.contain.keys(...connValues);
+        expect(stewardConn).to.contain.keys(...connValues);
+        expect(userConn).to.have.property('state', 'COMPLETE');
+        expect(stewardConn).to.have.property('state', 'RESPONDED');
+        expect(userConn).to.have.property('myDid', stewardConn.theirDid);
+        expect(userConn).to.have.property('myKey', stewardConn.theirKey);
+        expect(userConn).to.have.property('theirDid', stewardConn.myDid);
+        expect(userConn).to.have.property('theirKey', stewardConn.myKey);
+        expect(userConn.myDidDoc).to.eql(stewardConn.theirDidDoc);
+        expect(userConn.theirDidDoc).to.eql(stewardConn.myDidDoc);
+        expect(userConn.endpoint).to.contain.keys('recipientKeys', 'routingKeys', 'serviceEndpoint');
+        expect(stewardConn.endpoint).to.contain.keys('recipientKeys', 'routingKeys', 'serviceEndpoint');
+    });
+
+    it.skip('should send initial connection request', async function() {
+        // TODO initial requests with no previous invitation (or implicit invitation) are
+        // currently not supported
+    });
+
+    it.skip('should query connection requests', async function() {
+        // TODO
+    });
+
+    it.skip('should accept a connection request', async function() {
+        // TODO currently unsupported (requests in response to invitation are automatically accepted)
+        // and requests using implicit invitations, i.e. public did with diddoc, are currently unsupported
     });
 });

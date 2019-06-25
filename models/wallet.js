@@ -114,18 +114,21 @@ schema.set('toJSON', {
 schema.pre('remove', async function() {
     log.debug('wallet model pre-remove');
     await this.close();
-    await Mongoose.model('Message')
-        .remove({ wallet: this })
-        .exec();
-    await Mongoose.model('ProofRequestTemplate')
-        .remove({ wallet: this })
-        .exec();
-    await Mongoose.model('Proof')
-        .remove({ wallet: this })
-        .exec();
-    await Mongoose.model('User')
-        .update({ wallet: this }, { $unset: { wallet: 1 } }, { multi: true })
-        .exec();
+    const cascadeModels = ['Connection', 'Message', 'ProofRequestTemplate', 'Proof', 'Routing'];
+    const cascadePromises = [];
+    for (const modelName of cascadeModels) {
+        cascadePromises.push(
+            Mongoose.model(modelName)
+                .remove({ wallet: this })
+                .exec()
+        );
+    }
+    cascadePromises.push(
+        Mongoose.model('User')
+            .update({ wallet: this }, { $unset: { wallet: 1 } }, { multi: true })
+            .exec()
+    );
+    await Promise.all(cascadePromises);
     await this.delete();
 });
 
