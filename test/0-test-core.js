@@ -106,7 +106,7 @@ async function steward(testId) {
         username: 'steward' + testId,
         password: 'pass',
         wallet: {
-            name: 'wallet' + testId,
+            name: 'steward-wallet-' + testId,
             seed: stewardSeed,
             credentials: { key: 'walletkey' }
         }

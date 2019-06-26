@@ -93,11 +93,10 @@ exports.handle = async (wallet, message, senderVk, recipientVk) => {
     conn.theirDidDoc = message.connection.did_doc;
     conn.endpoint = await lib.diddoc.getDidcommService(wallet, message.connection.did_doc);
     conn.theirKey = conn.endpoint.recipientKeys[0];
+    conn = await ConnectionService.save(wallet, conn);
 
     if (conn.invitation) {
-        await Response.create(wallet, await ConnectionService.save(wallet, conn));
-    } else {
-        await ConnectionService.save(wallet, conn);
+        Response.create(wallet, conn);
     }
 };
 
