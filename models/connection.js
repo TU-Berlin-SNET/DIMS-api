@@ -54,7 +54,7 @@ const schema = new Mongoose.Schema(
         },
         theirDidDoc: {},
         /**
-         * Contains their recipientKeys, routingKeys,
+         * Contains my senderKey and their recipientKeys, routingKeys,
          * and serviceEndpoint address parsed from did-doc
          */
         endpoint: {},

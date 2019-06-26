@@ -52,17 +52,28 @@ async function storePairwiseInWallet(wallet, myDid, theirDid, theirVk, meta) {
 exports.create = async (wallet, connectionOrId) => {
     let connection = connectionOrId;
     if (typeof connection === 'string') {
+        log.debug('retrieving connection by id', connection);
         connection = await ConnectionService.findById(wallet, connection);
+    }
+    if (!connection) {
+        log.warn('connection not applicable or does not exist');
+        return;
     }
     if (connection.state === lib.connection.STATE.RESPONDED) {
         // resend response
-        await MessageService.send(wallet, connection.response, connection.endpoint);
+        log.debug('already responded, resending response');
+        await MessageService.send(wallet, connection.response, {
+            recipientKeys: connection.endpoint.recipientKeys,
+            routingKeys: connection.endpoint.routingKeys,
+            serviceEndpoint: connection.endpoint.serviceEndpoint
+        });
         return connection;
     }
     if (
         connection.state !== lib.connection.STATE.REQUESTED &&
         connection.stateDirection !== lib.connection.STATE_DIRECTION.IN
     ) {
+        log.warn('cannot respond to connection in wrong state');
         // TODO needs better error handling
         return;
     }
@@ -96,6 +107,9 @@ exports.create = async (wallet, connectionOrId) => {
     connection.state = lib.connection.STATE.RESPONDED;
     connection.stateDirection = lib.connection.STATE_DIRECTION.OUT;
     connection.response = response;
+    // add senderKey to send messages after this one authcrypted
+    connection.endpoint = Object.assign({}, connection.endpoint, { senderKey: myKey });
+    connection = await ConnectionService.save(wallet, connection);
 
     // if we specifically added a role to our offer then this role
     // will be in the request object as this means that this method
@@ -128,11 +142,15 @@ exports.create = async (wallet, connectionOrId) => {
         connection.meta
     );
 
-    await MessageService.send(wallet, response, connection.endpoint);
-    // add this after the message is sent
-    // to authcrypt subsequent messages
-    connection.endpoint.senderKey = connection.myKey;
-    return await ConnectionService.save(wallet, connection);
+    // omit senderKey from target so this message is sent
+    // anoncrypted since didexchange is not finished yet
+    await MessageService.send(wallet, response, {
+        recipientKeys: connection.endpoint.recipientKeys,
+        routingKeys: connection.endpoint.routingKeys,
+        serviceEndpoint: connection.endpoint.serviceEndpoint
+    });
+
+    return connection;
 };
 
 /**
@@ -175,6 +193,8 @@ exports.handle = async (wallet, message, senderVk, recipientVk) => {
     connection.state = lib.connection.STATE.COMPLETE;
     connection.stateDirection = lib.connection.STATE_DIRECTION.IN;
 
+    await ConnectionService.save(wallet, connection);
+
     await storePairwiseInWallet(
         wallet,
         connection.myDid,
@@ -182,8 +202,6 @@ exports.handle = async (wallet, message, senderVk, recipientVk) => {
         connection.endpoint.recipientKeys[0],
         connection.meta
     );
-
-    return await ConnectionService.save(wallet, connection);
 };
 
 MessageService.registerHandler(RESPONSE_MESSAGE_TYPE, exports.handle);

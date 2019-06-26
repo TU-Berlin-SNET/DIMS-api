@@ -138,16 +138,14 @@ describe('connection', function() {
         expect(stewardConn).to.have.property('state', 'RESPONDED');
         expect(userConn).to.contain.keys(...connValues);
         expect(stewardConn).to.contain.keys(...connValues);
-        expect(userConn).to.have.property('state', 'COMPLETE');
-        expect(stewardConn).to.have.property('state', 'RESPONDED');
         expect(userConn).to.have.property('myDid', stewardConn.theirDid);
         expect(userConn).to.have.property('myKey', stewardConn.theirKey);
         expect(userConn).to.have.property('theirDid', stewardConn.myDid);
         expect(userConn).to.have.property('theirKey', stewardConn.myKey);
         expect(userConn.myDidDoc).to.eql(stewardConn.theirDidDoc);
         expect(userConn.theirDidDoc).to.eql(stewardConn.myDidDoc);
-        expect(userConn.endpoint).to.contain.keys('recipientKeys', 'routingKeys', 'serviceEndpoint');
-        expect(stewardConn.endpoint).to.contain.keys('recipientKeys', 'routingKeys', 'serviceEndpoint');
+        expect(userConn.endpoint).to.contain.keys('senderKey', 'recipientKeys', 'routingKeys', 'serviceEndpoint');
+        expect(stewardConn.endpoint).to.contain.keys('senderKey', 'recipientKeys', 'routingKeys', 'serviceEndpoint');
     });
 
     it.skip('should send initial connection request', async function() {
