@@ -22,6 +22,7 @@ router
         wrap(async (req, res, next) => {
             const data = await controller.offer.create(
                 req.wallet,
+                req.body.comment,
                 req.body.recipientDid,
                 req.body.credDefId,
                 req.body.credentialLocation

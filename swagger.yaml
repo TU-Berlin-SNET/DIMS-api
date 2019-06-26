@@ -219,6 +219,9 @@ definitions:
     properties:
       wallet:
         $ref: '#/definitions/walletId'
+      comment:
+        description: '(optional) comment describing the credential'
+        type: string
       credentialRequestId:
         description: 'Credential Request _id as stored in API'
         type: string
@@ -252,6 +255,9 @@ definitions:
     properties:
       wallet:
         $ref: '#/definitions/walletId'
+      comment:
+        description: '(optional) comment describing the credential offer'
+        type: string
       recipientDid:
         description: 'DID for whom to create a credential offer'
         type: string
@@ -270,6 +276,9 @@ definitions:
     properties:
       wallet:
         $ref: '#/definitions/walletId'
+      comment:
+        description: '(optional) comment describing the credential request'
+        type: string
       credentialOfferId:
         description: 'credentialoffer _id as stored in API'
         type: string
