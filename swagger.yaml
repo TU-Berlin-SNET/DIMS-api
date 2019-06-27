@@ -363,6 +363,9 @@ definitions:
       recipientDid:
         description: 'DID for whom to create a proof request'
         type: string
+      comment:
+        description: '(optional) comment describing the proof request'
+        type: string
       proofRequest:
         description:
           'proof request template _id or proof request object (see https://github.com/hyperledger/indy-sdk/blob/master/doc/getting-started/getting-started.md#apply-for-a-job)'
@@ -388,6 +391,9 @@ definitions:
         $ref: '#/definitions/walletId'
       proofRequestId:
         description: 'proof request _id'
+        type: string
+      comment:
+        description: '(optional) comment describing the proof'
         type: string
       values:
         description: (Optional) Object containing self-attested-attributes as key-value pairs
