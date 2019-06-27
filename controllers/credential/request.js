@@ -17,7 +17,7 @@ const Services = require('../../services');
 const ConnectionService = Services.ConnectionService;
 const MessageService = Services.MessageService;
 
-const REQUEST_MESSAGE_TYPE = 'urn:sovrin:agent:message_type:sovrin.org/credential_request';
+const REQUEST_MESSAGE_TYPE = 'did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/issue-credential/1.0/request-credential';
 
 module.exports = {
     /**
@@ -35,47 +35,63 @@ module.exports = {
     /**
      * Create and send a credential request
      * @param {Wallet} wallet
-     * @param {(string | object)} credentialOffer _id or decrypted credential offer message
+     * @param {string} comment
+     * @param {string} credentialOffer _id
      * @return {Promise<Message>}
      */
-    async create(wallet, credentialOffer) {
-        let offerDoc;
-        if (typeof credentialOffer === 'string') {
-            offerDoc = await Message.findTypeById(
-                wallet,
-                credentialOffer,
-                CredentialOfferController.OFFER_MESSAGE_TYPE
-            ).exec();
-            credentialOffer = offerDoc ? offerDoc.message : null;
-        }
-        if (!credentialOffer) {
+    async create(wallet, comment = '', credentialOffer) {
+        const offerDoc = await Message.findTypeById(
+            wallet,
+            credentialOffer,
+            CredentialOfferController.OFFER_MESSAGE_TYPE
+        ).exec();
+        const offer = offerDoc.meta.offer;
+        if (!offerDoc) {
             throw APIResult.badRequest('invalid credential offer or no applicable credential offer found');
         }
-        const connection = await ConnectionService.findOne(wallet, { theirDid: credentialOffer.origin });
-        const [, credentialDefinition] = await lib.ledger.getCredDef(
-            connection.myDid,
-            credentialOffer.message.cred_def_id
-        );
+        const connection = await ConnectionService.findOne(wallet, {
+            myDid: offerDoc.recipientDid,
+            theirDid: offerDoc.senderDid
+        });
+        const [, credentialDefinition] = await lib.ledger.getCredDef(connection.myDid, offer.cred_def_id);
         const masterSecretId = await wallet.getMasterSecretId();
-        const [message, requestMeta] = await lib.credential.buildRequest(
+        const [request, requestMeta] = await lib.sdk.proverCreateCredentialReq(
             wallet.handle,
             connection.myDid,
-            credentialOffer.message,
+            offer,
             credentialDefinition,
             masterSecretId
         );
-        const doc = await Message.store(
-            wallet.id,
-            message.message.nonce,
-            message.type,
-            wallet.ownDid,
-            credentialOffer.origin,
-            message,
-            requestMeta
-        );
-        offerDoc && (await offerDoc.remove());
+        const id = await lib.crypto.generateId();
+        const requestMessage = {
+            '@id': id,
+            type: REQUEST_MESSAGE_TYPE,
+            comment,
+            '~thread': { thid: offerDoc.threadId },
+            'requests~attach': [
+                {
+                    '@id': id + '1',
+                    'mime-type': 'application/json',
+                    data: { base64: lib.crypto.b64encode(request) }
+                }
+            ]
+        };
+        const meta = offerDoc.meta;
+        meta.request = request;
+        meta.requestMeta = requestMeta;
+        const doc = await new Message({
+            wallet: wallet.id,
+            messageId: id,
+            threadId: offerDoc.threadId,
+            type: REQUEST_MESSAGE_TYPE,
+            senderDid: connection.myDid,
+            recipientDid: connection.theirDid,
+            message: requestMessage,
+            meta
+        }).save();
+        await offerDoc.remove();
 
-        await MessageService.send(wallet, message, connection.endpoint);
+        await MessageService.send(wallet, doc.message, connection.endpoint);
 
         return doc;
     },
@@ -108,44 +124,48 @@ module.exports = {
      * Handle reception of credential request through agent to agent communication
      * @param {Wallet} wallet
      * @param {object} message
+     * @param {string} senderVk
+     * @param {string} recipientVk
      */
-    async handle(wallet, message) {
+    async handle(wallet, message, senderVk, recipientVk) {
         log.debug('received credential request');
 
-        // find corresponding credential offer (use nonce for querying -> nonce match is established)
-        const offer = await Message.findTypeByMessageId(
-            wallet,
-            message.id,
-            CredentialOfferController.OFFER_MESSAGE_TYPE
-        ).exec();
+        // find corresponding credential offer (using threadId)
+        const offer = await Message.findOne({
+            wallet: wallet.id,
+            threadId: message['~thread'].thid,
+            type: CredentialOfferController.OFFER_MESSAGE_TYPE
+        }).exec();
+        const connection = await ConnectionService.findOne(wallet, { myKey: recipientVk, theirKey: senderVk });
 
         // 2018-10-19: we (and indy-sdk) currently do not support credential requests as the
         // first message in the credential issue flow, a credential offer must always exist
         // and we MUST be the sender of that credential offer, otherwise we reject the request
-        if (!offer || offer.senderDid !== wallet.ownDid) {
+        if (!offer || offer.senderDid !== connection.myDid) {
             throw APIResult.badRequest('no applicable credential offer found');
         }
 
-        const meta = offer.meta || {};
-        meta.offer = offer.message.message;
+        const meta = offer.meta;
+        meta.request = JSON.parse(lib.crypto.b64decode(message['requests~attach'][0].data.base64));
 
         // remove credential offer to prevent replays
         await offer.remove();
 
         // request is valid so store it
-        const request = await Message.store(
-            wallet.id,
-            message.message.nonce,
-            message.type,
-            message.origin,
-            wallet.ownDid,
+        const requestDoc = await new Message({
+            wallet: wallet.id,
+            messageId: message['@id'],
+            threadId: message['~thread'].thid,
+            type: message.type,
+            senderDid: connection.theirDid,
+            recipientDid: connection.myDid,
             message,
             meta
-        );
+        }).save();
 
         // automatically issue and send credential if credentialLocation exists in metadata
-        if (request.meta.credentialLocation) {
-            await Credential.create(wallet, request);
+        if (requestDoc.meta.credentialLocation) {
+            await Credential.create(wallet, 'credential', requestDoc);
         }
     }
 };

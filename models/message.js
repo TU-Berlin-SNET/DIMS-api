@@ -1,5 +1,4 @@
 const Mongoose = require('../db');
-const MessageTypes = require('../lib').message.messageTypes;
 
 const schema = new Mongoose.Schema(
     {
@@ -13,6 +12,11 @@ const schema = new Mongoose.Schema(
             type: String,
             required: true,
             index: true
+        },
+        threadId: {
+            type: String,
+            index: true,
+            sparse: true
         },
         type: {
             type: String,

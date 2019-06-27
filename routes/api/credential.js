@@ -20,7 +20,12 @@ router
     )
     .post(
         wrap(async (req, res, next) => {
-            const data = await controller.credential.create(req.wallet, req.body.credentialRequestId, req.body.values);
+            const data = await controller.credential.create(
+                req.wallet,
+                req.body.comment,
+                req.body.credentialRequestId,
+                req.body.values
+            );
             res.locals.result = APIResult.created(data);
             next();
         })

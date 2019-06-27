@@ -107,9 +107,7 @@ describe('credentials', function() {
             credDefId: credDef.credDefId
         };
         const res = await core.postRequest('/api/credentialoffer', issuer.token, postBody, 201);
-        expect(res.body).to.contain.keys('id', 'type', 'message', 'messageId');
-        expect(res.body.message.message).to.contain.keys('schema_id', 'cred_def_id', 'nonce', 'key_correctness_proof');
-        expect(res.body.messageId).to.equal(res.body.message.message.nonce);
+        expect(res.body).to.contain.keys('id', 'type', 'threadId', 'message', 'messageId');
     });
 
     it('should list received credential offers', async function() {
@@ -117,21 +115,14 @@ describe('credentials', function() {
         expect(res.body)
             .to.be.an('Array')
             .with.lengthOf(1);
-        expect(res.body[0]).to.contain.keys('id', 'type', 'message', 'messageId');
+        expect(res.body[0]).to.contain.keys('id', 'type', 'threadId', 'message', 'messageId');
         credentialOffer = res.body[0];
     });
 
     it('should accept credential offer and send credential request', async function() {
         const postBody = { credentialOfferId: credentialOffer.id };
         const res = await core.postRequest('/api/credentialrequest', holder.token, postBody, 201);
-        expect(res.body).to.contain.keys('id', 'type', 'message', 'messageId');
-        expect(res.body.message.message).to.contain.keys(
-            'prover_did',
-            'cred_def_id',
-            'blinded_ms',
-            'blinded_ms_correctness_proof',
-            'nonce'
-        );
+        expect(res.body).to.contain.keys('id', 'type', 'threadId', 'message', 'messageId');
     });
 
     it('should list received credential requests', async function() {
@@ -139,7 +130,7 @@ describe('credentials', function() {
         expect(res.body)
             .to.be.an('Array')
             .with.lengthOf(1);
-        expect(res.body[0]).to.contain.keys('id', 'type', 'message', 'messageId');
+        expect(res.body[0]).to.contain.keys('id', 'type', 'threadId', 'message', 'messageId');
         credentialRequest = res.body[0];
     });
 
@@ -149,8 +140,7 @@ describe('credentials', function() {
             values: data.credValues
         };
         const res = await core.postRequest('/api/credential', issuer.token, postBody, 201);
-        expect(res.body).to.contain.keys('id', 'type', 'message', 'messageId');
-        expect(res.body.message.message).to.contain.keys('schema_id', 'cred_def_id', 'values');
+        expect(res.body).to.contain.keys('id', 'type', 'threadId', 'message', 'messageId');
         credentialMessage = res.body;
     });
 
@@ -173,7 +163,7 @@ describe('credentials', function() {
         expect(res.body)
             .to.be.an('Array')
             .with.lengthOf(2);
-        expect(res.body.find(v => v.message.id === credentialMessage.message.id)).to.eql(credentialMessage);
+        expect(res.body.find(v => v.messageId === credentialMessage.messageId)).to.eql(credentialMessage);
     });
 
     it('should filter issued credentials by recipientDid', async function() {

@@ -189,12 +189,21 @@ async function onboard(token, did, verkey, role) {
  */
 async function connect(user1token, user2token) {
     const offer = await postRequest('/api/connectioninvitation', user1token, {}, 201);
-    await postRequest('/api/connectionrequest', user2token, { invitation: offer.body.invitation }, 201);
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    const res = await getRequest('/api/connection/' + offer.body.id, user1token, 200);
+    const request = await postRequest('/api/connectionrequest', user2token, { invitation: offer.body.invitation }, 201);
+
+    // poll until user2 connection is established and complete because user2 is waiting for response
+    for (let i = 1; i <= 3; i++) {
+        const user2Connection = await getRequest('/api/connection/' + request.body.id, user2token, 200);
+        if (user2Connection.body.state === 'COMPLETE') {
+            break;
+        }
+        await new Promise(resolve => setTimeout(resolve, 333 * i));
+    }
+
+    const user1Connection = await getRequest('/api/connection/' + offer.body.id, user1token, 200);
     const pairwise = {
-        my_did: res.body.myDid,
-        their_did: res.body.theirDid
+        my_did: user1Connection.body.myDid,
+        their_did: user1Connection.body.theirDid
     };
     return pairwise;
 }
@@ -234,14 +243,14 @@ async function issueCredential(token1, token2, recipientDid, credDefId, values) 
     // credential offer exchange
     const offerMessage = (await postRequest('/api/credentialoffer', token1, { recipientDid, credDefId }, 201)).body;
     const offer = (await getRequest('/api/credentialoffer', token2, 200)).body.find(
-        v => v.message.id === offerMessage.message.id
+        v => v.messageId === offerMessage.messageId
     );
 
     // credential request exchange
     const requestMessage = (await postRequest('/api/credentialrequest', token2, { credentialOfferId: offer.id }, 201))
         .body;
     const credentialRequestId = (await getRequest('/api/credentialrequest', token1, 200)).body.find(
-        v => v.message.id === requestMessage.message.id
+        v => v.messageId === requestMessage.messageId
     ).id;
 
     // issue credential
