@@ -48,7 +48,7 @@ module.exports = {
         const credentialOffer = await lib.sdk.issuerCreateCredentialOffer(wallet.handle, credDefId);
         const message = {
             '@id': id,
-            type: OFFER_MESSAGE_TYPE,
+            '@type': OFFER_MESSAGE_TYPE,
             comment,
             'offers~attach': [
                 {
@@ -72,7 +72,7 @@ module.exports = {
         const doc = await new Message({
             wallet: wallet.id,
             messageId: id,
-            type: OFFER_MESSAGE_TYPE,
+            type: message['@type'],
             senderDid: connection.myDid,
             threadId: id,
             recipientDid,
@@ -129,7 +129,7 @@ module.exports = {
             wallet: wallet.id,
             messageId: message['@id'],
             threadId: message['@id'],
-            type: message.type,
+            type: message['@type'],
             senderDid: connection.theirDid,
             recipientDid: connection.myDid,
             message,

@@ -65,7 +65,7 @@ module.exports = {
         const id = await lib.crypto.generateId();
         const requestMessage = {
             '@id': id,
-            type: REQUEST_MESSAGE_TYPE,
+            '@type': REQUEST_MESSAGE_TYPE,
             comment,
             '~thread': { thid: offerDoc.threadId },
             'requests~attach': [
@@ -83,7 +83,7 @@ module.exports = {
             wallet: wallet.id,
             messageId: id,
             threadId: offerDoc.threadId,
-            type: REQUEST_MESSAGE_TYPE,
+            type: requestMessage['@type'],
             senderDid: connection.myDid,
             recipientDid: connection.theirDid,
             message: requestMessage,
@@ -156,7 +156,7 @@ module.exports = {
             wallet: wallet.id,
             messageId: message['@id'],
             threadId: message['~thread'].thid,
-            type: message.type,
+            type: message['@type'],
             senderDid: connection.theirDid,
             recipientDid: connection.myDid,
             message,
