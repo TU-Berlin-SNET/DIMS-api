@@ -79,6 +79,7 @@ module.exports = {
             log.debug('verifying proof');
             proof.isValid = await lib.proof.verify(wallet.ownDid, proof.meta.proofRequest, proof.proof);
         }
+        await proof.save();
         log.debug('retrieved proof');
         return proof;
     },

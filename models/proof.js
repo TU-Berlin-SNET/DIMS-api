@@ -28,23 +28,17 @@ const schema = new Mongoose.Schema(
             default: 'pending',
             enum: ['pending', 'received']
         },
+        isValid: {
+            type: Boolean,
+            required: false
+        },
         meta: {}
     },
     { timestamps: true, minimize: false }
 );
 
-schema
-    .virtual('isValid')
-    .get(function() {
-        return this.__isValid || false;
-    })
-    .set(function(value) {
-        this.__isValid = value;
-    });
-
 schema.set('toJSON', {
     versionKey: false,
-    virtuals: true,
     transform: (doc, ret, options) => {
         ret.id = String(ret._id);
         delete ret.meta;
