@@ -23,6 +23,7 @@ router
             const data = await controller.request.create(
                 req.wallet,
                 req.body.recipientDid,
+                req.body.comment,
                 req.body.proofRequest,
                 req.body.templateValues
             );

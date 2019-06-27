@@ -13,13 +13,16 @@ const APIResult = require('../../util/api-result');
 const Proof = Mongoose.model('Proof');
 const Message = Mongoose.model('Message');
 const ProofRequestTemplate = Mongoose.model('ProofRequestTemplate');
-const messageTypes = lib.message.messageTypes;
 const Services = require('../../services');
 
 const ConnectionService = Services.ConnectionService;
 const MessageService = Services.MessageService;
 
+const REQUEST_MESSAGE_TYPE = 'did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/present-proof/1.0/request-presentation';
+
 module.exports = {
+    REQUEST_MESSAGE_TYPE,
+
     /**
      * List proof requests belonging to wallet (sent or received)
      * @param {Wallet} wallet
@@ -28,7 +31,7 @@ module.exports = {
     async list(wallet) {
         return Message.find({
             wallet: wallet.id,
-            type: messageTypes.PROOFREQUEST
+            type: REQUEST_MESSAGE_TYPE
         }).exec();
     },
 
@@ -36,12 +39,14 @@ module.exports = {
      * Create and send a proof request
      * @param {Wallet} wallet
      * @param {string} recipientDid
+     * @param {string} [comment]
      * @param {(string | object)} proofRequest _id of proof request template or proof request object
      * @param {object} [templateValues] values to use for rendering the template
      * @return {Promise<Message>}
      */
-    async create(wallet, recipientDid, proofRequest, templateValues) {
-        if (!(await lib.pairwise.exists(wallet.handle, recipientDid))) {
+    async create(wallet, recipientDid, comment = '', proofRequest, templateValues) {
+        const connection = await ConnectionService.findOne(wallet, { theirDid: recipientDid });
+        if (!connection || !(await lib.pairwise.exists(wallet.handle, recipientDid))) {
             throw APIResult.badRequest('invalid recipientDid, no pairwise exists');
         }
 
@@ -56,7 +61,23 @@ module.exports = {
         if (!proofRequest) {
             throw APIResult.badRequest('invalid proof request or no applicable proof request template found');
         }
-        const message = await lib.proof.buildRequest(wallet.handle, recipientDid, proofRequest);
+        if (!proofRequest.nonce) {
+            proofRequest.nonce = await lib.crypto.getNonce();
+        }
+        const id = await lib.crypto.generateId();
+        const message = {
+            '@id': id,
+            '@type': REQUEST_MESSAGE_TYPE,
+            '~thread': { thid: id },
+            comment,
+            'request_presentations~attach': [
+                {
+                    '@id': id + '-1',
+                    'mime-type': 'application/json',
+                    data: { base64: lib.crypto.b64encode(proofRequest) }
+                }
+            ]
+        };
 
         // create placeholder for expected proof, this will allow for checking the status later on
         const proof = await new Proof({
@@ -64,18 +85,18 @@ module.exports = {
             did: recipientDid
         }).save();
 
-        const meta = { proofId: proof.id };
-        const doc = await Message.store(
-            wallet.id,
-            message.message.nonce,
-            messageTypes.PROOFREQUEST,
-            wallet.ownDid,
+        const meta = { proofId: proof.id, proofRequest };
+        const doc = await new Message({
+            wallet: wallet.id,
+            type: message['@type'],
+            messageId: id,
+            threadId: id,
+            senderDid: connection.myDid,
             recipientDid,
             message,
             meta
-        );
+        }).save();
 
-        const connection = await ConnectionService.findOne(wallet, { theirDid: recipientDid });
         await MessageService.send(wallet, message, connection.endpoint);
 
         return doc;
@@ -88,7 +109,7 @@ module.exports = {
      * @return {Promise<Message>}
      */
     async retrieve(wallet, id) {
-        return Message.findTypeById(wallet, id, messageTypes.PROOFREQUEST).exec();
+        return Message.findTypeById(wallet, id, REQUEST_MESSAGE_TYPE).exec();
     },
 
     /**
@@ -109,16 +130,36 @@ module.exports = {
      * Handle reception of proof request through agent to agent communication
      * @param {Wallet} wallet
      * @param {object} message
+     * @param {string} senderVk
+     * @param {string} recipientVk
      */
-    async handle(wallet, message) {
+    async handle(wallet, message, senderVk, recipientVk) {
         log.debug('received proof request');
+        const connection = await ConnectionService.findOne(wallet, { myKey: recipientVk, theirKey: senderVk });
+        if (!connection) {
+            log.warn('received credential but there is no connection?');
+            return;
+        }
 
         // message was successfully auth-decrypted which means we have a pairwise with the sender and
-        // proof request can be the initial message in the flow so there is no further checking necessary
+        // proof request can be the initial message in the flow
 
-        // request is valid so store it
-        await Message.store(wallet.id, message.message.nonce, message.type, message.origin, wallet.ownDid, message);
+        const proofRequest = JSON.parse(lib.crypto.b64decode(message['request_presentations~attach'][0].data.base64));
+        const meta = { proofRequest };
+
+        await new Message({
+            wallet: wallet.id,
+            messageId: message['@id'],
+            type: message['@type'],
+            threadId: message['~thread'].thid,
+            senderDid: connection.theirDid,
+            recipientDid: connection.myDid,
+            message,
+            meta
+        }).save();
+
+        // await Message.store(wallet.id, message.message.nonce, message.type, message.origin, wallet.ownDid, message);
     }
 };
 
-MessageService.registerHandler(lib.message.messageTypes.PROOFREQUEST, module.exports.handle);
+MessageService.registerHandler(REQUEST_MESSAGE_TYPE, module.exports.handle);

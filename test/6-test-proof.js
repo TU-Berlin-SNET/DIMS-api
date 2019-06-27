@@ -203,23 +203,20 @@ describe('proofs', function() {
         const res = await core.postRequest('/api/proofrequest', relyingparty.token, postBody, 201);
         expect(res.body).to.contain.keys('id', 'type', 'messageId', 'message', 'meta');
         expect(res.body.meta).to.have.property('proofId');
-        expect(res.body.message.message).to.contain.keys(
-            'name',
-            'version',
-            'nonce',
-            'requested_attributes',
-            'requested_predicates'
-        );
+        expect(res.body.message).to.contain.keys('@id', '@type', 'comment', 'request_presentations~attach');
+        expect(res.body.message['request_presentations~attach'])
+            .to.be.an('Array')
+            .with.lengthOf(1);
+        expect(res.body.message['request_presentations~attach'][0]).to.contain.keys('@id', 'mime-type', 'data');
         proofId = res.body.meta.proofId;
     });
 
     it('should retrieve proof using proofId and the status should be pending', async function() {
         const res = await core.getRequest('/api/proof/' + proofId, relyingparty.token, 200);
-        expect(res.body).to.contain.keys('id', 'wallet', 'did', 'proof', 'status', 'isValid');
+        expect(res.body).to.contain.keys('id', 'wallet', 'did', 'proof', 'status');
         expect(res.body.did).to.equal(relyingpartyHolderPairwise['their_did']);
         expect(res.body.proof).to.be.null;
         expect(res.body.status).to.equal('pending');
-        expect(res.body.isValid).to.be.false;
     });
 
     it('should list received proof requests', async function() {
@@ -230,13 +227,6 @@ describe('proofs', function() {
         expect(res.body[0])
             .to.have.property('message')
             .that.is.an('Object');
-        expect(res.body[0].message).to.contain.keys('id', 'type', 'origin', 'message');
-        expect(res.body[0].message.message).to.contain.keys(
-            'name',
-            'version',
-            'requested_attributes',
-            'requested_predicates'
-        );
         proofRequest = res.body[0];
     });
 
@@ -249,8 +239,19 @@ describe('proofs', function() {
         };
         const res = await core.postRequest('/api/proof', holder.token, postBody, 201);
         expect(res.body).to.contain.keys('id', 'type', 'messageId', 'message');
-        expect(res.body.message).to.contain.keys('id', 'type', 'origin', 'message');
-        expect(res.body.message.message).to.contain.keys('requested_proof', 'proof', 'identifiers');
+        expect(res.body.message).to.contain.keys('@id', '@type', 'comment', 'presentations~attach');
+        expect(res.body.message['presentations~attach'])
+            .to.be.an('Array')
+            .with.lengthOf(1);
+        expect(res.body.message['presentations~attach'][0]).to.contain.keys('@id', 'mime-type', 'data');
+    });
+
+    it('should list received proofs', async function() {
+        const res = await core.getRequest('/api/proof', relyingparty.token, 200);
+        expect(res.body)
+            .to.be.an('Array')
+            .with.lengthOf(1);
+        expect(res.body[0]).to.contain.keys('id', 'wallet', 'did', 'proof', 'status');
     });
 
     it('should retrieve proof using proofId and it should be received and the proof should be valid', async function() {

@@ -274,7 +274,7 @@ async function getProof(token1, token2, recipientDid, proofRequest, templateValu
         201
     )).body;
     const recvMessage = (await getRequest('/api/proofrequest', token2, 200)).body.find(
-        v => v.message.id === reqMessage.message.id
+        v => v.messageId === reqMessage.messageId
     );
     await postRequest('/api/proof', token2, { proofRequestId: recvMessage.id, values: credValues || {} }, 201);
     const proof = (await getRequest('/api/proof/' + reqMessage.meta.proofId, token1, 200)).body;
