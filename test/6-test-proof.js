@@ -31,6 +31,11 @@ const data = {
         password: 'relyingparty',
         wallet: { name: 'testrelyingpartyWallet' + testId, credentials: { key: 'testrelyingpartyKey' } }
     },
+    holder2: {
+        username: 'testholder2' + testId,
+        password: 'holder2',
+        wallet: { name: 'testholder2Wallet' + testId, credentials: { key: 'testholder2Key' } }
+    },
     schema: {
         name: 'Passport-' + uuidv4(),
         version: '0.1',
@@ -45,6 +50,11 @@ const data = {
         firstname: 'Alice',
         lastname: 'Doe',
         age: '-32'
+    },
+    credHolder2: {
+        firstname: 'Bob',
+        lastname: 'Doe',
+        age: '32'
     }
 };
 const templates = {
@@ -78,8 +88,10 @@ const templates = {
 
 let issuer;
 let holder;
+let holder2;
 let relyingparty;
 let issuerHolderPairwise;
+let issuerHolder2Pairwise;
 let relyingpartyHolderPairwise;
 let schema;
 let credDefPositive;
@@ -94,40 +106,31 @@ describe('proofs', function() {
         const steward = await core.steward(testId);
         issuer = await core.prepareUser(data.issuer);
         holder = await core.prepareUser(data.holder);
+        holder2 = await core.prepareUser(data.holder2);
         relyingparty = await core.prepareUser(data.relyingparty);
         [steward, issuer, holder, relyingparty].forEach(v =>
             valuesToDelete.push({ id: v.id, token: v.token, path: 'user' })
         );
 
         // onboard issuer as TRUST_ANCHOR
-        // and holder and relying-party as NONE
-        // (to use ownDid as endpoint did for communication)
         await Promise.all([
             core.onboard(
                 steward.token,
                 issuer.wallet.ownDid,
                 issuer.wallet.dids.find(v => v.did === issuer.wallet.ownDid).verkey,
                 'TRUST_ANCHOR'
-            ),
-            core.onboard(
-                steward.token,
-                holder.wallet.ownDid,
-                holder.wallet.dids.find(v => v.did === holder.wallet.ownDid).verkey,
-                'NONE'
-            ),
-            core.onboard(
-                steward.token,
-                relyingparty.wallet.ownDid,
-                relyingparty.wallet.dids.find(v => v.did === relyingparty.wallet.ownDid).verkey,
-                'NONE'
             )
         ]);
 
-        [issuerHolderPairwise, relyingpartyHolderPairwise] = await Promise.all([
+        [issuerHolderPairwise, issuerHolder2Pairwise, relyingpartyHolderPairwise] = await Promise.all([
             // establish pairwise connection issuer <-> holder
             core.connect(
                 issuer.token,
                 holder.token
+            ),
+            core.connect(
+                issuer.token,
+                holder2.token
             ),
             // establish pairwise connection relyingparty <-> holder
             core.connect(
@@ -325,11 +328,28 @@ describe('proofs', function() {
             null,
             { phone: '11110000' }
         );
+        proofId = proof.id;
         expect(proof).to.contain.keys('id', 'wallet', 'did', 'proof', 'status', 'isValid');
         expect(proof.did).to.equal(relyingpartyHolderPairwise['their_did']);
         expect(proof.proof).to.not.be.null;
         expect(proof.status).to.equal('received');
         expect(proof.isValid).to.be.true;
+    });
+
+    it('should issue another credential and proof should still be valid', async function() {
+        await core.issueCredential(
+            issuer.token,
+            holder2.token,
+            issuerHolder2Pairwise['their_did'],
+            credDefRevoc.credDefId,
+            data.credHolder2
+        );
+        const res = await core.getRequest('/api/proof/' + proofId, relyingparty.token, 200);
+        expect(res.body).to.contain.keys('id', 'wallet', 'did', 'proof', 'status', 'isValid');
+        expect(res.body.did).to.equal(relyingpartyHolderPairwise['their_did']);
+        expect(res.body.proof).to.not.be.null;
+        expect(res.body.status).to.equal('received');
+        expect(res.body.isValid).to.be.true;
     });
 
     it('should revoke issued credential', async function() {
