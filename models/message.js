@@ -13,6 +13,11 @@ const schema = new Mongoose.Schema(
             required: true,
             index: true
         },
+        messageRef: {
+            type: String,
+            index: true,
+            sparse: true
+        },
         threadId: {
             type: String,
             index: true,

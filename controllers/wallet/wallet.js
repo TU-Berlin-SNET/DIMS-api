@@ -9,6 +9,7 @@ const log = require('../../log').log;
 const Mongoose = require('../../db');
 const APIResult = require('../../util/api-result');
 const WalletProvider = require('../../middleware/walletProvider');
+const WalletConnection = require('./wallet-connection');
 
 const Wallet = Mongoose.model('Wallet');
 const Routing = Mongoose.model('Routing');
@@ -100,7 +101,7 @@ module.exports = {
         try {
             result = wallet.toJSON();
             result.dids = await lib.sdk.listMyDidsWithMeta(wallet.handle);
-            result.pairwise = await lib.pairwise.list(wallet.handle);
+            result.pairwise = await WalletConnection.list(wallet);
         } finally {
             await WalletProvider.returnHandle(wallet);
         }
