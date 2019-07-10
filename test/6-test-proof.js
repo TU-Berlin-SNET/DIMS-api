@@ -64,7 +64,11 @@ const templates = {
         "requested_attributes": {
             "attr1_referent": {
                 "name": "firstname",
-                "restrictions": [{ "cred_def_id": "{{credDefId}}" }]
+                "restrictions": [{
+                    "cred_def_id": "{{credDefId}}",
+                    "issuer_did": "{{issuerDid}}",
+                    "schema_id": "{{schemaId}}"
+                }]
             },
             "attr2_referent": {
                 "name": "lastname",
@@ -198,6 +202,8 @@ describe('proofs', function() {
                 Mustache.render(templates.proofRequest, {
                     name: 'Ticket-Positive-' + testId,
                     credDefId: credDefPositive.credDefId,
+                    issuerDid: issuer.wallet.ownDid,
+                    schemaId: schema.schemaId,
                     proofAge: 18,
                     to: Math.floor(Date.now() / 1000)
                 })
@@ -275,6 +281,8 @@ describe('proofs', function() {
                 Mustache.render(templates.proofRequest, {
                     name: 'Ticket-Negative-' + testId,
                     credDefId: credDefNegative.credDefId,
+                    issuerDid: issuer.wallet.ownDid,
+                    schemaId: schema.schemaId,
                     proofAge: -40,
                     to: Math.floor(Date.now() / 1000)
                 })
@@ -298,6 +306,8 @@ describe('proofs', function() {
                 Mustache.render(templates.proofRequest, {
                     name: 'Ticket-Mixed-' + testId,
                     credDefId: credDefPositive.credDefId,
+                    issuerDid: issuer.wallet.ownDid,
+                    schemaId: schema.schemaId,
                     proofAge: -40,
                     to: Math.floor(Date.now() / 1000)
                 })
@@ -321,6 +331,8 @@ describe('proofs', function() {
                 Mustache.render(templates.proofRequest, {
                     name: 'Ticket-Revoc-' + testId,
                     credDefId: credDefRevoc.credDefId,
+                    issuerDid: issuer.wallet.ownDid,
+                    schemaId: schema.schemaId,
                     proofAge: 18,
                     to: Math.floor(Date.now() / 1000)
                 })
@@ -367,6 +379,8 @@ describe('proofs', function() {
                 Mustache.render(templates.proofRequest, {
                     name: 'Ticket-Revoc-' + testId,
                     credDefId: credDefRevoc.credDefId,
+                    issuerDid: issuer.wallet.ownDid,
+                    schemaId: schema.schemaId,
                     proofAge: 18,
                     to: Math.floor(Date.now() / 1000)
                 })
