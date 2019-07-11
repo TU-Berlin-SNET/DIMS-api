@@ -15,10 +15,36 @@ const domainWallet = require('../../domain-wallet');
 const Invitation = require('./invitation');
 const Response = require('./response');
 
-const ConnectionService = require('../../services').ConnectionService;
+const Mongoose = require('../../db');
+const Message = Mongoose.model('Message');
+
 const MessageService = require('../../services').MessageService;
 
 const REQUEST_MESSAGE_TYPE = 'did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/didexchange/1.0/request';
+
+exports.list = async wallet => {
+    return await Message.find({
+        wallet: wallet.id,
+        type: REQUEST_MESSAGE_TYPE
+    }).exec();
+};
+
+exports.retrieve = async (wallet, id) => {
+    return await Message.findOne({
+        _id: id,
+        wallet: wallet.id,
+        type: REQUEST_MESSAGE_TYPE
+    }).exec();
+};
+
+exports.remove = async (wallet, id) => {
+    const request = await exports.retrieve(wallet, id);
+    if (request) {
+        await request.remove();
+        return true;
+    }
+    return;
+};
 
 /**
  * Create and send a connection request,
@@ -30,9 +56,14 @@ const REQUEST_MESSAGE_TYPE = 'did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/didexchange/1.
  * @return {Promise<object>} connection
  */
 exports.create = async (wallet, label = uuidv4(), invitation, did) => {
-    let conn;
+    let endpoint;
     if (invitation) {
-        conn = await Invitation.handle(wallet, invitation);
+        const inviteMessage = await Invitation.handle(wallet, invitation);
+        endpoint = {
+            recipientKeys: inviteMessage.message.recipientKeys,
+            routingKeys: inviteMessage.message.routingKeys,
+            serviceEndpoint: inviteMessage.message.serviceEndpoint
+        };
     } else if (did) {
         // implicit invitation through public did currently not supported
         throw APIResult.create(501, 'not implemented');
@@ -52,18 +83,21 @@ exports.create = async (wallet, label = uuidv4(), invitation, did) => {
             did_doc: myDidDoc
         }
     };
-    conn.myDid = myDid;
-    conn.myKey = myVk;
-    conn.myDidDoc = myDidDoc;
-    conn.request = request;
-    conn.threadId = request['@id'];
-    conn.state = lib.connection.STATE.REQUESTED;
-    conn.stateDirection = lib.connection.STATE_DIRECTION.OUT;
+    const meta = { invitationKey: endpoint.recipientKeys[0] };
 
-    const result = await ConnectionService.save(wallet, conn);
-    await MessageService.send(wallet, conn.request, conn.endpoint);
+    const message = await new Message({
+        wallet: wallet.id,
+        messageId: request['@id'],
+        threadId: request['@id'],
+        type: REQUEST_MESSAGE_TYPE,
+        senderDid: myDid,
+        message: request,
+        meta
+    }).save();
 
-    return result;
+    await MessageService.send(wallet, request, endpoint);
+
+    return message;
 };
 
 /**
@@ -75,28 +109,31 @@ exports.create = async (wallet, label = uuidv4(), invitation, did) => {
  */
 exports.handle = async (wallet, message, senderVk, recipientVk) => {
     log.debug('received connection request', wallet.id, message);
-    let conn = await ConnectionService.findOne(wallet, {
-        myKey: recipientVk,
-        state: lib.connection.STATE.INVITED,
-        stateDirection: lib.connection.STATE_DIRECTION.OUT
-    });
-    if (!conn) {
-        log.info('invalid connection request, no invitation found');
-        throw APIResult.badRequest('invalid connection request, no invitation found');
-    }
-    conn.state = lib.connection.STATE.REQUESTED;
-    conn.stateDirection = lib.connection.STATE_DIRECTION.IN;
-    conn.request = message;
-    conn.threadId = message['@id'];
-    conn.theirLabel = message.label;
-    [, conn.theirDid] = lib.diddoc.parseDidWithMethod(message.connection.did);
-    conn.theirDidDoc = message.connection.did_doc;
-    conn.endpoint = await lib.diddoc.getDidcommService(wallet, message.connection.did_doc);
-    conn.theirKey = conn.endpoint.recipientKeys[0];
-    conn = await ConnectionService.save(wallet, conn);
+    const invitation = await Message.findOne({
+        wallet: wallet.id,
+        messageRef: recipientVk,
+        type: Invitation.INVITATION_MESSAGE_TYPE
+    }).exec();
+    const [, theirDid] = lib.diddoc.parseDidWithMethod(message.connection.did);
+    const request = await new Message({
+        wallet: wallet.id,
+        messageId: message['@id'],
+        threadId: message['@id'],
+        type: REQUEST_MESSAGE_TYPE,
+        senderDid: theirDid,
+        recipientDid: wallet.ownDid,
+        message
+    }).save();
 
-    if (conn.invitation) {
-        Response.create(wallet, conn);
+    if (invitation) {
+        request.meta = {
+            invitation: invitation.message,
+            invitationMeta: invitation.meta
+        };
+        // remove invitation to prevent replays
+        await invitation.remove();
+        await request.save();
+        Response.create(wallet, request);
     }
 };
 

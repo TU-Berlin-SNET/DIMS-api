@@ -98,6 +98,26 @@ function deleteRequest(url, token, status) {
 }
 
 /**
+ *
+ * @param {function} fn
+ * @param {function} condition
+ * @param {number} repetitions max repetititions
+ * @param {number} delay increasing delay between repetitions in ms
+ * @return {Promise<any>}
+ */
+async function repeat(fn, condition, repetitions = 10, delay = 333) {
+    let result;
+    for (let i = 1; i <= repetitions; i++) {
+        result = await fn();
+        if (condition(result)) {
+            break;
+        }
+        await new Promise(resolve => setTimeout(resolve, delay * i));
+    }
+    return result;
+}
+
+/**
  * Create and return (populated) steward user
  * @param {string} testId
  */
@@ -184,26 +204,28 @@ async function onboard(token, did, verkey, role) {
 /**
  * Establish a pairwise connection between user1 and user2
  * @param {object} user1token jwt for user 1
- * @param {object} user2token jwt for user 22
+ * @param {object} user2token jwt for user 2
  * @return {Promise<object>} pairwise from user1
  */
 async function connect(user1token, user2token) {
-    const offer = await postRequest('/api/connectioninvitation', user1token, {}, 201);
-    const request = await postRequest('/api/connectionrequest', user2token, { invitation: offer.body.invitation }, 201);
+    const offer = await postRequest('/api/connectionoffer', user1token, {}, 201);
+    const request = await postRequest(
+        '/api/connectionrequest',
+        user2token,
+        { connectionOffer: offer.body.message },
+        201
+    );
+    const user2Did = request.body.senderDid;
 
     // poll until user2 connection is established and complete because user2 is waiting for response
-    for (let i = 1; i <= 3; i++) {
-        const user2Connection = await getRequest('/api/connection/' + request.body.id, user2token, 200);
-        if (user2Connection.body.state === 'COMPLETE') {
-            break;
-        }
-        await new Promise(resolve => setTimeout(resolve, 333 * i));
-    }
+    const user2Connection = await repeat(
+        () => getRequest('/api/connection/' + user2Did, user2token),
+        res => res.status === 200
+    );
 
-    const user1Connection = await getRequest('/api/connection/' + offer.body.id, user1token, 200);
     const pairwise = {
-        my_did: user1Connection.body.myDid,
-        their_did: user1Connection.body.theirDid
+        my_did: user2Connection.body['their_did'],
+        their_did: user2Connection.body['my_did']
     };
     return pairwise;
 }
@@ -307,6 +329,7 @@ module.exports = {
     putRequest,
     patchRequest,
     deleteRequest,
+    repeat,
     steward,
     createUser,
     createWallet,

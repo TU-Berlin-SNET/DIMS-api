@@ -284,7 +284,7 @@ definitions:
         type: string
     required:
       - credentialOfferId
-  connectioninvitation_post:
+  connectionoffer_post:
     type: object
     properties:
       wallet:
@@ -302,7 +302,7 @@ definitions:
           - TRUST_ANCHOR
       meta:
         description:
-          '(Optional) Additional data to store in the offer (and later in the pairwise), e.g. citizen id but not send with the offer'
+          '(Optional) Additional data to store in the offer (and later in the connection), e.g. citizen id but not send with the offer'
         type: object
       data:
         description: '(Optional) Additional data like name, logo, description, to send with the connection offer'
@@ -313,10 +313,10 @@ definitions:
       wallet:
         $ref: '#/definitions/walletId'
       label:
-        description: a label for this connection
+        description: '(Optional) Label for this connection'
         type: string
-      invitation:
-        description: 'A connection invitation object'
+      connectionOffer:
+        description: 'A connection offer object'
         type: object
         example:
           '@id': 'a983-3829-f834-kfj3'
@@ -326,11 +326,22 @@ definitions:
           'serviceEndpoint': 'http://example.com/indy'
           'routingKeys': ['K7ufZ7Sn3BEqQqrNCfAq6x4d45dmXYP7z3cNeEYg5HH8']
     required:
-      - invitation
+      - connectionOffer
   # currently unsupported
   # did:
   #   description: '(currently unsupported) a public did with diddoc on the ledger'
   #   type: string
+  connectionresponse_post:
+    type: object
+    properties:
+      wallet:
+        $ref: '#/definitions/walletId'
+      connectionRequestId:
+        description: 'A unique string value identifying the connection request to respond to'
+        type: string
+        example: '5b7ddce00000000000000000'
+    required:
+      - connectionRequestId
   proofrequest_template_post:
     type: object
     properties:
@@ -539,73 +550,15 @@ definitions:
   connection:
     type: object
     properties:
-      wallet:
-        description: 'Wallet name'
+      my_did:
+        description: 'my did'
         type: string
-      label:
-        description: 'Connection Label'
+      their_did:
+        description: 'their did'
         type: string
-      initiator:
-        description: 'Connection Initiator'
-        type: string
-        enum:
-          - ME
-          - OTHER
-      state:
-        description: 'Connection State'
-        type: string
-        enum:
-          - 'NULL'
-          - INVITED
-          - REQUESTED
-          - RESPONDED
-          - COMPLETE
-          - ERRORED
-      stateDirection:
-        description: 'Connection State Direction'
-        type: string
-        enum:
-          - IN
-          - OUT
-      threadId:
-        description: 'Connection Messages Thread Id'
-        type: string
-      invitation:
-        description: 'Connection Invitation'
-        type: object
-      request:
-        description: 'Connection Request'
-        type: object
-      response:
-        description: 'Connection Response'
-        type: object
-      error:
-        description: 'Connection Error'
-        type: object
-      myDid:
-        description: 'My Did for this connection'
-        type: string
-      myKey:
-        description: 'My key for this connection'
-        type: string
-      myDidDoc:
-        description: 'My Did Document for this connection'
-        type: object
-      theirDid:
-        description: 'Their Did for this connection'
-        type: string
-      theirKey:
-        description: 'Their Key for this connection'
-        type: string
-      theirDidDoc:
-        description: 'Their Did Document for this connection'
-        type: object
-      endpoint:
-        description: 'Their recipientKeys, routingKeys, and serviceEndpoint parsed for their did doc'
-        type: object
-      meta:
-        description: 'Additional Metadata'
-        type: object
+      acknowledged:
+        description: 'status'
+        type: boolean
   connection_offer:
     type: object
     properties:
@@ -1720,30 +1673,6 @@ paths:
       summary: 'List connections'
       description: 'List connections'
       parameters:
-        - name: state
-          in: query
-          description: '(Optional) Connection state'
-          required: false
-          type: string
-          enum:
-            - 'NULL'
-            - INVITED
-            - REQUESTED
-            - RESPONDED
-            - COMPLETE
-            - ERRORED
-        - name: label
-          in: query
-          description: '(Optional) Connection label'
-          type: string
-        - name: myDid
-          in: query
-          description: '(Optional) Connection myDid'
-          type: string
-        - name: theirDid
-          in: query
-          description: '(Optional) Connection theirDid'
-          type: string
         - $ref: '#/parameters/walletHeader'
       responses:
         '200':
@@ -1761,11 +1690,11 @@ paths:
         - verifier
         - prover
 
-  /api/connection/{connectionId}:
+  /api/connection/{myDid}:
     parameters:
-      - name: connectionId
+      - name: myDid
         in: path
-        description: 'Connection Id'
+        description: 'my did'
         type: string
         required: true
     get:
@@ -1787,20 +1716,32 @@ paths:
         - verifier
         - prover
 
-  /api/connectioninvitation:
+  /api/connectionoffer:
+    get:
+      summary: 'list connection offers'
+      description: 'list connection offers'
+      parameters:
+        - $ref: '#/parameters/walletHeader'
+      responses:
+        '200':
+          description: 'Success'
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/connection_offer'
     post:
-      summary: 'Create a new connection invitation'
-      description: 'Create a new connection invitation'
+      summary: 'Create a new connection offer'
+      description: 'Create a new connection offer'
       parameters:
         - in: body
           name: data
           schema:
-            $ref: '#/definitions/connectioninvitation_post'
+            $ref: '#/definitions/connectionoffer_post'
       responses:
         '201':
           description: 'Created'
           schema:
-            $ref: '#/definitions/connection'
+            $ref: '#/definitions/connection_offer'
         '400':
           $ref: '#/responses/bad_request'
         '401':
@@ -1812,7 +1753,70 @@ paths:
         - issuer
         - verifier
 
+  /api/connectionoffer/{connectionOfferId}:
+    parameters:
+      - $ref: '#/parameters/walletHeader'
+      - in: path
+        name: connectionOfferId
+        description: connection offer _id
+    get:
+      summary: 'Retrieve a connection offer by _id'
+      description: 'Retrieve a connection offer by _id'
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/connection_offer'
+        '401':
+          $ref: '#/responses/unauthorized'
+        '404':
+          $ref: '#/responses/not_found'
+      tags:
+        - connection
+        - common
+        - issuer
+        - verifier
+        - prover
+    delete:
+      summary: 'Delete a connection offer by _id'
+      description: 'Delete a connection offer by _id'
+      responses:
+        '204':
+          $ref: '#/responses/no_content'
+        '401':
+          $ref: '#/responses/unauthorized'
+        '404':
+          $ref: '#/responses/not_found'
+      tags:
+        - connection
+        - common
+        - issuer
+        - verifier
+        - prover
+
   /api/connectionrequest:
+    get:
+      summary: 'List all my connection requests'
+      description: 'List all my connection requests'
+      parameters:
+        - $ref: '#/parameters/walletHeader'
+      responses:
+        '200':
+          description: 'Success'
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/connection_request'
+        '401':
+          $ref: '#/responses/unauthorized'
+        '404':
+          $ref: '#/responses/not_found'
+      tags:
+        - connection
+        - common
+        - issuer
+        - verifier
+        - prover
     post:
       summary: 'Accept a connection offer and/or send a connection request'
       description: 'Accept a connection offer and/or send a connection request'
@@ -1838,6 +1842,63 @@ paths:
         - issuer
         - verifier
         - prover
+  /api/connectionrequest/{connectionRequestId}:
+    parameters:
+      - in: path
+        name: connectionRequestId
+        description: 'connection request _id'
+        type: string
+        required: true
+      - $ref: '#/parameters/walletHeader'
+    get:
+      summary: 'Retrieve a connection request by _id'
+      description: 'Retrieve a connection request by _id'
+      responses:
+        '200':
+          description: 'Success'
+          schema:
+            $ref: '#/definitions/connection_request'
+        '401':
+          $ref: '#/responses/unauthorized'
+        '404':
+          $ref: '#/responses/not_found'
+      tags:
+        - connection
+        - common
+        - issuer
+        - verifier
+        - prover
+    delete:
+      summary: 'Delete a connection request by _id'
+      description: 'Delete a connection request by _id'
+      responses:
+        '204':
+          $ref: '#/responses/no_content'
+        '401':
+          $ref: '#/responses/unauthorized'
+        '404':
+          $ref: '#/responses/not_found'
+      tags:
+        - connection
+        - common
+        - issuer
+        - verifier
+        - prover
+
+  /api/connectionresponse:
+    post:
+      summary: 'Accept a connection request and send a connection response'
+      description: 'Accept a connection request and send a connection response'
+      parameters:
+        - in: body
+          name: data
+          schema:
+            $ref: '#/definitions/connectionresponse_post'
+      responses:
+        '201':
+          description: 'Created'
+          schema:
+            $ref: '#/definitions/connection_response'
 
   /api/indyschema:
     get:

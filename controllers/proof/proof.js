@@ -51,7 +51,8 @@ module.exports = {
         const proofRequest = requestDoc.meta.proofRequest;
         const masterSecretId = await wallet.getMasterSecretId();
         const recipientDid = requestDoc.senderDid;
-        const proof = await lib.proof.create(wallet.handle, masterSecretId, recipientDid, proofRequest, values);
+        const proof = await lib.proof.create(wallet.handle, masterSecretId, connection.myDid, proofRequest, values);
+
         const id = await lib.crypto.generateId();
         const message = {
             '@id': id,

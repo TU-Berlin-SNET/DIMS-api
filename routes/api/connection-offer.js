@@ -1,12 +1,14 @@
 /**
- * IDChain Agent REST API Routes
- * Connection Request Routes
+ * Connection Offer Routes
  */
 'use strict';
 
 const router = require('express').Router();
-const controller = require('../../controllers/connection/request');
 const wrap = require('../../util/asyncwrap').wrapNext;
+// const controller = require('../../controllers/connection/index');
+const controller = require('../../controllers/connection/invitation');
+
+module.exports = exports = { router };
 
 router
     .route('/')
@@ -19,9 +21,10 @@ router
         wrap(async (req, res, next) => {
             const connection = await controller.create(
                 req.wallet,
-                req.body.label,
-                req.body.connectionOffer,
-                req.body.did
+                req.body.data,
+                req.body.meta,
+                req.body.role,
+                req.body.label
             );
             return connection;
         })
@@ -39,5 +42,3 @@ router
             return await controller.remove(req.wallet, req.params.id);
         })
     );
-
-module.exports = router;

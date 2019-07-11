@@ -46,8 +46,11 @@ module.exports = {
      */
     async create(wallet, recipientDid, comment = '', proofRequest, templateValues) {
         const connection = await ConnectionService.findOne(wallet, { theirDid: recipientDid });
-        if (!connection || !(await lib.pairwise.exists(wallet.handle, recipientDid))) {
-            throw APIResult.badRequest('invalid recipientDid, no pairwise exists');
+        if (
+            !connection ||
+            ![lib.connection.STATE.RESPONDED, lib.connection.STATE.COMPLETE].includes(connection.state)
+        ) {
+            throw APIResult.badRequest('invalid recipientDid, no applicable connection found');
         }
 
         // proofRequest === string -> it is a template _id so retrieve it
@@ -157,8 +160,6 @@ module.exports = {
             message,
             meta
         }).save();
-
-        // await Message.store(wallet.id, message.message.nonce, message.type, message.origin, wallet.ownDid, message);
     }
 };
 

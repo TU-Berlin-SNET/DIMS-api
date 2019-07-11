@@ -5,6 +5,7 @@
 'use strict';
 
 const lib = require('../../lib');
+const ConnectionService = require('../../services').ConnectionService;
 
 module.exports = {
     /**
@@ -13,7 +14,13 @@ module.exports = {
      * @return {Promise<object[]>}
      */
     async list(wallet) {
-        return lib.pairwise.list(wallet.handle);
+        return (await ConnectionService.find(wallet)).map(v => {
+            return {
+                my_did: v.myDid,
+                their_did: v.theirDid,
+                acknowledged: v.state === lib.connection.STATE.COMPLETE
+            };
+        });
     },
 
     /**
@@ -22,6 +29,14 @@ module.exports = {
      * @param {string} id
      */
     async retrieve(wallet, id) {
-        return lib.pairwise.retrieve(wallet.handle, id);
+        const connection = await ConnectionService.findOne(wallet, { theirDid: id });
+        if (!connection) {
+            return;
+        }
+        return {
+            my_did: connection.myDid,
+            their_did: connection.theirDid,
+            acknowledged: connection.state === lib.connection.STATE.COMPLETE
+        };
     }
 };
