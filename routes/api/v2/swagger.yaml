@@ -1,0 +1,408 @@
+openapi: '3.0.0'
+info:
+  title: 'DIMS Agent API'
+  description: 'DIMS Agent API'
+  version: '2.0.0-WIP'
+
+servers:
+  - url: /api/v2
+    description: relative
+  - url: http://localhost:8000/api/v2
+    description: dev environment
+  - url: http://172.16.0.100:8000/api/v2
+    description: dev environment
+  - url: '{protocol}://{host}:{port}/{path}'
+    description: configurable environment
+    variables:
+      protocol:
+        default: http
+        description: ''
+      host:
+        default: localhost
+        description: ''
+      port:
+        default: '8000'
+        description: ''
+      path:
+        default: api/v2
+        description: ''
+
+externalDocs:
+  url: /api/v2/docs
+  description: ''
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      description: 'Just copy and paste the token, no need to add "Bearer"'
+
+  parameters:
+    idParam:
+      in: path
+      name: id
+      description: 'identifier'
+      required: true
+      schema:
+        type: string
+    walletParam:
+      in: header
+      name: X-Wallet
+      description: 'wallet identifier'
+      required: false
+      schema:
+        type: string
+
+  schemas:
+    username:
+      type: string
+    password:
+      type: string
+    wallet:
+      type: object
+      properties:
+        name:
+          type: string
+          description: 'Wallet name, must be globally unique. Automatically generated if none is provided.'
+        credentials:
+          type: object
+          description:
+            'Wallet Credentials JSON. Supported keys vary by wallet type. A default config will be used if none is provided.'
+          properties:
+            key:
+              type: string
+              description: 'Passphrase used to derive wallet master key'
+    error-message:
+      type: object
+      properties:
+        message:
+          description: 'Informational Message'
+          type: string
+
+  responses:
+    accepted:
+      description: 'Message accepted'
+    no-content:
+      description: 'Success - but no content'
+    error:
+      description: 'Error'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error-message'
+
+security:
+  - BearerAuth: []
+
+paths:
+  /register:
+    post:
+      summary: 'Register'
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                password:
+                  type: string
+                wallet:
+                  type: object
+      responses:
+        '201':
+          description: created
+      tags:
+        - authentication
+
+  /login:
+    post:
+      summary: 'Allow users to login, will return them a JWT valid for a specific amount of time'
+      description: 'Allow users to login, will return them a JWT valid for a specific amount of time'
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '200':
+          description: 'Login successful'
+      tags:
+        - authentication
+
+  /user:
+    get:
+      summary: ''
+      responses:
+        '200':
+          description: ''
+      tags:
+        - user
+    post:
+      summary: ''
+      responses:
+        '200':
+          description: ''
+      tags:
+        - user
+
+  /user/{id}:
+    parameters:
+      - $ref: '#/components/parameters/idParam'
+    get:
+      summary: ''
+      responses:
+        '200':
+          description: ''
+      tags:
+        - user
+    put:
+      summary: ''
+      responses:
+        '200':
+          description: ''
+      tags:
+        - user
+    delete:
+      summary: ''
+      responses:
+        '200':
+          description: ''
+      tags:
+        - user
+
+  /wallet:
+    get:
+      summary: ''
+      responses:
+        '200':
+          description: ''
+      tags:
+        - wallet
+    post:
+      summary: ''
+      responses:
+        '200':
+          description: ''
+      tags:
+        - wallet
+
+  /wallet/{id}:
+    parameters:
+      - $ref: '#/components/parameters/idParam'
+    get:
+      summary: ''
+      responses:
+        '200':
+          description: ''
+      tags:
+        - wallet
+    put:
+      summary: ''
+      responses:
+        '200':
+          description: ''
+      tags:
+        - wallet
+    delete:
+      summary: ''
+      responses:
+        '200':
+          description: ''
+      tags:
+        - wallet
+
+  /credential-definitions:
+    parameters:
+      - $ref: '#/components/parameters/walletParam'
+    get:
+      summary: 'list credential definitions'
+      responses:
+        '200':
+          description: ''
+      tags:
+        - credential-definitions
+    post:
+      summary: 'create credential definition (also revocation registries and schemas)'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                schema:
+                  oneOf:
+                    - type: string
+                    - type: object
+                tag:
+                  type: string
+                revocation:
+                  type: object
+                  properties:
+                    isSupported:
+                      type: boolean
+                    type:
+                      type: string
+                      enum:
+                        - 'ISSUANCE_BY_DEFAULT'
+                        - 'ISSUANCE_ON_DEMAND'
+                    capacity:
+                      type: number
+      responses:
+        '201':
+          description: ''
+      tags:
+        - credential-definitions
+
+  /credential-definitions/{id}:
+    parameters:
+      - $ref: '#/components/parameters/idParam'
+      - $ref: '#/components/parameters/walletParam'
+    get:
+      summary: 'get credential definition'
+      responses:
+        '200':
+          description: ''
+      tags:
+        - credential-definitions
+
+  /ledgers:
+    parameters:
+      - $ref: '#/components/parameters/walletParam'
+    get:
+      summary: 'list connected ledgers'
+      responses:
+        '200':
+          description: ''
+      tags:
+        - ledgers
+  /ledgers/{id}:
+    parameters:
+      - $ref: '#/components/parameters/idParam'
+      - $ref: '#/components/parameters/walletParam'
+    get:
+      summary: 'get ledger'
+      responses:
+        '200':
+          description: ''
+      tags:
+        - ledgers
+  /ledgers/{id}/transactions:
+    parameters:
+      - $ref: '#/components/parameters/idParam'
+      - $ref: '#/components/parameters/walletParam'
+    get:
+      summary: 'query transactions from ledger'
+      responses:
+        '200':
+          description: ''
+      tags:
+        - ledgers
+  /ledgers/{id}/nym:
+    parameters:
+      - $ref: '#/components/parameters/idParam'
+      - $ref: '#/components/parameters/walletParam'
+    post:
+      summary: 'send nym request to ledger'
+      responses:
+        '201':
+          description: ''
+      tags:
+        - ledgers
+  /ledgers/{id}/nym/{id}:
+    parameters:
+      - $ref: '#/components/parameters/idParam'
+      - $ref: '#/components/parameters/walletParam'
+    get:
+      summary: 'get nym record from ledger'
+      responses:
+        '200':
+          description: ''
+      tags:
+        - ledgers
+  /ledgers/{id}/nym/{id}/attrib:
+    parameters:
+      - $ref: '#/components/parameters/idParam'
+      - $ref: '#/components/parameters/walletParam'
+    post:
+      summary: 'send attrib request for nym record to ledger'
+      responses:
+        '200':
+          description: ''
+      tags:
+        - ledgers
+  /ledgers/{id}/nym/{id}/attrib/{id}:
+    parameters:
+      - $ref: '#/components/parameters/idParam'
+      - $ref: '#/components/parameters/walletParam'
+    get:
+      summary: 'retrieve attribute from nym record from ledger'
+      responses:
+        '200':
+          description: ''
+      tags:
+        - ledgers
+  /ledgers/{id}/schemas/{id}:
+    parameters:
+      - $ref: '#/components/parameters/idParam'
+      - $ref: '#/components/parameters/walletParam'
+    get:
+      summary: 'get schema from ledger'
+      responses:
+        '200':
+          description: ''
+      tags:
+        - ledgers
+  /ledgers/{id}/credential-definitions/{id}:
+    parameters:
+      - $ref: '#/components/parameters/idParam'
+      - $ref: '#/components/parameters/walletParam'
+    get:
+      summary: 'get credential definition from ledger'
+      responses:
+        '200':
+          description: ''
+      tags:
+        - ledgers
+
+  /events:
+    parameters:
+      - $ref: '#/components/parameters/walletParam'
+    get:
+      summary: 'query/list events/notifications'
+      responses:
+        '200':
+          description: ''
+      tags:
+        - events
+
+  /events/{id}:
+    parameters:
+      - $ref: '#/components/parameters/idParam'
+      - $ref: '#/components/parameters/walletParam'
+    get:
+      summary: 'get event/notification'
+      responses:
+        '200':
+          description: ''
+      tags:
+        - events
+    delete:
+      summary: 'delete event/notification'
+      responses:
+        '200':
+          description: ''
+      tags:
+        - events

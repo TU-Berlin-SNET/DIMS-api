@@ -4,11 +4,11 @@
 
 const router = require('express').Router();
 
-const auth = require('../../middleware/auth');
-const walletProvider = require('../../middleware/walletProvider');
-const user = require('../../controllers/user');
-const transactions = require('../../controllers/transactions');
-const schemaController = require('../../controllers/schema');
+const auth = require('../../../middleware/auth');
+const walletProvider = require('../../../middleware/walletProvider');
+const user = require('../../../controllers/user');
+const transactions = require('../../../controllers/transactions');
+const schemaController = require('../../../controllers/schema');
 const nym = require('./nym');
 
 const docs = require('./docs');
@@ -26,12 +26,9 @@ const proofRequestTemplate = require('./proof-request-template');
 const proofRequest = require('./proof-request');
 const proof = require('./proof');
 
-router.use('/docs', docs);
+router.use('/docs', docs.router);
 
-router
-    .route('/user')
-    // TODO rate-limiting?
-    .post(user.create);
+router.route('/user').post(user.create);
 
 router.post('/login', auth.login);
 

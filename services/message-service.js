@@ -3,7 +3,7 @@
  * Message Controller
  */
 
-const log = require('../log').log;
+const log = require('../log');
 const lib = require('../lib');
 const Routing = require('../models/routing');
 const ConnectionService = require('../services').ConnectionService;

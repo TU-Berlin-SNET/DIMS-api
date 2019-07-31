@@ -6,7 +6,7 @@
 
 const Mustache = require('mustache');
 const lib = require('../../lib');
-const log = require('../../log').log;
+const log = require('../../log');
 const Mongoose = require('../../db');
 const APIResult = require('../../util/api-result');
 

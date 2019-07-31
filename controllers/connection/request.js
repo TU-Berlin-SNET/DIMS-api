@@ -9,7 +9,7 @@ module.exports = exports = {};
 const uuidv4 = require('uuid/v4');
 
 const lib = require('../../lib');
-const log = require('../../log').log;
+const log = require('../../log');
 const APIResult = require('../../util/api-result');
 const domainWallet = require('../../domain-wallet');
 const Invitation = require('./invitation');

@@ -5,7 +5,7 @@
 'use strict';
 
 const lib = require('../../lib');
-const log = require('../../log').log;
+const log = require('../../log');
 const Mongoose = require('../../db');
 const APIResult = require('../../util/api-result');
 
@@ -50,7 +50,6 @@ module.exports = {
         }
         const proofRequest = requestDoc.meta.proofRequest;
         const masterSecretId = await wallet.getMasterSecretId();
-        const recipientDid = requestDoc.senderDid;
         const proof = await lib.proof.create(wallet.handle, masterSecretId, connection.myDid, proofRequest, values);
 
         const id = await lib.crypto.generateId();

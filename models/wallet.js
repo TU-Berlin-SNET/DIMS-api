@@ -6,7 +6,7 @@
 const uuidv4 = require('uuid/v4');
 
 const lib = require('../lib');
-const log = require('../log').log;
+const log = require('../log');
 const Mongoose = require('../db');
 
 const ObjectId = Mongoose.Schema.Types.ObjectId;

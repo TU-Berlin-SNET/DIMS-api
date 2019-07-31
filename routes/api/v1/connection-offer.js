@@ -4,9 +4,9 @@
 'use strict';
 
 const router = require('express').Router();
-const wrap = require('../../util/asyncwrap').wrapNext;
+const wrap = require('../../../util/asyncwrap').wrapNext;
 // const controller = require('../../controllers/connection/index');
-const controller = require('../../controllers/connection/invitation');
+const controller = require('../../../controllers/connection/invitation');
 
 module.exports = exports = { router };
 

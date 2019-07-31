@@ -5,8 +5,8 @@
 'use strict';
 
 const router = require('express').Router();
-const controller = require('../../controllers/connection/request');
-const wrap = require('../../util/asyncwrap').wrapNext;
+const controller = require('../../../controllers/connection/request');
+const wrap = require('../../../util/asyncwrap').wrapNext;
 
 router
     .route('/')

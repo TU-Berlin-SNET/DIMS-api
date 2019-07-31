@@ -4,7 +4,7 @@
  */
 'use strict';
 
-const log = require('../../log').log;
+const log = require('../../log');
 const lib = require('../../lib');
 const Mongoose = require('../../db');
 

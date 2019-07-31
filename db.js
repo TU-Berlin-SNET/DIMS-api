@@ -3,7 +3,7 @@
  */
 
 const Mongoose = require('mongoose');
-const log = require('./log').log;
+const log = require('./log');
 
 const connRetriesLimit = 3;
 const connRetriesInterval = 3000;

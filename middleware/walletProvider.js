@@ -4,7 +4,7 @@
  */
 'use strict';
 
-const log = require('../log').log;
+const log = require('../log');
 const config = require('../config');
 const APIResult = require('../util/api-result');
 const { wrap, wrapEx } = require('../util/asyncwrap');

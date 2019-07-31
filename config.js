@@ -3,7 +3,7 @@
 require('dotenv').config();
 const path = require('path');
 const crypto = require('crypto');
-const log = require('./log').log;
+const logger = require('./log');
 
 module.exports = exports = {};
 
@@ -24,7 +24,7 @@ exports.POOL_IP = process.env.IDC_POOL_IP;
 exports.POOL_INFOPORT = process.env.IDC_POOL_INFO_PORT || 8001;
 
 exports.LIB_OPTIONS = {
-    logger: log,
+    logger,
     runtimeConfig: { collect_backtrace: true },
     pool: {
         name: process.env.IDC_POOL_NAME || 'testPool',

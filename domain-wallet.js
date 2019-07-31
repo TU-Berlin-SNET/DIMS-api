@@ -4,7 +4,7 @@
 
 const config = require('./config');
 const lib = require('./lib');
-const log = require('./log').log;
+const log = require('./log');
 
 const wallet = new lib.Wallet(config.WALLET_CONFIG, config.WALLET_CREDENTIALS);
 

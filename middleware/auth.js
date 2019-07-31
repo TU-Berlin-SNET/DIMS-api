@@ -9,7 +9,7 @@ const ExtractJwt = require('passport-jwt').ExtractJwt;
 const JwtStrategy = require('passport-jwt').Strategy;
 const jwt = require('jsonwebtoken');
 
-const log = require('../log').log;
+const log = require('../log');
 const User = require('../models/user');
 
 const jwtOptions = {

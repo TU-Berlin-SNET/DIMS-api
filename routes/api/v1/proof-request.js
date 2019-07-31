@@ -1,13 +1,13 @@
 /**
  * IDChain Agent REST API Routes
- * Credential Request Routes
+ * Proof Request Routes
  */
 'use strict';
 
 const router = require('express').Router();
-const controller = require('../../controllers/credential/index');
-const wrap = require('../../util/asyncwrap').wrap;
-const APIResult = require('../../util/api-result');
+const controller = require('../../../controllers/proof/index');
+const wrap = require('../../../util/asyncwrap').wrap;
+const APIResult = require('../../../util/api-result');
 
 router
     .route('/')
@@ -20,24 +20,30 @@ router
     )
     .post(
         wrap(async (req, res, next) => {
-            const data = await controller.request.create(req.wallet, req.body.comment, req.body.credentialOfferId);
+            const data = await controller.request.create(
+                req.wallet,
+                req.body.recipientDid,
+                req.body.comment,
+                req.body.proofRequest,
+                req.body.templateValues
+            );
             res.locals.result = APIResult.created(data);
             next();
         })
     );
 
 router
-    .route('/:credentialRequestId')
+    .route('/:proofRequestId')
     .get(
         wrap(async (req, res, next) => {
-            const data = await controller.request.retrieve(req.wallet, req.params.credentialRequestId);
+            const data = await controller.request.retrieve(req.wallet, req.params.proofRequestId);
             res.locals.result = data ? APIResult.success(data) : APIResult.notFound();
             next();
         })
     )
     .delete(
         wrap(async (req, res, next) => {
-            const data = await controller.request.remove(req.wallet, req.params.credentialRequestId);
+            const data = await controller.request.remove(req.wallet, req.params.proofRequestId);
             res.locals.result = data ? APIResult.noContent() : APIResult.notFound();
             next();
         })
