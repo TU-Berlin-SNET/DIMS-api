@@ -3,7 +3,7 @@
  */
 
 const agent = require('superagent');
-const log = require('../log').log;
+const log = require('../log');
 const APIResult = require('../util/api-result');
 const MessageService = require('../services').MessageService;
 

@@ -3,7 +3,7 @@
  * Stores in MongoDB
  */
 
-const log = require('../log').log;
+const log = require('../log');
 const Connection = require('../models/connection');
 
 module.exports = exports = {};

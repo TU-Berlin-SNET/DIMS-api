@@ -12,6 +12,7 @@ const core = require('./0-test-core');
 
 const { before, after, describe, it } = mocha;
 const testId = uuidv4();
+const baseUrl = '/api/v1';
 
 const valuesToDelete = [];
 const data = {
@@ -31,11 +32,11 @@ describe('user', function() {
     });
 
     it('create should return 400 on missing parameters', async function() {
-        await core.postRequest('/api/user', user.token, { username: 'something' }, 400);
+        await core.postRequest(`${baseUrl}/user`, user.token, { username: 'something' }, 400);
     });
 
     it('should retrieve specific user by id', async function() {
-        const res = await core.getRequest(`/api/user/${user.id}`, user.token, 200);
+        const res = await core.getRequest(`${baseUrl}/user/${user.id}`, user.token, 200);
         expect(res.body).to.eql({
             id: user.id,
             username: data.username
@@ -43,7 +44,7 @@ describe('user', function() {
     });
 
     it('should retrieve current user using "me" as id', async function() {
-        const res = await core.getRequest('/api/user/me', user.token, 200);
+        const res = await core.getRequest(`${baseUrl}/user/me`, user.token, 200);
         expect(res.body).to.eql({
             id: user.id,
             username: user.username
@@ -51,12 +52,12 @@ describe('user', function() {
     });
 
     it('should return 404 when trying to retrieve user which does not exist', async function() {
-        await core.getRequest('/api/user/otheruser', user.token, 404);
+        await core.getRequest(`${baseUrl}/user/otheruser`, user.token, 404);
     });
 
     it('should update specific user', async function() {
         const res = await core.putRequest(
-            `/api/user/${user.id}`,
+            `${baseUrl}/user/${user.id}`,
             user.token,
             { username: 'newName', password: 'newPass' },
             200
@@ -67,7 +68,7 @@ describe('user', function() {
     });
 
     it('should delete specific user', async function() {
-        await core.deleteRequest(`/api/user/${user.id}`, user.token, 204);
+        await core.deleteRequest(`${baseUrl}/user/${user.id}`, user.token, 204);
         valuesToDelete.splice(valuesToDelete.findIndex(v => v.id === user.id), 1);
     });
 });

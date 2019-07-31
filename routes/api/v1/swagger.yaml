@@ -1,10 +1,11 @@
 swagger: '2.0'
 info:
-  description: 'DIMS Agent REST API'
-  title: 'DIMS API'
-  version: '0.2.0'
+  title: 'DIMS Agent API'
+  description: 'DIMS Agent API'
+  version: '1.0.0'
 schemes:
   - http
+basePath: /api/v1
 securityDefinitions:
   Bearer:
     description: |
@@ -47,8 +48,6 @@ tags:
     description: 'Proof request, and proof endpoints'
   - name: transaction
     description: 'Low-level indy transaction endpoints'
-  - name: message
-    description: 'Message endpoints'
 
 parameters:
   userParam:
@@ -110,16 +109,9 @@ definitions:
   messageType:
     description: 'Message Type'
     type: string
-    enum:
-      - 'urn:sovrin:agent:message_type:sovrin.org/connection_offer'
-      - 'urn:sovrin:agent:message_type:sovrin.org/connection_request'
-      - 'urn:sovrin:agent:message_type:sovrin.org/connection_response'
-      - 'urn:sovrin:agent:message_type:sovrin.org/connection_acknowledge'
-      - 'urn:sovrin:agent:message_type:sovrin.org/credential_offer'
-      - 'urn:sovrin:agent:message_type:sovrin.org/credential_request'
-      - 'urn:sovrin:agent:message_type:sovrin.org/credential'
-      - 'urn:sovrin:agent:message_type:sovrin.org/proof_request'
-      - 'urn:sovrin:agent:message_type:sovrin.org/proof'
+  messageObject:
+    description: 'Message Object'
+    type: object
   senderDid:
     description: 'Sender Did'
     type: string
@@ -129,6 +121,9 @@ definitions:
   expireAt:
     description: 'Optional expire time'
     type: string
+  metaObject:
+    description: 'Additional Metadata'
+    type: object
   user:
     type: object
     properties:
@@ -498,14 +493,6 @@ definitions:
           lowLevelSchema: {}
           credentialDefinitionId: 'Th7MpTaRZVRYnPiabds81Y:3:CL:15:TAG1'
           revocationRegistryId: ''
-  indy_post:
-    type: object
-    properties:
-      message:
-        description: 'Anoncrypted-message'
-        type: string
-    required:
-      - message
   login_post:
     type: object
     properties:
@@ -573,14 +560,13 @@ definitions:
       messageId:
         $ref: '#/definitions/messageId'
       type:
-        description: 'urn:sovrin:agent:message_type:sovrin.org/connection_offer'
-        type: string
+        $ref: '#/definitions/messageType'
       senderDid:
         $ref: '#/definitions/senderDid'
       recipientDid:
         $ref: '#/definitions/recipientDid'
       message:
-        $ref: '#/message_formats/connection_offer'
+        $ref: '#/definitions/messageObject'
       meta:
         description: 'Additional Metadata'
         type: object
@@ -605,35 +591,17 @@ definitions:
       messageId:
         $ref: '#/definitions/messageId'
       type:
-        description: 'urn:sovrin:agent:message_type:sovrin.org/connection_request'
-        type: string
+        $ref: '#/definitions/messageType'
       senderDid:
         $ref: '#/definitions/senderDid'
       recipientDid:
         $ref: '#/definitions/recipientDid'
       message:
-        $ref: '#/message_formats/connection_request'
+        $ref: '#/definitions/messageObject'
       meta:
-        description: 'Additional Metadata'
-        type: object
-        properties:
-          role:
-            description: '(Optional) Role which was offered (only on offering side)'
-            type: string
-          myDid:
-            description: "User's pairwise did"
-            type: string
-          theirEndpointDid:
-            description: "(Only on sender side) Recipient's endpoint did"
-            type: string
-          theirEndpointVk:
-            description: "(Only on sender side) Recipient's endpoint did verification key"
-            type: string
-          theirEndpoint:
-            description: "(Only on sender side) Recipient's endpoint address"
-            type: string
+        $ref: '#/definitions/metaObject'
   connection_response:
-    $ref: '#/message_formats/connection_response'
+    type: object
   credential_offer:
     type: object
     properties:
@@ -648,21 +616,15 @@ definitions:
       messageId:
         $ref: '#/definitions/messageId'
       type:
-        description: 'urn:sovrin:agent:message_type:sovrin.org/credential_offer'
-        type: string
+        $ref: '#/definitions/messageType'
       senderDid:
         $ref: '#/definitions/senderDid'
       recipientDid:
         $ref: '#/definitions/recipientDid'
       message:
-        $ref: '#/message_formats/credential_offer'
+        $ref: '#/definitions/messageObject'
       meta:
-        description: 'Additional Metadata'
-        type: object
-        properties:
-          credentialLocation:
-            description: '(Optional) URL location of credential values to automatically issue credentials on request'
-            type: string
+        $ref: '#/definitions/metaObject'
   indy_schema_db:
     description: 'Indy low-level schema as stored in DB'
     type: object
@@ -795,17 +757,15 @@ definitions:
       messageId:
         $ref: '#/definitions/messageId'
       type:
-        description: 'urn:sovrin:agent:message_type:sovrin.org/credential_request'
-        type: string
+        $ref: '#/definitions/messageType'
       senderDid:
         $ref: '#/definitions/senderDid'
       recipientDid:
         $ref: '#/definitions/recipientDid'
       message:
-        $ref: '#/message_formats/credential_request'
+        $ref: '#/definitions/messageObject'
       meta:
-        description: 'Credential request metadata JSON as created by indy-sdk'
-        type: object
+        $ref: '#/definitions/metaObject'
   credential_message:
     type: object
     properties:
@@ -820,14 +780,13 @@ definitions:
       messageId:
         $ref: '#/definitions/messageId'
       type:
-        description: 'urn:sovrin:agent:message_type:sovrin.org/credential'
-        type: string
+        $ref: '#/definitions/messageType'
       senderDid:
         $ref: '#/definitions/senderDid'
       recipientDid:
         $ref: '#/definitions/recipientDid'
       message:
-        $ref: '#/message_formats/credential'
+        $ref: '#/definitions/messageObject'
       meta:
         description: 'Additional Metadata'
         type: object
@@ -855,14 +814,13 @@ definitions:
       messageId:
         $ref: '#/definitions/messageId'
       type:
-        description: 'urn:sovrin:agent:message_type:sovrin.org/proof_request'
-        type: string
+        $ref: '#/definitions/messageType'
       senderDid:
         $ref: '#/definitions/senderDid'
       recipientDid:
         $ref: '#/definitions/recipientDid'
       message:
-        $ref: '#/message_formats/proof_request'
+        $ref: '#/definitions/messageObject'
       meta:
         description: 'Additional Metadata'
         type: object
@@ -884,14 +842,13 @@ definitions:
       messageId:
         $ref: '#/definitions/messageId'
       type:
-        description: 'urn:sovrin:agent:message_type:sovrin.org/proof'
-        type: string
+        $ref: '#/definitions/messageType'
       senderDid:
         $ref: '#/definitions/senderDid'
       recipientDid:
         $ref: '#/definitions/recipientDid'
       message:
-        $ref: '#/message_formats/proof'
+        $ref: '#/definitions/messageObject'
   proof:
     type: object
     properties:
@@ -929,22 +886,11 @@ definitions:
       theirDid:
         description: 'Their pairwise DID'
         type: string
+      acknowledged:
+        description: 'If connection is in COMPLETED state'
+        type: boolean
       metadata:
-        description: 'Additional Metadata, may include other things'
-        type: object
-        properties:
-          theirEndpointDid:
-            description: 'Their endpoint did'
-            type: string
-          theirEndpointVk:
-            description: 'Their endpoint did verification key'
-            type: string
-          theirEndpoint:
-            description: 'Their endpoint address'
-            type: string
-          acknowledged:
-            description: 'Whether this connection was acknowledged'
-            type: boolean
+        $ref: '#/definitions/metaObject'
   proofrequest_template:
     type: object
     properties:
@@ -1041,32 +987,6 @@ definitions:
       reqId: 1542895352021723000
       dest: S5g1z6eUGjdTF6uiuvoJDC
       txnTime: 1542895203
-  message_db:
-    description: 'Message Object as stored in DB'
-    type: object
-    properties:
-      id:
-        $ref: '#/definitions/id'
-      createdAt:
-        $ref: '#/definitions/createdAt'
-      updatedAt:
-        $ref: '#/definitions/updatedAt'
-      expireAt:
-        $ref: '#/definitions/expireAt'
-      messageId:
-        $ref: '#/definitions/messageId'
-      type:
-        $ref: '#/definitions/messageType'
-      senderDid:
-        $ref: '#/definitions/senderDid'
-      recipientDid:
-        $ref: '#/definitions/recipientDid'
-      message:
-        description: 'Message which is sent to recipient, see message_formats'
-        type: object
-      meta:
-        description: 'Additional Metadata'
-        type: object
 
 responses:
   accepted:
@@ -1084,259 +1004,8 @@ responses:
   unauthorized:
     description: 'Unauthorized'
 
-message_formats:
-  connection_offer:
-    type: object
-    properties:
-      id:
-        description: 'Offer Nonce'
-        type: string
-      type:
-        description: 'urn:sovrin:agent:message_type:sovrin.org/connection_offer'
-        type: string
-      message:
-        type: object
-        properties:
-          did:
-            description: "Sender's Endpoint DID"
-            type: string
-          verkey:
-            description: "(Optional) Sender's Endpoint DID Verification Key, required if not on ledger"
-            type: string
-          endpoint:
-            description: "(Optional) Sender's Endpoint DID endpoint Address, required if not on ledger"
-            type: string
-          nonce:
-            description: 'Offer Nonce'
-            type: string
-          data:
-            description: 'Object containing additional information about sender such as name, description, logo, etc.'
-            type: object
-  connection_request:
-    type: object
-    properites:
-      id:
-        description: 'offer nonce, if applicable, or request nonce'
-        type: string
-      type:
-        description: 'urn:sovrin:agent:message_type:sovrin.org/connection_request'
-        type: string
-      message:
-        type: object
-        properties:
-          did:
-            description: "Sender's Pairwise DID"
-            type: string
-          verkey:
-            description: "(Optional) Sender's Pairwise DID Verification Key, required if not on ledger"
-            type: string
-          endpointDid:
-            description: "(Optional) Sender's Endpoint DID, required if not on ledger not diddoc has no endpoint"
-            type: string
-          endpoint:
-            description: "(Optional) Sender's Endpoint DID endpoint Address, required if not on ledger"
-            type: string
-          nonce:
-            description: 'Request Nonce'
-            type: string
-  connection_response:
-    type: object
-    properites:
-      id:
-        description: 'request nonce'
-        type: string
-      aud:
-        description: "Recipient's pairwise did"
-        type: string
-      type:
-        description: 'urn:sovrin:agent:message_type:sovrin.org/connection_response'
-        type: string
-      message:
-        type: object
-        properties:
-          did:
-            description: "Sender's Pairwise DID"
-            type: string
-          verkey:
-            description: "(Optional) Sender's Pairwise DID Verification Key, required if not on ledger"
-            type: string
-          nonce:
-            description: 'Request Nonce'
-            type: string
-  connection_acknowledgement:
-    type: object
-    properites:
-      id:
-        description: "Sender's Pairwise DID"
-        type: string
-      type:
-        description: 'urn:sovrin:agent:message_type:sovrin.org/connection_acknowledge'
-        type: string
-      message:
-        description: 'SUCCESS'
-        type: string
-  credential_offer:
-    type: object
-    properites:
-      id:
-        description: 'offer nonce'
-        type: string
-      origin:
-        description: "Sender's pairwise did"
-        type: string
-      type:
-        description: 'urn:sovrin:agent:message_type:sovrin.org/credential_offer'
-        type: string
-      message:
-        description: 'Credential Offer as created by indy-sdk, fields may vary'
-        type: object
-        properties:
-          schema_id:
-            description: "Offered credential's schema id"
-            type: string
-          cred_def_id:
-            description: "Offered credential's credentialdefinition id"
-            type: string
-          nonce:
-            description: 'Offer Nonce'
-            type: string
-          key_correctness_proof:
-            description: 'Key Correctness Proof'
-            type: string
-  credential_request:
-    type: object
-    properites:
-      id:
-        description: 'offer nonce'
-        type: string
-      origin:
-        description: "Sender's pairwise did"
-        type: string
-      type:
-        description: 'urn:sovrin:agent:message_type:sovrin.org/credential_request'
-        type: string
-      message:
-        description: 'Credential Request as created by indy-sdk, fields may vary'
-        type: object
-        properties:
-          prover_did:
-            description: 'Prover Did'
-            type: string
-          cred_def_id:
-            description: 'Credential Definition Id'
-            type: string
-          blinded_ms:
-            description: 'Blinded Master Secret'
-            type: string
-          blinded_ms_correctness_proof:
-            description: 'Blinded Master Secret Correctness Proof'
-            type: string
-          nonce:
-            description: 'Request Nonce'
-            type: string
-  credential:
-    type: object
-    properites:
-      id:
-        description: 'request nonce'
-        type: string
-      origin:
-        description: "Sender's pairwise did"
-        type: string
-      type:
-        description: 'urn:sovrin:agent:message_type:sovrin.org/credential'
-        type: string
-      message:
-        $ref: '#/definitions/indy_credential'
-  proof_request:
-    type: object
-    properties:
-      id:
-        description: 'Request Nonce'
-        type: string
-      origin:
-        description: "Sender's pairwise did"
-        type: string
-      type:
-        description: 'urn:sovrin:agent:message_type:sovrin.org/proof_request'
-        type: string
-      message:
-        type: object
-        properties:
-          name:
-            description: 'Proof Request name'
-            type: string
-          version:
-            description: 'Proof Request Version'
-            type: string
-          nonce:
-            description: 'Request Nonce'
-            type: string
-          requested_attributes:
-            type: object
-            properties:
-              attr1_referent:
-                description: 'Attribute Id/Referent'
-                type: object
-                properties:
-                  name:
-                    description: 'Attribute Name'
-                    type: string
-                  restrictions:
-                    description: |-
-                      (Optional) Attribute Restrictions, e.g. which credential definition it is backed by.
-                      Leave empty to allow for self-attested attributes.
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        cred_def_id:
-                          description: 'Credential Definition Id'
-                          type: string
-          requested_predicates:
-            type: object
-            properties:
-              predicate1_referent:
-                type: object
-                properties:
-                  name:
-                    description: 'Predicate Name'
-                    type: string
-                  p_type:
-                    description: 'Predicate Type, e.g. ">="'
-                    type: string
-                  p_value:
-                    description: 'Value to check predicate against'
-                    type: string
-                  restrictions:
-                    description: |-
-                      (Optional) Attribute Restrictions, e.g. which credential definition it is backed by.
-                      Leave empty to allow for self-attested attributes.
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        cred_def_id:
-                          description: 'Credential Definition Id'
-                          type: string
-  proof:
-    type: object
-    properties:
-      id:
-        description: 'Request Nonce'
-        type: string
-      origin:
-        description: "Sender's pairwise did"
-        type: string
-      type:
-        description: 'urn:sovrin:agent:message_type:sovrin.org/proof'
-        type: string
-      message:
-        description: 'Proof as created by indy-sdk'
-        type: object
-
 paths:
-  /api/login:
+  /login:
     post:
       summary: 'Allow users to login, will return them a JWT valid for a specific amount of time'
       description: 'Allow users to login, will return them a JWT valid for a specific amount of time'
@@ -1372,7 +1041,7 @@ paths:
         - verifier
         - prover
 
-  /api/user:
+  /user:
     post:
       summary: 'Register a new user'
       description: 'Register a new user'
@@ -1404,7 +1073,7 @@ paths:
         - verifier
         - prover
 
-  /api/user/{user}:
+  /user/{user}:
     parameters:
       - $ref: '#/parameters/userParam'
     get:
@@ -1471,7 +1140,7 @@ paths:
         - verifier
         - prover
 
-  /api/wallet:
+  /wallet:
     get:
       summary: 'List all wallets of user'
       description: 'List all wallets of user'
@@ -1518,7 +1187,7 @@ paths:
         - verifier
         - prover
 
-  /api/wallet/{wallet}:
+  /wallet/{wallet}:
     parameters:
       - $ref: '#/parameters/walletParam'
     get:
@@ -1558,7 +1227,7 @@ paths:
         - verifier
         - prover
 
-  /api/wallet/{wallet}/connection/:
+  /wallet/{wallet}/connection/:
     parameters:
       - $ref: '#/parameters/walletParam'
     get:
@@ -1582,7 +1251,7 @@ paths:
         - verifier
         - prover
 
-  /api/wallet/{wallet}/connection/{theirDid}:
+  /wallet/{wallet}/connection/{theirDid}:
     parameters:
       - $ref: '#/parameters/walletParam'
       - $ref: '#/parameters/theirDidParam'
@@ -1605,7 +1274,7 @@ paths:
         - verifier
         - prover
 
-  /api/wallet/{wallet}/credential/:
+  /wallet/{wallet}/credential/:
     get:
       summary: 'List credentials stored in wallet'
       description: 'List credentials stored in wallet'
@@ -1652,7 +1321,7 @@ paths:
         - wallet
         - prover
 
-  /api/wallet/{wallet}/credential/{credential}:
+  /wallet/{wallet}/credential/{credential}:
     parameters:
       - $ref: '#/parameters/walletParam'
       - $ref: '#/parameters/credentialParam'
@@ -1668,7 +1337,7 @@ paths:
         - wallet
         - prover
 
-  /api/connection/:
+  /connection/:
     get:
       summary: 'List connections'
       description: 'List connections'
@@ -1690,7 +1359,7 @@ paths:
         - verifier
         - prover
 
-  /api/connection/{myDid}:
+  /connection/{myDid}:
     parameters:
       - name: myDid
         in: path
@@ -1716,7 +1385,7 @@ paths:
         - verifier
         - prover
 
-  /api/connectionoffer:
+  /connectionoffer:
     get:
       summary: 'list connection offers'
       description: 'list connection offers'
@@ -1729,6 +1398,10 @@ paths:
             type: array
             items:
               $ref: '#/definitions/connection_offer'
+      tags:
+        - connection
+        - issuer
+        - verifier
     post:
       summary: 'Create a new connection offer'
       description: 'Create a new connection offer'
@@ -1753,12 +1426,14 @@ paths:
         - issuer
         - verifier
 
-  /api/connectionoffer/{connectionOfferId}:
+  /connectionoffer/{connectionOfferId}:
     parameters:
       - $ref: '#/parameters/walletHeader'
       - in: path
         name: connectionOfferId
         description: connection offer _id
+        type: string
+        required: true
     get:
       summary: 'Retrieve a connection offer by _id'
       description: 'Retrieve a connection offer by _id'
@@ -1794,7 +1469,7 @@ paths:
         - verifier
         - prover
 
-  /api/connectionrequest:
+  /connectionrequest:
     get:
       summary: 'List all my connection requests'
       description: 'List all my connection requests'
@@ -1829,7 +1504,7 @@ paths:
         '201':
           description: 'Created'
           schema:
-            $ref: '#/definitions/connection'
+            $ref: '#/definitions/connection_request'
         '400':
           $ref: '#/responses/bad_request'
         '401':
@@ -1842,7 +1517,7 @@ paths:
         - issuer
         - verifier
         - prover
-  /api/connectionrequest/{connectionRequestId}:
+  /connectionrequest/{connectionRequestId}:
     parameters:
       - in: path
         name: connectionRequestId
@@ -1885,7 +1560,7 @@ paths:
         - verifier
         - prover
 
-  /api/connectionresponse:
+  /connectionresponse:
     post:
       summary: 'Accept a connection request and send a connection response'
       description: 'Accept a connection request and send a connection response'
@@ -1899,8 +1574,12 @@ paths:
           description: 'Created'
           schema:
             $ref: '#/definitions/connection_response'
+      tags:
+        - connection
+        - issuer
+        - verifier
 
-  /api/indyschema:
+  /indyschema:
     get:
       summary: 'List low-level indy schemas'
       description: 'List low-level indy schemas'
@@ -1943,7 +1622,7 @@ paths:
         - indyschema
         - issuer
 
-  /api/indyschema/{schemaid}:
+  /indyschema/{schemaid}:
     parameters:
       - description: 'A unique string value identifying this schema.'
         in: path
@@ -1968,7 +1647,7 @@ paths:
         - issuer
         - verifier
 
-  /api/schema:
+  /schema:
     get:
       tags:
         - schema
@@ -2036,7 +1715,7 @@ paths:
         409:
           description: 'Schema with the same name and version already exists'
 
-  /api/schema/{schemaid}:
+  /schema/{schemaid}:
     get:
       tags:
         - schema
@@ -2090,7 +1769,7 @@ paths:
         422:
           description: 'Schema does not support revocations, or is already revoked'
 
-  /api/attribute/type:
+  /attribute/type:
     get:
       summary: 'The types supported by the high-level schema language'
       description: 'The types supported by the high-level schema language'
@@ -2105,7 +1784,7 @@ paths:
         - schema
         - issuer
 
-  /api/credentialdef:
+  /credentialdef:
     get:
       summary: 'List credential definitions of wallet stored in DB'
       description: 'List credential definitions of wallet stored in DB'
@@ -2152,7 +1831,7 @@ paths:
         - credential
         - issuer
 
-  /api/credentialdef/{creddef}:
+  /credentialdef/{creddef}:
     parameters:
       - description: A unique string value identifying a credential definition.
         in: path
@@ -2176,7 +1855,7 @@ paths:
         - credential
         - issuer
 
-  /api/credentialoffer:
+  /credentialoffer:
     get:
       summary: 'List credential offers'
       description: 'List credential offers'
@@ -2220,7 +1899,7 @@ paths:
         - credential
         - issuer
 
-  /api/credentialoffer/{id}:
+  /credentialoffer/{id}:
     parameters:
       - description: 'A unique string value identifying a credential offer.'
         in: path
@@ -2261,7 +1940,7 @@ paths:
         - issuer
         - prover
 
-  /api/credentialrequest:
+  /credentialrequest:
     get:
       summary: 'List credential requests'
       description: 'List credential requests'
@@ -2303,7 +1982,7 @@ paths:
         - credential
         - issuer
 
-  /api/credentialrequest/{id}:
+  /credentialrequest/{id}:
     parameters:
       - description: 'A unique string value identifying a credential request.'
         in: path
@@ -2342,7 +2021,7 @@ paths:
         - issuer
         - prover
 
-  /api/credential/:
+  /credential/:
     get:
       summary: 'List credentials issued by a wallet'
       description: 'List credentials issued by a wallet'
@@ -2389,7 +2068,7 @@ paths:
         - credential
         - issuer
 
-  /api/credential/{id}:
+  /credential/{id}:
     parameters:
       - description: 'A unique string value identifying this credential.'
         in: path
@@ -2414,7 +2093,7 @@ paths:
         - issuer
 
   # Endpoint is WIP
-  /api/credential/{id}/revoke:
+  /credential/{id}/revoke:
     parameters:
       - description: 'A unique string value identifying this credential.'
         in: path
@@ -2447,7 +2126,7 @@ paths:
         - credential
         - issuer
 
-  /api/proofrequesttemplate:
+  /proofrequesttemplate:
     get:
       summary: 'List proof request templates'
       description: 'List proof request templates'
@@ -2490,7 +2169,7 @@ paths:
         - proof
         - verifier
 
-  /api/proofrequesttemplate/{id}:
+  /proofrequesttemplate/{id}:
     parameters:
       - description: 'A unique string value identifying a proof request template.'
         in: path
@@ -2543,7 +2222,7 @@ paths:
         - proof
         - verifier
 
-  /api/proofrequest:
+  /proofrequest:
     get:
       summary: 'List proof requests'
       description: 'List proof requests'
@@ -2587,7 +2266,7 @@ paths:
         - proof
         - verifier
 
-  /api/proofrequest/{id}:
+  /proofrequest/{id}:
     parameters:
       - description: 'A unique string value identifying a proof request.'
         in: path
@@ -2626,7 +2305,7 @@ paths:
         - verifier
         - prover
 
-  /api/proof:
+  /proof:
     get:
       summary: 'List received proofs'
       description: 'List received proofs'
@@ -2669,7 +2348,7 @@ paths:
         - proof
         - prover
 
-  /api/proof/{id}:
+  /proof/{id}:
     parameters:
       - description: 'A unique string value identifying a proof.'
         in: path
@@ -2708,7 +2387,7 @@ paths:
         - proof
         - verifier
 
-  /api/transactions:
+  /transactions:
     get:
       description: 'Get ledger transactions from-to indexes'
       parameters:
@@ -2743,7 +2422,7 @@ paths:
       tags:
         - transaction
 
-  /api/nym:
+  /nym:
     post:
       description: 'Send Nym request to the ledger'
       summary: 'Send Nym request to the ledger'
@@ -2766,7 +2445,7 @@ paths:
       tags:
         - transaction
 
-  /api/nym/{did}:
+  /nym/{did}:
     get:
       description: 'Retrieve Nym from ledger'
       summary: 'Retrieve Nym from ledger'
@@ -2788,49 +2467,3 @@ paths:
           $ref: '#/responses/not_found'
       tags:
         - transaction
-
-  /indy/:
-    post:
-      summary: 'Agent Message Endpoint'
-      description: 'Agent Message Endpoint'
-      security: []
-      parameters:
-        - in: body
-          name: data
-          schema:
-            $ref: '#/definitions/indy_post'
-      responses:
-        '202':
-          description: 'Accepted'
-        '400':
-          $ref: '#/responses/bad_request'
-        '404':
-          $ref: '#/responses/not_found'
-      tags:
-        - message
-
-  /tails/{tailsHash}:
-    parameters:
-      - in: path
-        name: tailsHash
-        description: 'tailsHash as provided in tailsLocation'
-        required: true
-        type: string
-    get:
-      summary: 'Agent Revocation Tails Endpoint'
-      description: 'Public immutable shared blob linked to a revocation registry definition'
-      security: []
-      responses:
-        '200':
-          description: 'Success'
-          schema:
-            description: 'tails file as base64 encoded string'
-            type: string
-        '400':
-          $ref: '#/responses/bad_request'
-        '404':
-          $ref: '#/responses/not_found'
-      tags:
-        - proof
-        - issuer
-        - prover

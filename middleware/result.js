@@ -3,7 +3,7 @@
  * Result Handler
  */
 
-const log = require('../log').log;
+const log = require('../log');
 const APIResult = require('../util/api-result');
 
 const internalServerError = 500;

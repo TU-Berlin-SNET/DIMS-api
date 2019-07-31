@@ -7,7 +7,7 @@ module.exports = exports = {};
 
 const uuidv4 = require('uuid/v4');
 
-const log = require('../../log').log;
+const log = require('../../log');
 const lib = require('../../lib');
 const domainWallet = require('../../domain-wallet');
 

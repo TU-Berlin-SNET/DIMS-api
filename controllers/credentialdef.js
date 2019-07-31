@@ -9,7 +9,7 @@ const path = require('path');
 const uuidv4 = require('uuid/v4');
 
 const config = require('../config');
-const log = require('../log').log;
+const log = require('../log');
 const lib = require('../lib');
 const CredDef = require('../models/credentialdef');
 const RevocRegistry = require('../models/revocation-registry');

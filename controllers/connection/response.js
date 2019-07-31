@@ -9,7 +9,7 @@ module.exports = exports = {};
 const uuidv4 = require('uuid/v4');
 const config = require('../../config');
 const lib = require('../../lib');
-const log = require('../../log').log;
+const log = require('../../log');
 const domainWallet = require('../../domain-wallet');
 
 const Mongoose = require('../../db');

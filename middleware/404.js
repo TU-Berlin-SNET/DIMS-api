@@ -1,4 +1,4 @@
-const log = require('../log').log;
+const log = require('../log');
 const apiResult = new (require('../util/api-result'))(404, { message: 'Sorry, there is nothing here.' });
 
 module.exports = (req, res, next) => {

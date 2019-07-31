@@ -14,7 +14,7 @@ require('./db');
 require('./models');
 
 const lib = require('./lib');
-const log = require('./log').log;
+const log = require('./log');
 const domainWallet = require('./domain-wallet');
 const routes = require('./routes/index');
 
@@ -41,8 +41,8 @@ async function initialize() {
 initialize()
     .then(() => {
         const server = app.listen(config.APP_PORT, config.APP_HOST, async () => {
-            log.info('IDChain API now up at %s:%s', server.address().address, server.address().port);
-            log.info('Access APIDocs at /api/docs');
+            log.info('API now up at %s:%s', server.address().address, server.address().port);
+            log.info('Access APIDocs at /api/v1/docs or /api/v2/docs');
         });
     })
     .catch(err => {

@@ -2,7 +2,7 @@ const agent = require('superagent');
 
 const config = require('../config');
 const lib = require('../lib');
-const log = require('../log').log;
+const log = require('../log');
 
 const Schema = require('../models/schema');
 const CredDef = require('../models/credentialdef');

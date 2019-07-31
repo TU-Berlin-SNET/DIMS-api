@@ -5,9 +5,9 @@
 'use strict';
 
 const router = require('express').Router();
-const controller = require('../../controllers/connection/response');
-const wrap = require('../../util/asyncwrap').wrap;
-const APIResult = require('../../util/api-result');
+const controller = require('../../../controllers/connection/response');
+const wrap = require('../../../util/asyncwrap').wrap;
+const APIResult = require('../../../util/api-result');
 
 router.route('/').post(
     wrap(async (req, res, next) => {

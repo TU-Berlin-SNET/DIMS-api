@@ -20,7 +20,7 @@ exports.createResponse = Response.create;
 exports.receiveResponse = Response.handle;
 
 exports.list = async (wallet, query) => {
-    return await ConnectionService.find(wallet, query).map(v => {
+    return (await ConnectionService.find(wallet, query)).map(v => {
         return {
             my_did: v.myDid,
             their_did: v.theirDid,
