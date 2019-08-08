@@ -38,6 +38,9 @@ exports.create = async (wallet, theirDid, comment = '', credentialProposal = {},
         comment,
         credential_proposal: credentialProposal
     };
+
+    // TODO check if the combination makes sense, i.e.
+    // if the credential definition is actually based on the schema
     if (schemaId) {
         proposal['schema_id'] = schemaId;
     }
@@ -87,9 +90,9 @@ exports.handle = async (wallet, message, senderVk, recipientVk) => {
     // store and wait for further action
     await new Message({
         wallet: wallet.id,
+        type: message['@type'],
         messageId: message['@id'],
         threadId: message['~thread'] ? message['~thread'].thid : message['@id'],
-        type: message['@type'],
         senderDid: conn.theirDid,
         recipientDid: conn.myDid,
         message

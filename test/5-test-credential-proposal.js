@@ -32,33 +32,34 @@ const data = {
         firstname: 'Alice',
         lastname: 'Doe',
         age: '32'
-    },
-    credProposal: {
-        comment: 'test-proposal-' + testId,
-        credentialProposal: {
-            attributes: [
-                {
-                    name: 'firstname',
-                    'mime-type': 'string',
-                    value: 'Alice'
-                },
-                {
-                    name: 'lastname',
-                    'mime-type': 'string',
-                    value: 'Doe'
-                },
-                {
-                    name: 'age',
-                    'mime-type': 'number',
-                    value: 32
-                }
-            ]
-        },
-        // these will be populated during test
-        recipientDid: '',
-        schema: '',
-        credentialDefinition: ''
     }
+};
+
+data.credProposal = {
+    comment: 'test-proposal-' + testId,
+    credentialProposal: {
+        attributes: [
+            {
+                name: 'firstname',
+                'mime-type': 'string',
+                value: data.credValues.firstname
+            },
+            {
+                name: 'lastname',
+                'mime-type': 'string',
+                value: data.credValues.lastname
+            },
+            {
+                name: 'age',
+                'mime-type': 'number',
+                value: data.credValues.age
+            }
+        ]
+    },
+    // these will be populated during test
+    recipientDid: '',
+    schema: '',
+    credentialDefinition: ''
 };
 
 const MESSAGE_TYPE = 'did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/issue-credential/1.0/propose-credential';
@@ -73,7 +74,7 @@ let schema;
 let credentialDefinition;
 let credentialProposal;
 
-describe.only('credential proposals', function() {
+describe('credential proposals', function() {
     before(async function() {
         steward = await core.steward(testId);
         issuer = await core.prepareUser(data.issuer);
@@ -143,11 +144,29 @@ describe.only('credential proposals', function() {
         expect(res.body.message.credential_proposal).to.have.property('@type', PROPOSAL_TYPE);
     });
 
-    it('should delete credential proposal', async function() {
-        await core.deleteRequest('/api/credentialproposal/' + credentialProposal.id, issuer.token, 204);
+    it('should offer credential based on proposal (accept the proposal)', async function() {
+        const postBody = {
+            comment: 'test-offer-' + testId,
+            recipientDid: issuerHolderPairwise['their_did'],
+            credDefId: data.credProposal.credentialDefinition,
+            credentialProposal: credentialProposal.id
+        };
+        await core.postRequest('/api/credentialoffer', issuer.token, postBody, 201);
     });
 
-    it.skip('should accept credential proposal', async function() {
-        // TODO
+    it('should retrieve credential issued based on proposal', async function() {
+        const res = await core.repeat(
+            () => core.getRequest('/api/wallet/default/credential', holder.token),
+            res => res.status === 200 && res.body.length > 0
+        );
+        expect(res).to.have.property('status', 200);
+        expect(res.body)
+            .to.be.an('Array')
+            .with.lengthOf(1);
+        const credential = res.body[0];
+        expect(credential).to.contain.keys('referent', 'attrs', 'schema_id', 'cred_def_id');
+        expect(credential).to.have.property('schema_id', data.credProposal.schema);
+        expect(credential).to.have.property('cred_def_id', data.credProposal.credentialDefinition);
+        expect(credential.attrs).to.eql(data.credValues);
     });
 });

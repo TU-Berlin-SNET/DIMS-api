@@ -288,6 +288,9 @@ definitions:
       credDefId:
         description: 'Credential definition id'
         type: string
+      credentialProposal:
+        description: '(optional) identifier of credential proposal to accept'
+        type: string
       credentialLocation:
         description:
           '(Optional) URL at which key-value object containing credential values can be fetched using HTTP GET'

@@ -140,7 +140,7 @@ module.exports = {
         log.debug('received proof request');
         const connection = await ConnectionService.findOne(wallet, { myKey: recipientVk, theirKey: senderVk });
         if (!connection) {
-            log.warn('received credential but there is no connection?');
+            log.warn('received proof request but there is no connection?');
             return;
         }
 

@@ -15,7 +15,7 @@ module.exports = {
      */
     async list(wallet, query = {}) {
         const [searchHandle, totalCount] = await lib.sdk.proverSearchCredentials(wallet.handle, query);
-        return lib.sdk.proverFetchCredentials(searchHandle, totalCount);
+        return totalCount > 0 ? await lib.sdk.proverFetchCredentials(searchHandle, totalCount) : [];
     },
 
     /**
@@ -24,6 +24,6 @@ module.exports = {
      * @param {string} credentialId
      */
     async retrieve(wallet, credentialId) {
-        return lib.sdk.proverGetCredential(wallet.handle, credentialId);
+        return await lib.sdk.proverGetCredential(wallet.handle, credentialId);
     }
 };

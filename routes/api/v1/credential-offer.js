@@ -25,6 +25,7 @@ router
                 req.body.comment,
                 req.body.recipientDid,
                 req.body.credDefId,
+                req.body.credentialProposal,
                 req.body.credentialLocation
             );
             res.locals.result = APIResult.created(data);
