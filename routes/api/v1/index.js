@@ -19,6 +19,7 @@ const connection = require('./connection');
 const indySchema = require('./indy-schema');
 const schema = require('./schema');
 const credentialDefinition = require('./credential-definition');
+const credentialProposal = require('./credential-proposal');
 const credentialOffer = require('./credential-offer');
 const credentialRequest = require('./credential-request');
 const credential = require('./credential');
@@ -53,6 +54,8 @@ router.use('/indyschema', indySchema);
 
 router.use('/schema', schema);
 router.route('/attribute/type').get(schemaController.types); // it does not need auth middleware, but I keep it here to be treated the same as schemas
+
+router.use('/credentialproposal', credentialProposal);
 
 router.use('/credentialoffer', credentialOffer);
 

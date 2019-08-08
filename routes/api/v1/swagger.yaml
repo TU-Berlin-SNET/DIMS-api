@@ -245,6 +245,35 @@ definitions:
         default: false
     required:
       - schemaId
+  credentialproposal_post:
+    type: object
+    properties:
+      wallet:
+        $ref: '#/definitions/walletId'
+      recipientDid:
+        description: 'Pairwise DID of connection to whom to send the credential proposal'
+        type: string
+      comment:
+        description: '(optional) comment describing the credential offer'
+        type: string
+      credentialProposal:
+        description: 'JSON-LD object describing the credential you want to receive'
+        type: object
+        example:
+          'attributes':
+            - name: 'example attribute name'
+              mime-type: 'string'
+              encoding: 'encoding'
+              value: 'expected value'
+      schema:
+        description: 'schema id credential should be based on'
+        type: string
+      credentialDefinition:
+        description: 'credential definition id credential should be based on'
+        type: string
+    required:
+      - recipientDid
+      - credentialProposal
   credentialoffer_post:
     type: object
     properties:
@@ -828,27 +857,6 @@ definitions:
           proofId:
             description: 'Proof placeholder Id which can be queried for proof status'
             type: string
-  proof_message:
-    type: object
-    properties:
-      id:
-        $ref: '#/definitions/id'
-      createdAt:
-        $ref: '#/definitions/createdAt'
-      updatedAt:
-        $ref: '#/definitions/updatedAt'
-      expireAt:
-        $ref: '#/definitions/expireAt'
-      messageId:
-        $ref: '#/definitions/messageId'
-      type:
-        $ref: '#/definitions/messageType'
-      senderDid:
-        $ref: '#/definitions/senderDid'
-      recipientDid:
-        $ref: '#/definitions/recipientDid'
-      message:
-        $ref: '#/definitions/messageObject'
   proof:
     type: object
     properties:
@@ -987,6 +995,27 @@ definitions:
       reqId: 1542895352021723000
       dest: S5g1z6eUGjdTF6uiuvoJDC
       txnTime: 1542895203
+  message:
+    type: object
+    properties:
+      id:
+        $ref: '#/definitions/id'
+      createdAt:
+        $ref: '#/definitions/createdAt'
+      updatedAt:
+        $ref: '#/definitions/updatedAt'
+      expireAt:
+        $ref: '#/definitions/expireAt'
+      messageId:
+        $ref: '#/definitions/messageId'
+      type:
+        $ref: '#/definitions/messageType'
+      senderDid:
+        $ref: '#/definitions/senderDid'
+      recipientDid:
+        $ref: '#/definitions/recipientDid'
+      message:
+        $ref: '#/definitions/messageObject'
 
 responses:
   accepted:
@@ -1855,6 +1884,91 @@ paths:
         - credential
         - issuer
 
+  /credentialproposal:
+    get:
+      summary: 'List credential proposals'
+      description: 'List credential proposals'
+      parameters:
+        - $ref: '#/parameters/walletHeader'
+      responses:
+        '200':
+          description: 'Success'
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/message'
+        '401':
+          $ref: '#/responses/unauthorized'
+        '404':
+          $ref: '#/responses/not_found'
+      tags:
+        - credential
+        - issuer
+        - prover
+    post:
+      summary: 'Create and send a credential proposal'
+      description: 'Create and send a credential proposal'
+      parameters:
+        - in: body
+          name: data
+          schema:
+            $ref: '#/definitions/credentialproposal_post'
+      responses:
+        '201':
+          description: 'Created'
+          schema:
+            $ref: '#/definitions/message'
+        '400':
+          $ref: '#/responses/bad_request'
+        '401':
+          $ref: '#/responses/unauthorized'
+        '404':
+          $ref: '#/responses/not_found'
+      tags:
+        - credential
+        - prover
+
+  /credentialproposal/{id}:
+    parameters:
+      - description: 'A unique string value identifying a credential proposal.'
+        in: path
+        name: id
+        required: true
+        type: string
+      - $ref: '#/parameters/walletHeader'
+    get:
+      summary: 'Retrieve a credential proposal'
+      description: 'Retrieve a credential proposal'
+      responses:
+        '200':
+          description: 'Success'
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/message'
+        '401':
+          $ref: '#/responses/unauthorized'
+        '404':
+          $ref: '#/responses/not_found'
+      tags:
+        - credential
+        - issuer
+        - prover
+    delete:
+      summary: 'Delete a credential proposal'
+      description: 'Delete a credential proposal'
+      responses:
+        '204':
+          $ref: '#/responses/no_content'
+        '401':
+          $ref: '#/responses/unauthorized'
+        '404':
+          $ref: '#/responses/not_found'
+      tags:
+        - credential
+        - issuer
+        - prover
+
   /credentialoffer:
     get:
       summary: 'List credential offers'
@@ -2337,7 +2451,7 @@ paths:
         '201':
           description: 'Created'
           schema:
-            $ref: '#/definitions/proof_message'
+            $ref: '#/definitions/message'
         '400':
           $ref: '#/responses/bad_request'
         '401':

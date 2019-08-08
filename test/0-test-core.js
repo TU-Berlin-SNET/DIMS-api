@@ -99,7 +99,7 @@ function deleteRequest(url, token, status) {
 
 /**
  *
- * @param {function} fn
+ * @param {function} fn async fn
  * @param {function} condition
  * @param {number} repetitions max repetititions
  * @param {number} delay increasing delay between repetitions in ms
