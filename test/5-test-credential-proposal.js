@@ -148,7 +148,7 @@ describe('credential proposals', function() {
         const postBody = {
             comment: 'test-offer-' + testId,
             recipientDid: issuerHolderPairwise['their_did'],
-            credDefId: data.credProposal.credentialDefinition,
+            credDefId: credentialDefinition.credDefId,
             credentialProposal: credentialProposal.id
         };
         await core.postRequest('/api/credentialoffer', issuer.token, postBody, 201);
@@ -165,8 +165,8 @@ describe('credential proposals', function() {
             .with.lengthOf(1);
         const credential = res.body[0];
         expect(credential).to.contain.keys('referent', 'attrs', 'schema_id', 'cred_def_id');
-        expect(credential).to.have.property('schema_id', data.credProposal.schema);
-        expect(credential).to.have.property('cred_def_id', data.credProposal.credentialDefinition);
+        expect(credential).to.have.property('schema_id', schema.schemaId);
+        expect(credential).to.have.property('cred_def_id', credentialDefinition.credDefId);
         expect(credential.attrs).to.eql(data.credValues);
     });
 });

@@ -48,6 +48,10 @@ module.exports = {
      */
     async create(wallet, comment = '', recipientDid, credDefId, credentialProposal, credentialLocation) {
         const connection = await ConnectionService.findOne(wallet, { theirDid: recipientDid });
+        if (!connection) {
+            throw APIResult.badRequest('no connection with recipientDid');
+        }
+
         let proposal;
         if (credentialProposal) {
             proposal = await Message.findOne({
@@ -56,16 +60,26 @@ module.exports = {
                 wallet: wallet.id,
                 senderDid: connection.theirDid
             }).exec();
+
             if (!proposal) {
                 throw APIResult.badRequest('invalid proposal id');
             }
-            if (proposal.message.cred_def_id && proposal.message.cred_def_id !== credDefId) {
+
+            if (
+                proposal.meta.credentialDefinition &&
+                credDefId &&
+                proposal.meta.credentialDefinition.id !== credDefId
+            ) {
                 throw APIResult.badRequest('credential definition id mismatch');
             }
         }
 
         const id = await lib.crypto.generateId();
         const credentialOffer = await lib.sdk.issuerCreateCredentialOffer(wallet.handle, credDefId);
+
+        // a credential-preview is not provided because the API does not
+        // store attribute values when offering credentials to ensure
+        // values are current on issuance (design decision)
         const message = {
             '@id': id,
             '@type': OFFER_MESSAGE_TYPE,
@@ -81,17 +95,17 @@ module.exports = {
             ]
         };
 
-        // store and send message
-        const meta = {
-            offer: credentialOffer
-        };
+        let meta = {};
         if (proposal) {
-            message['~thread'] = { thid: proposal.threadId };
+            meta = proposal.meta || meta;
             meta.proposal = proposal.message;
+            message['~thread'] = { thid: proposal.threadId };
         }
         if (credentialLocation) {
             meta.credentialLocation = credentialLocation;
         }
+        // store and send message
+        meta.offer = credentialOffer;
 
         const doc = await new Message({
             wallet: wallet.id,

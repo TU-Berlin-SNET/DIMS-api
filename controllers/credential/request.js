@@ -159,10 +159,17 @@ module.exports = {
             meta
         }).save();
 
-        // auto-issue credential if credentialLocation or proposal
-        // (which includes credential_proposal with values) exists
-        // TODO check if all values needed for credential are fulfilled
-        if (requestDoc.meta.credentialLocation || requestDoc.meta.proposal) {
+        // auto-issue if credentialLocation was provided..
+        let autoIssue = !!requestDoc.meta.credentialLocation;
+
+        if (requestDoc.meta.proposal && requestDoc.meta.proposal.credential_proposal) {
+            const proposalAttrNames = requestDoc.meta.proposal.credential_proposal.attributes.map(v => v.name);
+            meta.schema = meta.schema || (await lib.ledger.getSchema(connection.myDid, meta.offer.schema_id))[1];
+            // ..or if proposal includes every attribute necessary for credential
+            autoIssue = meta.schema.attrNames.every(v => proposalAttrNames.includes(v)) || autoIssue;
+        }
+
+        if (autoIssue) {
             await Credential.create(wallet, 'credential', requestDoc);
         }
     }
