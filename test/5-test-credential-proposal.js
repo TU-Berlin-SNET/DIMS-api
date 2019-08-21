@@ -38,23 +38,9 @@ const data = {
 data.credProposal = {
     comment: 'test-proposal-' + testId,
     credentialProposal: {
-        attributes: [
-            {
-                name: 'firstname',
-                'mime-type': 'string',
-                value: data.credValues.firstname
-            },
-            {
-                name: 'lastname',
-                'mime-type': 'string',
-                value: data.credValues.lastname
-            },
-            {
-                name: 'age',
-                'mime-type': 'number',
-                value: data.credValues.age
-            }
-        ]
+        firstname: data.credValues.firstname,
+        lastname: data.credValues.lastname,
+        age: data.credValues.age
     },
     // these will be populated during test
     recipientDid: '',
@@ -144,7 +130,7 @@ describe('credential proposals', function() {
         expect(res.body.message.credential_proposal).to.have.property('@type', PROPOSAL_TYPE);
     });
 
-    it('should offer credential based on proposal (accept the proposal)', async function() {
+    it('should offer credential based on proposal', async function() {
         const postBody = {
             comment: 'test-offer-' + testId,
             recipientDid: issuerHolderPairwise['their_did'],

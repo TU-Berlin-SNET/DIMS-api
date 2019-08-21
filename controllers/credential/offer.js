@@ -197,8 +197,9 @@ module.exports = {
             const previewsMatch =
                 proposal.message.credential_proposal && message.credential_preview
                     ? proposal.message.credential_proposal.attributes.every(attr => {
+                          // check if attribute names and values match
                           const attrInOffer = message.credential_preview.find(v => v.name === attr.name);
-                          return ['name', 'mime-type', 'encoding', 'value'].every(v => attr[v] === attrInOffer[v]);
+                          return attr.name === attrInOffer.name && attr.value === attrInOffer.value;
                       })
                     : true;
 

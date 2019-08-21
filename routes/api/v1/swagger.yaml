@@ -257,14 +257,11 @@ definitions:
         description: '(optional) comment describing the credential offer'
         type: string
       credentialProposal:
-        description: 'JSON-LD object describing the credential you want to receive'
+        description: 'Key-Value credential values describing the credential you want to receive'
         type: object
         example:
-          'attributes':
-            - name: 'example attribute name'
-              mime-type: 'string'
-              encoding: 'encoding'
-              value: 'expected value'
+          'attributeName1': 'attributeValue1'
+          'attributeName2': 'attributeValue2'
       schema:
         description: 'schema id credential should be based on'
         type: string

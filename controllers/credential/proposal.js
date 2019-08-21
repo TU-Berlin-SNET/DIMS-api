@@ -26,18 +26,25 @@ exports.list = async wallet => {
     }).exec();
 };
 
-exports.create = async (wallet, theirDid, comment = '', credentialProposal = {}, schemaId, credentialDefinitionId) => {
+exports.create = async (wallet, theirDid, comment = '', proposalValues = {}, schemaId, credentialDefinitionId) => {
     const conn = await ConnectionService.findOne(wallet, { theirDid });
     if (!conn && ![lib.connection.STATE.RESPONDED, lib.connection.STATE.COMPLETE].includes(conn.state)) {
         throw APIResult.badRequest('no usable connection with given did');
     }
 
-    credentialProposal['@type'] = PROPOSAL_TYPE;
     const proposal = {
         '@id': await lib.crypto.generateId(),
         '@type': MESSAGE_TYPE,
         comment,
-        credential_proposal: credentialProposal
+        credential_proposal: {
+            '@type': PROPOSAL_TYPE,
+            attributes: Object.keys(proposalValues).map(name => {
+                return {
+                    name,
+                    value: proposalValues[name]
+                };
+            })
+        }
     };
 
     if (schemaId) {
