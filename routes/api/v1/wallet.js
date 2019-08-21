@@ -63,7 +63,7 @@ router.route('/:wallet/connection/:connectionId').get(
 router.route('/:wallet/credential').get(
     wrap(async (req, res, next) => {
         const data = await controller.credential.list(req.wallet, req.query);
-        res.locals.result = APIResult.success(data || []);
+        res.locals.result = APIResult.success(data);
         next();
     })
 );

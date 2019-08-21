@@ -65,8 +65,14 @@ module.exports = {
         }
 
         // merge all possibly provided values or create empty object
+        const valueBase = {};
+        if (credentialRequest.meta.proposal) {
+            credentialRequest.meta.proposal.credential_proposal.attributes.map(
+                attribute => (valueBase[attribute.name] = attribute.value)
+            );
+        }
         values = Object.assign(
-            {},
+            valueBase,
             values,
             credentialRequest.meta.credentialLocation
                 ? (await agent.get(credentialRequest.meta.credentialLocation)).body
@@ -188,7 +194,7 @@ module.exports = {
      * @param {string} recipientVk
      */
     async handle(wallet, message, senderVk, recipientVk) {
-        log.debug('credential received');
+        log.debug('received credential');
         const connection = await ConnectionService.findOne(wallet, { myKey: recipientVk, theirKey: senderVk });
         if (!connection) {
             log.warn('received credential but there is no connection?');

@@ -7,6 +7,9 @@
 const log = require('../../log');
 const lib = require('../../lib');
 const Mongoose = require('../../db');
+const APIResult = require('../../util/api-result');
+const CredentialProposal = require('./proposal');
+const CredentialRequestController = require('./request');
 
 const Message = Mongoose.model('Message');
 
@@ -15,6 +18,7 @@ const Services = require('../../services');
 const ConnectionService = Services.ConnectionService;
 const MessageService = Services.MessageService;
 
+const PROPOSAL_MESSAGE_TYPE = CredentialProposal.MESSAGE_TYPE;
 const OFFER_MESSAGE_TYPE = 'did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/issue-credential/1.0/offer-credential';
 
 module.exports = {
@@ -38,14 +42,44 @@ module.exports = {
      * @param {string} comment
      * @param {string} recipientDid
      * @param {string} credDefId
+     * @param {string} credentialProposal accept a credential proposal
      * @param {string} [credentialLocation]
      * @return {Promise<Message>} Credential Offer object
      */
-    async create(wallet, comment = '', recipientDid, credDefId, credentialLocation) {
+    async create(wallet, comment = '', recipientDid, credDefId, credentialProposal, credentialLocation) {
         const connection = await ConnectionService.findOne(wallet, { theirDid: recipientDid });
+        if (!connection) {
+            throw APIResult.badRequest('no connection with recipientDid');
+        }
+
+        let proposal;
+        if (credentialProposal) {
+            proposal = await Message.findOne({
+                _id: credentialProposal,
+                type: PROPOSAL_MESSAGE_TYPE,
+                wallet: wallet.id,
+                senderDid: connection.theirDid
+            }).exec();
+
+            if (!proposal) {
+                throw APIResult.badRequest('invalid proposal id');
+            }
+
+            if (
+                proposal.meta.credentialDefinition &&
+                credDefId &&
+                proposal.meta.credentialDefinition.id !== credDefId
+            ) {
+                throw APIResult.badRequest('credential definition id mismatch');
+            }
+        }
 
         const id = await lib.crypto.generateId();
         const credentialOffer = await lib.sdk.issuerCreateCredentialOffer(wallet.handle, credDefId);
+
+        // a credential-preview is not provided because the API does not
+        // store attribute values when offering credentials to ensure
+        // values are current on issuance (design decision)
         const message = {
             '@id': id,
             '@type': OFFER_MESSAGE_TYPE,
@@ -60,25 +94,30 @@ module.exports = {
                 }
             ]
         };
-        // ---
 
-        // store and send message
-        const meta = {
-            offer: credentialOffer
-        };
+        let meta = {};
+        if (proposal) {
+            meta = proposal.meta || meta;
+            meta.proposal = proposal.message;
+            message['~thread'] = { thid: proposal.threadId };
+        }
         if (credentialLocation) {
             meta.credentialLocation = credentialLocation;
         }
+        // store and send message
+        meta.offer = credentialOffer;
+
         const doc = await new Message({
             wallet: wallet.id,
             messageId: id,
             type: message['@type'],
             senderDid: connection.myDid,
-            threadId: id,
+            threadId: message['~thread'] ? message['~thread'].thid : id,
             recipientDid,
             message,
             meta
         }).save();
+
         await MessageService.send(wallet, message, connection.endpoint);
 
         return doc;
@@ -116,25 +155,73 @@ module.exports = {
      * @param {*} recipientVk
      */
     async handle(wallet, message, senderVk, recipientVk) {
-        log.debug('credential offer received');
+        log.debug('received credential offer');
         const connection = await ConnectionService.findOne(wallet, { myKey: recipientVk, theirKey: senderVk });
         if (!connection) {
             log.warn('received credential offer but there is no connection');
             // TODO needs better error handling
             return;
         }
+
         const decodedOffer = JSON.parse(lib.crypto.b64decode(message['offers~attach'][0].data.base64));
         const meta = { offer: decodedOffer };
-        await new Message({
+
+        const doc = await new Message({
             wallet: wallet.id,
             messageId: message['@id'],
-            threadId: message['@id'],
             type: message['@type'],
+            threadId: message['~thread'] ? message['~thread'].thid : message['@id'],
             senderDid: connection.theirDid,
             recipientDid: connection.myDid,
             message,
             meta
         }).save();
+
+        // if offer contains threading information, it might be in response to a previous proposal
+        if (message['~thread']) {
+            const proposal = await Message.findOne({
+                wallet: wallet.id,
+                type: PROPOSAL_MESSAGE_TYPE,
+                senderDid: connection.myDid,
+                recipientDid: connection.theirDid,
+                threadId: message['~thread'].thid
+            }).exec();
+
+            if (!proposal) {
+                return;
+            }
+
+            log.debug('credential offer was in response to previous proposal');
+
+            // if both have previews, check if they match
+            const previewsMatch =
+                proposal.message.credential_proposal && message.credential_preview
+                    ? proposal.message.credential_proposal.attributes.every(attr => {
+                          // check if attribute names and values match
+                          const attrInOffer = message.credential_preview.find(v => v.name === attr.name);
+                          return attr.name === attrInOffer.name && attr.value === attrInOffer.value;
+                      })
+                    : true;
+
+            // if both have schema ids, check if they match
+            const schemaIdsMatch = proposal.message.schema_id
+                ? proposal.message.schema_id === decodedOffer.schema_id
+                : true;
+
+            // same for cred def ids
+            const credDefsMatch = proposal.message.cred_def_id
+                ? proposal.message.cred_def_id === decodedOffer.cred_def_id
+                : true;
+
+            // if all match, auto-request credentials
+            if (previewsMatch && schemaIdsMatch && credDefsMatch) {
+                log.debug('credential offer matches previous proposal, auto-requesting..');
+                await proposal.remove();
+                CredentialRequestController.create(wallet, '', doc.id);
+            } else {
+                log.debug('credential offer does NOT match previous proposal');
+            }
+        }
     }
 };
 

@@ -11,12 +11,12 @@ const APIResult = require('../../util/api-result');
 const Credential = require('./credential');
 
 const Message = Mongoose.model('Message');
-const CredentialOfferController = require('./offer');
 const Services = require('../../services');
 
 const ConnectionService = Services.ConnectionService;
 const MessageService = Services.MessageService;
 
+const OFFER_MESSAGE_TYPE = 'did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/issue-credential/1.0/offer-credential';
 const REQUEST_MESSAGE_TYPE = 'did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/issue-credential/1.0/request-credential';
 
 module.exports = {
@@ -40,15 +40,11 @@ module.exports = {
      * @return {Promise<Message>}
      */
     async create(wallet, comment = '', credentialOffer) {
-        const offerDoc = await Message.findTypeById(
-            wallet,
-            credentialOffer,
-            CredentialOfferController.OFFER_MESSAGE_TYPE
-        ).exec();
-        const offer = offerDoc.meta.offer;
+        const offerDoc = await Message.findTypeById(wallet, credentialOffer, OFFER_MESSAGE_TYPE).exec();
         if (!offerDoc) {
             throw APIResult.badRequest('invalid credential offer or no applicable credential offer found');
         }
+        const offer = offerDoc.meta.offer;
         const connection = await ConnectionService.findOne(wallet, {
             myDid: offerDoc.recipientDid,
             theirDid: offerDoc.senderDid
@@ -134,7 +130,7 @@ module.exports = {
         const offer = await Message.findOne({
             wallet: wallet.id,
             threadId: message['~thread'].thid,
-            type: CredentialOfferController.OFFER_MESSAGE_TYPE
+            type: OFFER_MESSAGE_TYPE
         }).exec();
         const connection = await ConnectionService.findOne(wallet, { myKey: recipientVk, theirKey: senderVk });
 
@@ -163,8 +159,17 @@ module.exports = {
             meta
         }).save();
 
-        // automatically issue and send credential if credentialLocation exists in metadata
-        if (requestDoc.meta.credentialLocation) {
+        // auto-issue if credentialLocation was provided..
+        let autoIssue = !!requestDoc.meta.credentialLocation;
+
+        if (requestDoc.meta.proposal && requestDoc.meta.proposal.credential_proposal) {
+            const proposalAttrNames = requestDoc.meta.proposal.credential_proposal.attributes.map(v => v.name);
+            meta.schema = meta.schema || (await lib.ledger.getSchema(connection.myDid, meta.offer.schema_id))[1];
+            // ..or if proposal includes every attribute necessary for credential
+            autoIssue = meta.schema.attrNames.every(v => proposalAttrNames.includes(v)) || autoIssue;
+        }
+
+        if (autoIssue) {
             await Credential.create(wallet, 'credential', requestDoc);
         }
     }
