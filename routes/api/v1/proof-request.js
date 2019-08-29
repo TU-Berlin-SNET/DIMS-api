@@ -25,7 +25,8 @@ router
                 req.body.recipientDid,
                 req.body.comment,
                 req.body.proofRequest,
-                req.body.templateValues
+                req.body.templateValues,
+                req.body.proofProposal
             );
             res.locals.result = APIResult.created(data);
             next();

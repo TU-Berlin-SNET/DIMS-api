@@ -16,7 +16,7 @@ const Services = require('../../services');
 const ConnectionService = Services.ConnectionService;
 const MessageService = Services.MessageService;
 
-const REQUEST_MESSAGE_TYPE = require('./request').REQUEST_MESSAGE_TYPE;
+const REQUEST_MESSAGE_TYPE = 'did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/present-proof/1.0/request-presentation';
 const PRESENTATION_MESSAGE_TYPE = 'did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/present-proof/1.0/presentation';
 
 module.exports = {
@@ -34,20 +34,28 @@ module.exports = {
     /**
      * Accept a proof request and create and send a proof
      * @param {Wallet} wallet
-     * @param {string} proofRequestId _id of proof request message
+     * @param {(string | object)} request _id of proof request message
      * @param {string} [comment]
      * @param {object} [values] object containing self-attested atributes as key-value pairs
      * @return {Promise<Message>}
      */
-    async create(wallet, proofRequestId, comment = '', values) {
-        const requestDoc = await Message.findTypeById(wallet, proofRequestId, REQUEST_MESSAGE_TYPE).exec();
+    async create(wallet, request, comment = '', values) {
+        let requestDoc = request;
+        if (typeof requestDoc === 'string') {
+            log.debug('proof request is string, fetching..');
+            requestDoc = await Message.findOne({
+                _id: request,
+                wallet: wallet.id,
+                type: REQUEST_MESSAGE_TYPE
+            }).exec();
+        }
+        if (!requestDoc) {
+            throw APIResult.badRequest('invalid proof request id, not found');
+        }
         const connection = await ConnectionService.findOne(wallet, {
             myDid: requestDoc.recipientDid,
             theirDid: requestDoc.senderDid
         });
-        if (!requestDoc || !connection) {
-            throw APIResult.badRequest('invalid proof request id');
-        }
         const proofRequest = requestDoc.meta.proofRequest;
         const masterSecretId = await wallet.getMasterSecretId();
         const proof = await lib.proof.create(wallet.handle, masterSecretId, connection.myDid, proofRequest, values);

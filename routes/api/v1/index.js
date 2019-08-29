@@ -24,6 +24,7 @@ const credentialOffer = require('./credential-offer');
 const credentialRequest = require('./credential-request');
 const credential = require('./credential');
 const proofRequestTemplate = require('./proof-request-template');
+const proofProposal = require('./proof-proposal');
 const proofRequest = require('./proof-request');
 const proof = require('./proof');
 
@@ -66,6 +67,8 @@ router.use('/credential', credential);
 router.use('/credentialdef', credentialDefinition);
 
 router.use('/proofrequesttemplate', proofRequestTemplate);
+
+router.use('/proofproposal', proofProposal);
 
 router.use('/proofrequest', proofRequest);
 

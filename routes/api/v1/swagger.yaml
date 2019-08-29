@@ -390,6 +390,66 @@ definitions:
           '{ "name": "Ticket", "version": "0.1", "requested_attributes": { "attr1_referent": { "name": "firstname", "restrictions": [ { "cred_def_id": "{{ cred_def_id }}" }] }, "attr2_referent": { "name": "phone" } }, "requested_predicates": {} }'
     required:
       - template
+  proofproposal_post:
+    type: object
+    required:
+      - recipientDid
+      - attributes
+      - predicates
+    properties:
+      wallet:
+        $ref: '#/definitions/walletId'
+      recipientDid:
+        description: 'DID for whom to create and send the proof proposal'
+        type: string
+      comment:
+        description: '(optional) comment describing the proof proposal'
+        type: string
+      attributes:
+        type: array
+        description: 'list of attributes (and values) to propose for proof, may be empty'
+        items:
+          required:
+            - name
+          properties:
+            name:
+              type: string
+              description: attribute name
+            cred_def_id:
+              type: string
+              description: (optional) cred def id attribute's credential is based on
+            value:
+              type: string
+              description: (optional) attribute value
+      predicates:
+        type: array
+        description: 'list of predicates to propose for proof, may be empty'
+        items:
+          required:
+            - name
+            - cred_def_id
+            - predicate
+            - threshold
+            # - filter
+          properties:
+            name:
+              type: string
+              description: attribute name
+            cred_def_id:
+              type: string
+              description: (optional) cred def id attribute's credential is based on
+            predicate:
+              type: string
+              description: 'one of the supported predicates (e.g. <)'
+            threshold:
+              type: number
+              description: 'value to use for predicate comparison'
+  # filter:
+  #   type: object
+  #   description: ''
+  #   example:
+  #     cred_def_id: 'credential definition id'
+  #     schema_id: 'schema id'
   proofrequest_post:
     type: object
     properties:
@@ -416,9 +476,11 @@ definitions:
           cred_def_id: 'VPKnyQy9yo4oy344YtAUcb:3:CL:485'
           age: 18
           citizen: true
+      proofProposal:
+        description: 'proof proposal id to accept and base proof request on'
+        type: string
     required:
       - recipientDid
-      - proofRequest
   proof_post:
     type: object
     properties:
@@ -2335,6 +2397,89 @@ paths:
       tags:
         - proof
         - verifier
+
+  /proofproposal:
+    get:
+      summary: 'List proof proposals'
+      description: 'List proof proposals'
+      parameters:
+        - $ref: '#/parameters/walletHeader'
+      responses:
+        '200':
+          description: 'Success'
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/message'
+        '401':
+          $ref: '#/responses/unauthorized'
+        '404':
+          $ref: '#/responses/not_found'
+      tags:
+        - proof
+        - verifier
+        - prover
+    post:
+      summary: 'Create and send a proof proposal'
+      description: 'Create and send a proof proposal'
+      parameters:
+        - in: body
+          name: data
+          schema:
+            $ref: '#/definitions/proofproposal_post'
+      responses:
+        '201':
+          description: 'Created'
+          schema:
+            $ref: '#/definitions/message'
+        '400':
+          $ref: '#/responses/bad_request'
+        '401':
+          $ref: '#/responses/unauthorized'
+        '404':
+          $ref: '#/responses/not_found'
+      tags:
+        - proof
+        - prover
+
+  /proofproposal/{id}:
+    parameters:
+      - description: 'A unique string value identifying a proof proposal.'
+        in: path
+        name: id
+        required: true
+        type: string
+      - $ref: '#/parameters/walletHeader'
+    get:
+      summary: 'Retrieve a proof proposal'
+      description: 'Retrieve a proof proposal'
+      responses:
+        '200':
+          description: 'Success'
+          schema:
+            $ref: '#/definitions/message'
+        '401':
+          $ref: '#/responses/unauthorized'
+        '404':
+          $ref: '#/responses/not_found'
+      tags:
+        - proof
+        - verifier
+        - prover
+    delete:
+      summary: 'Delete a proof proposal'
+      description: 'Delete a proof proposal'
+      responses:
+        '204':
+          $ref: '#/responses/no_content'
+        '401':
+          $ref: '#/responses/unauthorized'
+        '404':
+          $ref: '#/responses/not_found'
+      tags:
+        - proof
+        - verifier
+        - prover
 
   /proofrequest:
     get:
