@@ -15,6 +15,7 @@ const MessageService = require('../../services').MessageService;
 
 const Mongoose = require('../../db');
 const Message = Mongoose.model('Message');
+const Event = Mongoose.model('Event');
 
 const INVITATION_MESSAGE_TYPE = 'did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/didexchange/1.0/invitation';
 
@@ -81,6 +82,8 @@ exports.create = async (wallet, data, meta = {}, role, label = uuidv4()) => {
         message: invitation,
         meta
     }).save();
+
+    await Event.createNew('connectionoffer.created', message.id, wallet.id);
 
     return message;
 };
