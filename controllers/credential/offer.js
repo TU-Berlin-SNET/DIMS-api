@@ -12,6 +12,7 @@ const CredentialProposal = require('./proposal');
 const CredentialRequestController = require('./request');
 
 const Message = Mongoose.model('Message');
+const Event = Mongoose.model('Event');
 
 const Services = require('../../services');
 
@@ -176,6 +177,8 @@ module.exports = {
             message,
             meta
         }).save();
+
+        Event.createNew('credentialoffer.received', doc.id, wallet.id);
 
         // if offer contains threading information, it might be in response to a previous proposal
         if (message['~thread']) {

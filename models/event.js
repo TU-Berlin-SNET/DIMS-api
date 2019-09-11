@@ -12,10 +12,8 @@ const schema = new Mongoose.Schema(
             type: String,
             required: true
         },
-        // TODO maybe add a resource field?
         ref: {
-            type: String,
-            required: true
+            type: String
         },
         wallet: {
             type: String,

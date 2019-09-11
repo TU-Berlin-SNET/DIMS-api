@@ -26,7 +26,7 @@ exports.list = async (wallet, query = {}) => {
  * @return {Promise<Object>}
  */
 exports.retrieve = async (wallet, id) => {
-    return Event.find({
+    return Event.findOne({
         _id: id,
         wallet: wallet.id
     }).exec();

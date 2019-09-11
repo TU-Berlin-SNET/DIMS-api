@@ -12,6 +12,7 @@ const Mongoose = require('../../db');
 const APIResult = require('../../util/api-result');
 
 const Message = Mongoose.model('Message');
+const Event = Mongoose.model('Event');
 const CredDef = Mongoose.model('CredentialDefinition');
 const RevReg = Mongoose.model('RevocationRegistry');
 const Services = require('../../services');
@@ -217,7 +218,7 @@ module.exports = {
             [, revocRegDefinition] = await lib.ledger.getRevocRegDef(connection.myDid, credential.rev_reg_id);
         }
 
-        await lib.sdk.proverStoreCredential(
+        const credId = await lib.sdk.proverStoreCredential(
             wallet.handle,
             null, // credId
             credentialRequest.meta.requestMeta,
@@ -225,6 +226,8 @@ module.exports = {
             credentialDefinition,
             revocRegDefinition
         );
+
+        Event.createNew('credential.received', credId, wallet.id);
     }
 };
 

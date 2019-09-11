@@ -10,6 +10,7 @@ const Mongoose = require('../../db');
 const APIResult = require('../../util/api-result');
 
 const Message = Mongoose.model('Message');
+const Event = Mongoose.model('Event');
 const Proof = Mongoose.model('Proof');
 const Services = require('../../services');
 
@@ -174,6 +175,8 @@ module.exports = {
         // meta includes decoded proof request
         proofDoc.meta = requestDoc.meta;
         await proofDoc.save();
+
+        Event.createNew('proof.received', proofDoc.id, wallet.id);
     }
 };
 

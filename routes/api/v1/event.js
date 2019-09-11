@@ -17,7 +17,7 @@ router
     .route('/:eventId')
     .get(
         wrap(async (req, res, next) => {
-            return await controller.retrieve(req.wallet.req.params.eventId);
+            return await controller.retrieve(req.wallet, req.params.eventId);
         })
     )
     .delete(

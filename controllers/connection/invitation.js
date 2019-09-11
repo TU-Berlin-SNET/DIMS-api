@@ -83,8 +83,6 @@ exports.create = async (wallet, data, meta = {}, role, label = uuidv4()) => {
         meta
     }).save();
 
-    await Event.createNew('connectionoffer.created', message.id, wallet.id);
-
     return message;
 };
 
@@ -98,7 +96,7 @@ exports.create = async (wallet, data, meta = {}, role, label = uuidv4()) => {
 exports.handle = async (wallet, message, senderVk, recipientVk) => {
     log.debug('received connection invitation', wallet.id, message);
 
-    return await new Message({
+    const doc = await new Message({
         wallet: wallet.id,
         messageId: message['@id'],
         type: INVITATION_MESSAGE_TYPE,
@@ -106,6 +104,10 @@ exports.handle = async (wallet, message, senderVk, recipientVk) => {
         recipientDid: wallet.ownDid,
         message
     }).save();
+
+    Event.createNew('connectionoffer.received', doc.id, wallet.id);
+
+    return doc;
 };
 
 MessageService.registerHandler(INVITATION_MESSAGE_TYPE, exports.handle);

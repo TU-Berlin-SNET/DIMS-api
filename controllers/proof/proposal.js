@@ -10,6 +10,7 @@ const { MessageService, ConnectionService } = require('../../services');
 const APIResult = require('../../util/api-result');
 
 const Message = Mongoose.model('Message');
+const Event = Mongoose.model('Event');
 const MESSAGE_TYPE = 'did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/present-proof/1.0/propose-presentation';
 const PREVIEW_TYPE = 'did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/present-proof/1.0/presentation-preview';
 
@@ -96,7 +97,7 @@ exports.handle = async (wallet, message, senderVk, recipientVk) => {
     }
 
     // store and wait for further action
-    await new Message({
+    const doc = await new Message({
         wallet: wallet.id,
         type: message['@type'],
         messageId: message['@id'],
@@ -105,6 +106,8 @@ exports.handle = async (wallet, message, senderVk, recipientVk) => {
         recipientDid: conn.myDid,
         message
     }).save();
+
+    Event.createNew('proofproposal.received', doc.id, wallet.id);
 };
 
 /**

@@ -13,6 +13,7 @@ const ProofController = require('./proof');
 
 const Proof = Mongoose.model('Proof');
 const Message = Mongoose.model('Message');
+const Event = Mongoose.model('Event');
 const ProofRequestTemplate = Mongoose.model('ProofRequestTemplate');
 const Services = require('../../services');
 
@@ -207,6 +208,8 @@ module.exports = {
             message,
             meta
         }).save();
+
+        Event.createNew('proofrequest.received', proofRequestDoc.id, wallet.id);
 
         // auto-accept and respond if 1) there is a proposal, 2) proposal and request match,
         // and 3) proof can be created with available values,
