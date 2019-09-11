@@ -11,6 +11,7 @@ const APIResult = require('../../util/api-result');
 const Credential = require('./credential');
 
 const Message = Mongoose.model('Message');
+const Event = Mongoose.model('Event');
 const Services = require('../../services');
 
 const ConnectionService = Services.ConnectionService;
@@ -158,6 +159,8 @@ module.exports = {
             message,
             meta
         }).save();
+
+        Event.createNew('credentialrequest.received', requestDoc.id, wallet.id);
 
         // auto-issue if credentialLocation was provided..
         let autoIssue = !!requestDoc.meta.credentialLocation;

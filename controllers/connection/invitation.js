@@ -15,6 +15,7 @@ const MessageService = require('../../services').MessageService;
 
 const Mongoose = require('../../db');
 const Message = Mongoose.model('Message');
+const Event = Mongoose.model('Event');
 
 const INVITATION_MESSAGE_TYPE = 'did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/didexchange/1.0/invitation';
 
@@ -95,7 +96,7 @@ exports.create = async (wallet, data, meta = {}, role, label = uuidv4()) => {
 exports.handle = async (wallet, message, senderVk, recipientVk) => {
     log.debug('received connection invitation', wallet.id, message);
 
-    return await new Message({
+    const doc = await new Message({
         wallet: wallet.id,
         messageId: message['@id'],
         type: INVITATION_MESSAGE_TYPE,
@@ -103,6 +104,10 @@ exports.handle = async (wallet, message, senderVk, recipientVk) => {
         recipientDid: wallet.ownDid,
         message
     }).save();
+
+    Event.createNew('connectionoffer.received', doc.id, wallet.id);
+
+    return doc;
 };
 
 MessageService.registerHandler(INVITATION_MESSAGE_TYPE, exports.handle);

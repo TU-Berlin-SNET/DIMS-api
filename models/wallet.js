@@ -114,7 +114,7 @@ schema.set('toJSON', {
 schema.pre('remove', async function() {
     log.debug('wallet model pre-remove');
     await this.close();
-    const cascadeModels = ['Connection', 'Message', 'ProofRequestTemplate', 'Proof', 'Routing'];
+    const cascadeModels = ['Connection', 'Message', 'ProofRequestTemplate', 'Proof', 'Routing', 'Event'];
     const cascadePromises = [];
     for (const modelName of cascadeModels) {
         cascadePromises.push(

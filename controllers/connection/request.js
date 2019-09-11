@@ -17,6 +17,7 @@ const Response = require('./response');
 
 const Mongoose = require('../../db');
 const Message = Mongoose.model('Message');
+const Event = Mongoose.model('Event');
 
 const MessageService = require('../../services').MessageService;
 
@@ -125,14 +126,17 @@ exports.handle = async (wallet, message, senderVk, recipientVk) => {
         message
     }).save();
 
+    Event.createNew('connectionrequest.received', request.id, wallet.id);
+
     if (invitation) {
         request.meta = {
             invitation: invitation.message,
             invitationMeta: invitation.meta
         };
+        await request.save();
         // remove invitation to prevent replays
         await invitation.remove();
-        await request.save();
+
         Response.create(wallet, request);
     }
 };

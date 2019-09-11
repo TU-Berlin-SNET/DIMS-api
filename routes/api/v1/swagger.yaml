@@ -1078,6 +1078,25 @@ definitions:
         $ref: '#/definitions/recipientDid'
       message:
         $ref: '#/definitions/messageObject'
+  event:
+    type: object
+    properties:
+      id:
+        description: 'unique identifier'
+        type: string
+      name:
+        description: 'event name'
+        type: string
+      ref:
+        description: 'event reference, e.g. the id of a created resource'
+        type: string
+      wallet:
+        description: 'wallet name'
+        type: string
+      createdAt:
+        $ref: '#/definitions/createdAt'
+      updatedAt:
+        $ref: '#/definitions/updatedAt'
 
 responses:
   accepted:
@@ -2726,3 +2745,57 @@ paths:
           $ref: '#/responses/not_found'
       tags:
         - transaction
+
+  /event:
+    get:
+      description: 'List events for wallet'
+      summary: 'List events for wallet'
+      parameters:
+        - $ref: '#/parameters/walletHeader'
+      responses:
+        '200':
+          description: 'Success'
+          type: array
+          items:
+            $ref: '#/definitions/event'
+        '401':
+          $ref: '#/responses/unauthorized'
+        '404':
+          $ref: '#/responses/not_found'
+      tags:
+        - event
+
+  /event{eventId}:
+    parameters:
+      - in: path
+        name: eventId
+        description: 'A unique string value identifying an event.'
+        required: true
+        type: string
+      - $ref: '#/parameters/walletHeader'
+    get:
+      description: 'Retrieve an event by id'
+      summary: 'Retrieve an event by id'
+      responses:
+        '200':
+          description: 'Success'
+          schema:
+            $ref: '#/definitions/event'
+        '401':
+          $ref: '#/responses/unauthorized'
+        '404':
+          $ref: '#/responses/not_found'
+      tags:
+        - event
+    delete:
+      summary: 'Delete an event by id'
+      description: 'Delete an event by id'
+      responses:
+        '204':
+          $ref: '#/responses/no_content'
+        '401':
+          $ref: '#/responses/unauthorized'
+        '404':
+          $ref: '#/responses/not_found'
+      tags:
+        - event

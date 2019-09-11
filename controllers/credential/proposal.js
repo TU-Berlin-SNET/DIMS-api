@@ -11,6 +11,7 @@ const APIResult = require('../../util/api-result');
 
 const CredentialDefinition = Mongoose.model('CredentialDefinition');
 const Message = Mongoose.model('Message');
+const Event = Mongoose.model('Event');
 const MESSAGE_TYPE = 'did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/issue-credential/1.0/propose-credential';
 const PROPOSAL_TYPE = 'did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/issue-credential/1.0/credential-preview';
 
@@ -135,7 +136,7 @@ exports.handle = async (wallet, message, senderVk, recipientVk) => {
     }
 
     // store and wait for further action
-    await new Message({
+    const doc = await new Message({
         wallet: wallet.id,
         type: message['@type'],
         messageId: message['@id'],
@@ -145,6 +146,8 @@ exports.handle = async (wallet, message, senderVk, recipientVk) => {
         message,
         meta
     }).save();
+
+    Event.createNew('credentialproposal.received', doc.id, wallet.id);
 };
 
 MessageService.registerHandler(MESSAGE_TYPE, exports.handle);

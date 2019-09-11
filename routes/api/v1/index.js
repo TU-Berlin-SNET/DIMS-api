@@ -27,6 +27,7 @@ const proofRequestTemplate = require('./proof-request-template');
 const proofProposal = require('./proof-proposal');
 const proofRequest = require('./proof-request');
 const proof = require('./proof');
+const event = require('./event');
 
 router.use('/docs', docs.router);
 
@@ -77,6 +78,8 @@ router.use('/proof', proof);
 router.route('/transactions').get(transactions.list);
 
 router.use('/nym', nym);
+
+router.use('/event', event);
 
 router.use(walletProvider.after);
 

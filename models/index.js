@@ -14,6 +14,7 @@ const Proof = require('./proof');
 const ProofRequestTemplate = require('./proof-request-template');
 const RevocationRegistry = require('./revocation-registry');
 const Routing = require('./routing');
+const Event = require('./event');
 
 module.exports = {
     User,
@@ -26,5 +27,6 @@ module.exports = {
     Proof,
     ProofRequestTemplate,
     RevocationRegistry,
-    Routing
+    Routing,
+    Event
 };

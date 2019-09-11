@@ -14,6 +14,7 @@ const domainWallet = require('../../domain-wallet');
 
 const Mongoose = require('../../db');
 const Message = Mongoose.model('Message');
+const Event = Mongoose.model('Event');
 
 const ConnectionService = require('../../services').ConnectionService;
 const MessageService = require('../../services').MessageService;
@@ -110,6 +111,8 @@ exports.create = async (wallet, connectionOrId) => {
 
     connection = await ConnectionService.save(wallet, connection);
 
+    Event.createNew('connection.created', connection.id, wallet.id);
+
     // if we specifically added a role to our offer then this role
     // will be in the request object as this means that this method
     // was called automatically after receiving a connection request
@@ -174,7 +177,7 @@ exports.handle = async (wallet, message, senderVk, recipientVk) => {
     }
     const sigData = sigDataBuf.toString('utf-8');
     const splitIndex = sigData.indexOf('{');
-    const timestamp = Number(sigData.substring(0, splitIndex));
+    // const timestamp = Number(sigData.substring(0, splitIndex));
     const theirData = JSON.parse(sigData.substring(splitIndex));
 
     const [, theirDid] = lib.diddoc.parseDidWithMethod(theirData.did);
@@ -198,6 +201,8 @@ exports.handle = async (wallet, message, senderVk, recipientVk) => {
     await ConnectionService.save(wallet, connection);
 
     await storeTheirDid(wallet, connection.theirDid, connection.endpoint.recipientKeys[0], connection.meta);
+
+    Event.createNew('connection.created', connection.id, wallet.id);
 };
 
 MessageService.registerHandler(RESPONSE_MESSAGE_TYPE, exports.handle);
