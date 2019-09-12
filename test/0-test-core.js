@@ -7,6 +7,7 @@
 const supertest = require('supertest');
 const config = require('../config');
 
+const wsURL = `ws://${process.env.IDC_API_HOST}:${process.env.IDC_API_PORT}`;
 const serverURL = `http://${process.env.IDC_API_HOST}:${process.env.IDC_API_PORT}`;
 const acceptHeader = { Accept: 'application/json' };
 const contentHeader = { 'Content-Type': 'application/json' };
@@ -320,6 +321,7 @@ async function clean(valuesToDelete) {
 module.exports = {
     agent,
     bothHeaders,
+    wsURL,
     serverURL,
     stewardSeed,
     AGENT_ENDPOINT,
