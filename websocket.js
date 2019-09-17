@@ -5,12 +5,16 @@
 
 const http = require('http');
 const WebsocketServer = require('ws').Server;
+
+const config = require('./config');
 const log = require('./log');
 const Mongoose = require('./db');
 const eventBus = require('./eventbus');
 const authenticate = require('./middleware/auth');
 
 const Wallet = Mongoose.model('Wallet');
+
+const WS_PING_INTERVAL = config.APP_WS_PING_INTERVAL;
 
 /**
  * Minimal mock of the res object to use with passportjs middleware
@@ -78,17 +82,80 @@ class MockRes {
     }
 }
 
-// key-value map user to connections[]
-const connections = {};
+/**
+ * Callback on Pong message from socket
+ * Sets its isAlive property to true
+ */
+function setAlive() {
+    // eslint-disable-next-line no-invalid-this
+    this.isAlive = true;
+}
 
-// TODO think about dead connection detection and cleanup
+/**
+ * Noop callback
+ */
+function noop() {}
+
+/**
+ * Ping or terminate connections, called periodically
+ */
+function livenessCheck() {
+    log.debug('running socket liveness check');
+
+    const connEntries = Object.entries(connections);
+    let terminateCounter = 0;
+    let pingCounter = 0;
+    for (let a = connEntries.length - 1; a >= 0; a--) {
+        const [userId, conns] = connEntries[a];
+        for (let b = conns.length - 1; b >= 0; b--) {
+            const conn = conns[b];
+
+            if (conn.isAlive === false) {
+                conns.splice(b, 1);
+                conn.terminate();
+                terminateCounter++;
+            } else {
+                conn.isAlive = false;
+                conn.ping(noop);
+                pingCounter++;
+            }
+        }
+
+        if (connections[userId].length === 0) {
+            log.debug(`ws: no more connections from user ${userId}, deleting property`);
+            delete connections[userId];
+        }
+    }
+
+    log.info('socket liveness check pinged %d and terminated %d connections', pingCounter, terminateCounter);
+}
+
+// key-value map userIds to connections/sockets[]
+const connections = {};
 
 module.exports = httpServer => {
     const server = new WebsocketServer({ noServer: true, perMessageDeflate: false });
 
-    eventBus.on('event.created', event => {
+    setInterval(livenessCheck, WS_PING_INTERVAL);
+
+    eventBus.on('event.created', async event => {
         const message = JSON.stringify(event);
-        (connections[event.wallet] || []).forEach(client => client.send(message));
+        const wallet = await Wallet.findOne({ _id: event.wallet }).exec();
+        if (!wallet) {
+            log.info('event with no wallet, returning without sending notifications');
+            return;
+        }
+        [wallet.owner, ...(wallet.users || [])].forEach(userId => {
+            if (connections[userId]) {
+                connections[userId].forEach(conn => {
+                    try {
+                        conn.send(message);
+                    } catch (err) {
+                        log.warn('failed to send event', userId, err, conn);
+                    }
+                });
+            }
+        });
     });
 
     httpServer.on('upgrade', async (req, socket, head) => {
@@ -103,12 +170,12 @@ module.exports = httpServer => {
                 throw new Error('user not found');
             }
 
-            log.debug('ws: handle upgrade for user', req.user.username);
+            log.info('ws: handle upgrade for user', req.user.username);
             server.handleUpgrade(req, socket, head, function done(ws) {
                 server.emit('connection', ws, req);
             });
         } catch (err) {
-            log.debug('error on http upgrade', err);
+            log.info('error on http upgrade', err);
             if (err instanceof MockRes) {
                 socket.write(err.toString());
             }
@@ -117,20 +184,15 @@ module.exports = httpServer => {
     });
 
     server.on('connection', async (conn, req) => {
-        log.debug('ws connection user', req.user.username);
+        log.debug(`ws: registering connection for user ${req.user.username}`);
+        conn.isAlive = true;
+        conn.on('pong', setAlive.bind(conn));
 
-        // find all wallets usable by the user
-        const wallets = await Wallet.find({ $or: [{ owner: req.user._id }, { users: req.user._id }] }).exec();
-        wallets.forEach(wallet => {
-            log.debug(`registering user ${req.user.username} for events of wallet ${wallet.id}`);
-            if (!connections[wallet.id]) {
-                connections[wallet.id] = [];
-            }
-            connections[wallet.id].push(conn);
-        });
+        if (!connections[req.user.id]) {
+            connections[req.user.id] = [];
+        }
+        connections[req.user.id].push(conn);
 
-        conn.on('message', message => {
-            conn.send('{ "message": "unsupported" }');
-        });
+        log.info(`ws: registered connection for user ${req.user.username}`);
     });
 };

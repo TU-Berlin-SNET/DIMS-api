@@ -66,15 +66,13 @@ describe('websockets', function() {
         await new Promise((resolve, reject) => {
             socket.on('open', err => resolve());
             socket.on('close', message => reject(new Error(message || 'socket close called')));
-            socket.on('ping', message => resolve());
-            socket.on('message', message => resolve());
             socket.on('error', err => reject(err || new Error('socket error called')));
         });
     });
 
     it('should receive events', async function() {
         const promise = new Promise((resolve, reject) => {
-            socket.once('message', message => {
+            socket.on('message', message => {
                 resolve(message);
             });
         });

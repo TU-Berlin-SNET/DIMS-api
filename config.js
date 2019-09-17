@@ -18,6 +18,8 @@ exports.APP_DOMAIN_ENDPOINT = `${exports.APP_DOMAIN_PROTOCOL}://${exports.APP_DO
 exports.APP_AGENT_ENDPOINT = exports.APP_DOMAIN_ENDPOINT + '/indy';
 exports.APP_TAILS_ENDPOINT = exports.APP_DOMAIN_ENDPOINT + '/tails/';
 
+exports.APP_WS_PING_INTERVAL = process.env.IDC_API_WS_PING_INTERVAL || 30000;
+
 exports.NYM_ALWAYS = ['true', 'yes'].includes(process.env.IDC_API_NYM_ALWAYS) ? true : false;
 
 exports.POOL_IP = process.env.IDC_POOL_IP;
