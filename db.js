@@ -18,11 +18,23 @@ if (process.env.IDC_API_DB_USER) {
 }
 connString += `${process.env.IDC_API_DB_HOST}:${process.env.IDC_API_DB_PORT}/idchain`;
 
+const options = {
+    // switch to new parser from deprecated old one
+    useNewUrlParser: true,
+    // use mongoDB driver's native findAndUpdate instead of old findAndModify
+    useFindAndModify: false,
+    // use createIndex instead of deprecated ensureIndex
+    useCreateIndex: true
+};
+
 /**
  * Connect to MongoDB
  */
 function connect() {
-    Mongoose.connect(connString)
+    Mongoose.connect(
+        connString,
+        options
+    )
         .then(() => log.info('connection to database established'))
         .catch(error => {
             log.error(error);
