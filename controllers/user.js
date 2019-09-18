@@ -21,7 +21,7 @@ function isSame(user, resource) {
  * @return {Promise<boolean>} true or false
  */
 async function usernameIsTaken(username) {
-    return (await User.count({ username: username }).exec()) > 0;
+    return (await User.countDocuments({ username: username }).exec()) > 0;
 }
 
 /**
