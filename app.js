@@ -5,6 +5,7 @@
 
 const config = require('./config');
 
+const http = require('http');
 const express = require('express');
 
 // require db at start to establish connection
@@ -13,6 +14,7 @@ const express = require('express');
 require('./db');
 require('./models');
 
+const websocket = require('./websocket');
 const lib = require('./lib');
 const log = require('./log');
 const domainWallet = require('./domain-wallet');
@@ -21,6 +23,10 @@ const routes = require('./routes/index');
 lib.setup(config.LIB_OPTIONS);
 
 const app = express();
+const server = http.createServer(app);
+
+// initialize websocket server
+websocket(server);
 
 app.use('/', routes);
 
@@ -40,7 +46,7 @@ async function initialize() {
 
 initialize()
     .then(() => {
-        const server = app.listen(config.APP_PORT, config.APP_HOST, async () => {
+        server.listen(config.APP_PORT, config.APP_HOST, () => {
             log.info('API now up at %s:%s', server.address().address, server.address().port);
             log.info('Access APIDocs at /api/v1/docs or /api/v2/docs');
         });
