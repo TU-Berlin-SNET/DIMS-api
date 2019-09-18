@@ -100,8 +100,6 @@ function noop() {}
  * Ping or terminate connections, called periodically
  */
 function livenessCheck() {
-    log.debug('running socket liveness check');
-
     const connEntries = Object.entries(connections);
     let terminateCounter = 0;
     let pingCounter = 0;
@@ -122,12 +120,14 @@ function livenessCheck() {
         }
 
         if (connections[userId].length === 0) {
-            log.debug(`ws: no more connections from user ${userId}, deleting property`);
+            log.info(`ws: no more connections from user ${userId}, deleting property`);
             delete connections[userId];
         }
     }
 
-    log.info('socket liveness check pinged %d and terminated %d connections', pingCounter, terminateCounter);
+    if (terminateCounter + pingCounter > 0) {
+        log.info('socket liveness check pinged %d and terminated %d connections', pingCounter, terminateCounter);
+    }
 }
 
 // key-value map userIds to connections/sockets[]
