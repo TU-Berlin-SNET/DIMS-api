@@ -25,13 +25,13 @@
     "indy-sdk": "1.8.1",
     "js-yaml": "^3.13.1",
     "jsonwebtoken": "^8.3.0",
-    "mongoose": "^5.1.5",
+    "mongoose": "^5.7.1",
     "mustache": "^3.0.0",
     "passport": "^0.4.0",
     "passport-jwt": "^4.0.0",
     "passport-local": "^1.0.0",
     "pino": "^4.17.3",
-    "superagent": "^3.8.3",
+    "superagent": "^5.1.0",
     "swagger-ui-express": "^4.0.0",
     "uuid": "^3.2.1",
     "ws": "^7.1.2"
@@ -48,6 +48,6 @@
     "pino-debug": "^1.2.0",
     "prettier": "^1.14.0",
     "pretty-quick": "^1.6.0",
-    "supertest": "^3.1.0"
+    "supertest": "^4.0.2"
   }
 }
