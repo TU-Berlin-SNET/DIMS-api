@@ -161,6 +161,20 @@ module.exports = httpServer => {
     httpServer.on('upgrade', async (req, socket, head) => {
         log.debug('http server received upgrade request');
         try {
+            // 2019-09-26: since there is currently no way to define custom headers on the frontend
+            // for websocket connections, if there is no authentication header, try to fetch token from cookies
+            // and set it manually for subsequent authentication with passport strategy middleware
+            if (!req.headers.authorization && req.headers.cookie) {
+                const xAuthCookie = req.headers.cookie
+                    .split('; ')
+                    .find(cookie => cookie.toLowerCase().startsWith('x-authorization'));
+                if (xAuthCookie) {
+                    const [, bearerToken] = xAuthCookie.split('=');
+                    // set as authorization header for following passport authentication
+                    req.headers.authorization = bearerToken.trim();
+                }
+            }
+
             await new Promise((resolve, reject) => {
                 const res = new MockRes({ resolve, reject });
                 authenticate(req, res, err => (err ? res.promise.reject(err) : res.promise.resolve()));
@@ -175,10 +189,12 @@ module.exports = httpServer => {
                 server.emit('connection', ws, req);
             });
         } catch (err) {
-            log.info('error on http upgrade', err);
+            log.info('error on http upgrade');
+            log.info(err);
             if (err instanceof MockRes) {
                 socket.write(err.toString());
             }
+            socket.terminate();
             socket.destroy();
         }
     });
