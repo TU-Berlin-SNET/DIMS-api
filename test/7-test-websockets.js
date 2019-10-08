@@ -64,9 +64,19 @@ describe('websockets', function() {
     it('should connect with valid Authorization header', async function() {
         socket = new WebSocket(core.wsURL, { headers: { Authorization: user.token } });
         await new Promise((resolve, reject) => {
-            socket.on('open', err => resolve());
-            socket.on('close', message => reject(new Error(message || 'socket close called')));
-            socket.on('error', err => reject(err || new Error('socket error called')));
+            socket.once('open', err => resolve());
+            socket.once('close', message => reject(new Error(message || 'socket close called')));
+            socket.once('error', err => reject(err || new Error('socket error called')));
+        });
+        socket.close();
+    });
+
+    it('should connect with valid x-authorization cookie', async function() {
+        socket = new WebSocket(core.wsURL, { headers: { cookie: `x-authorization=${user.token}` } });
+        await new Promise((resolve, reject) => {
+            socket.once('open', err => resolve());
+            socket.once('close', message => reject(new Error(message || 'socket close called')));
+            socket.once('error', err => reject(err || new Error('socket error called')));
         });
     });
 
