@@ -50,7 +50,7 @@ describe('did-auth', function() {
         stewardUserPairwise = await core.connect(
             steward.token,
             user.token,
-            { did: steward.wallet.ownDid }
+            { myDid: steward.wallet.ownDid }
         );
     });
 

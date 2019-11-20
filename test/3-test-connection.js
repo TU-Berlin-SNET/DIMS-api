@@ -92,7 +92,12 @@ describe('connection', function() {
     });
 
     it('should create a connection offer with specified did', async function() {
-        const res = await core.postRequest('/api/connectionoffer', steward.token, { did: steward.wallet.ownDid }, 201);
+        const res = await core.postRequest(
+            '/api/connectionoffer',
+            steward.token,
+            { myDid: steward.wallet.ownDid },
+            201
+        );
         expect(res.body.meta).to.have.property('myDid', steward.wallet.ownDid);
     });
 
