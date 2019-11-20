@@ -283,6 +283,9 @@ definitions:
       endpoint:
         description: '(Optional) Response endpoint for connection response - my endpoint'
         type: string
+      did:
+        description: '(Optional) DID to (re-)use for this connection'
+        type: string
       role:
         description: '(Optional) Role offered to the connection invitee'
         type: string

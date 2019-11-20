@@ -91,6 +91,11 @@ describe('connection', function() {
         connectionOfferToDelete = res.body.message;
     });
 
+    it('should create a connection offer with specified did', async function() {
+        const res = await core.postRequest('/api/connectionoffer', steward.token, { did: steward.wallet.ownDid }, 201);
+        expect(res.body.meta).to.have.property('myDid', steward.wallet.ownDid);
+    });
+
     it('should return 404 if retrieving a connection where the pairwise does not exist yet', async function() {
         await core.getRequest('/api/connection/' + connectionOffer.meta.myDid, steward.token, 404);
     });
