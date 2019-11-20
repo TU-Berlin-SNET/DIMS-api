@@ -14,6 +14,7 @@ const WalletProvider = require('../middleware/walletProvider');
 const connection = require('./connection/index');
 const credential = require('./credential/index');
 const proof = require('./proof/index');
+const didauthresponse = require('./did-auth/response');
 
 const handlers = {};
 handlers[lib.message.messageTypes.CONNECTIONOFFER] = connection.offer.handle;
@@ -25,6 +26,7 @@ handlers[lib.message.messageTypes.CREDENTIALREQUEST] = credential.request.handle
 handlers[lib.message.messageTypes.CREDENTIAL] = credential.credential.handle;
 handlers[lib.message.messageTypes.PROOFREQUEST] = proof.request.handle;
 handlers[lib.message.messageTypes.PROOF] = proof.proof.handle;
+handlers[lib.message.messageTypes.DIDAUTHRESPONSE] = didauthresponse.handle;
 
 /**
  * Loops through wallets trying to find an applicable one
