@@ -185,10 +185,11 @@ async function onboard(token, did, verkey, role) {
  * Establish a pairwise connection between user1 and user2
  * @param {object} user1token jwt for user 1
  * @param {object} user2token jwt for user 22
+ * @param {object} [offerOpts] payload with options for creating conn offer
  * @return {Promise<object>} pairwise from user1
  */
-async function connect(user1token, user2token) {
-    const offer = await postRequest('/api/connectionoffer', user1token, {}, 201);
+async function connect(user1token, user2token, offerOpts = {}) {
+    const offer = await postRequest('/api/connectionoffer', user1token, offerOpts, 201);
     const request = await postRequest(
         '/api/connectionrequest',
         user2token,

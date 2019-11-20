@@ -30,17 +30,18 @@ module.exports = {
      * @param {object} [meta] additional meta information to store with offer (and later in pairwise)
      * @param {string} [role] role that is offered, e.g. TRUST_ANCHOR, ..
      * @param {string} [endpoint] my endpoint, default is derived from environment variables
+     * @param {string} [did] did to use for pairwise connection
      * @return {Promise<Message>} Message object including the connection offer
      */
-    async create(wallet, data, meta = {}, role, endpoint = config.APP_AGENT_ENDPOINT) {
-        const did = await wallet.getEndpointDid();
-        const verkey = await lib.did.localKeyOf(wallet, did);
-        const [myDid] = await lib.sdk.createAndStoreMyDid(wallet.handle, {});
-        const offer = await lib.connection.buildOffer(did, verkey, endpoint);
+    async create(wallet, data, meta = {}, role, endpoint = config.APP_AGENT_ENDPOINT, did) {
+        const endpointDid = await wallet.getEndpointDid();
+        const verkey = await lib.did.localKeyOf(wallet, endpointDid);
+        const myDid = did || (await lib.sdk.createAndStoreMyDid(wallet.handle, {}))[0];
+        const offer = await lib.connection.buildOffer(endpointDid, verkey, endpoint);
         if (data && typeof data === 'object') offer.message.data = data;
         if (role && typeof role === 'string') meta.role = role;
         meta.myDid = myDid;
-        const message = await Message.store(wallet.id, offer.id, offer.type, did, null, offer, meta);
+        const message = await Message.store(wallet.id, offer.id, offer.type, endpointDid, null, offer, meta);
         return message;
     },
 

@@ -25,7 +25,8 @@ router
                 req.body.data,
                 req.body.meta,
                 req.body.role,
-                req.body.endpoint
+                req.body.endpoint,
+                req.body.did
             );
             res.locals.result = APIResult.created(data);
             next();
