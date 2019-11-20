@@ -1,11 +1,10 @@
 /**
- * IDChain Agent REST API Routes
- * Connection Offer Routes
+ * DID Auth Response Routes
  */
 'use strict';
 
 const router = require('express').Router();
-const controller = require('../../controllers/connection');
+const controller = require('../../controllers/did-auth/response');
 const wrap = require('../../util/asyncwrap').wrap;
 const APIResult = require('../../util/api-result');
 
@@ -13,38 +12,31 @@ router
     .route('/')
     .get(
         wrap(async (req, res, next) => {
-            const data = await controller.offer.list(req.wallet);
+            const data = await controller.list(req.wallet);
             res.locals.result = APIResult.success(data || []);
             next();
         })
     )
     .post(
         wrap(async (req, res, next) => {
-            const data = await controller.offer.create(
-                req.wallet,
-                req.body.data,
-                req.body.meta,
-                req.body.role,
-                req.body.endpoint,
-                req.body.myDid
-            );
+            const data = await controller.create(req.wallet, req.body.request);
             res.locals.result = APIResult.created(data);
             next();
         })
     );
 
 router
-    .route('/:connectionOfferId')
+    .route('/:didauthresponseId')
     .get(
         wrap(async (req, res, next) => {
-            const data = await controller.offer.retrieve(req.wallet, req.params.connectionOfferId);
+            const data = await controller.retrieve(req.wallet, req.params.didauthresponseId);
             res.locals.result = data ? APIResult.success(data) : APIResult.notFound();
             next();
         })
     )
     .delete(
         wrap(async (req, res, next) => {
-            const data = await controller.offer.remove(req.wallet, req.params.connectionOfferId);
+            const data = await controller.remove(req.wallet, req.params.didauthresponseId);
             res.locals.result = data ? APIResult.noContent() : APIResult.notFound();
             next();
         })

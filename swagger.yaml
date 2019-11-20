@@ -47,6 +47,8 @@ tags:
     description: 'Proof request, and proof endpoints'
   - name: transaction
     description: 'Low-level indy transaction endpoints'
+  - name: did-auth
+    description: 'did-auth endpoints'
   - name: message
     description: 'Message endpoints'
 
@@ -492,6 +494,27 @@ definitions:
           lowLevelSchema: {}
           credentialDefinitionId: 'Th7MpTaRZVRYnPiabds81Y:3:CL:15:TAG1'
           revocationRegistryId: ''
+  didauth_request_post:
+    type: object
+    properties:
+      wallet:
+        $ref: '#/definitions/walletId'
+      myDid:
+        description: '(Optional) my did, default is endpointDid'
+        type: string
+      meta:
+        description: '(Optional) Additional data to store with the request (and later with the response)'
+        type: object
+  didauth_response_post:
+    type: object
+    properties:
+      wallet:
+        $ref: '#/definitions/walletId'
+      request:
+        description: 'did-auth-request'
+        type: object
+    required:
+      - request
   message_post:
     type: object
     properties:
@@ -2926,3 +2949,155 @@ paths:
         - proof
         - issuer
         - prover
+
+  /api/didauthrequest:
+    get:
+      summary: 'List did auth requests'
+      description: 'List did auth requests'
+      parameters:
+        - $ref: '#/parameters/walletHeader'
+      responses:
+        '200':
+          description: 'Success'
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/message_db'
+        '401':
+          $ref: '#/responses/unauthorized'
+        '404':
+          $ref: '#/responses/not_found'
+      tags:
+        - did-auth
+    post:
+      summary: 'Create a did auth request'
+      description: 'Create a did auth request'
+      parameters:
+        - in: body
+          name: data
+          schema:
+            $ref: '#/definitions/didauth_request_post'
+      responses:
+        '201':
+          description: 'Created'
+          schema:
+            $ref: '#/definitions/message_db'
+        '400':
+          $ref: '#/responses/bad_request'
+        '401':
+          $ref: '#/responses/unauthorized'
+        '404':
+          $ref: '#/responses/not_found'
+      tags:
+        - did-auth
+
+  /api/didauthrequest/{didauthrequestId}:
+    parameters:
+      - $ref: '#/parameters/walletHeader'
+      - in: path
+        name: didauthrequestId
+        description: did auth request _id
+        type: string
+        required: true
+    get:
+      summary: 'Retrieve a did auth request by _id'
+      description: 'Retrieve a did auth request by _id'
+      responses:
+        '200':
+          description: 'Success'
+          schema:
+            $ref: '#/definitions/message_db'
+        '401':
+          $ref: '#/responses/unauthorized'
+        '404':
+          $ref: '#/responses/not_found'
+      tags:
+        - did-auth
+    delete:
+      summary: 'Delete a did auth request by _id'
+      description: 'Delete a did auth request by _id'
+      responses:
+        '204':
+          $ref: '#/responses/no_content'
+        '401':
+          $ref: '#/responses/unauthorized'
+        '404':
+          $ref: '#/responses/not_found'
+      tags:
+        - did-auth
+
+  /api/didauthresponse:
+    get:
+      summary: 'List did auth responses'
+      description: 'List did auth responses'
+      parameters:
+        - $ref: '#/parameters/walletHeader'
+      responses:
+        '200':
+          description: 'Success'
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/message_db'
+        '401':
+          $ref: '#/responses/unauthorized'
+        '404':
+          $ref: '#/responses/not_found'
+      tags:
+        - did-auth
+    post:
+      summary: 'Create a did auth response'
+      description: 'Create a did auth response'
+      parameters:
+        - in: body
+          name: data
+          schema:
+            $ref: '#/definitions/didauth_response_post'
+      responses:
+        '201':
+          description: 'Created'
+          schema:
+            $ref: '#/definitions/message_db'
+        '400':
+          $ref: '#/responses/bad_request'
+        '401':
+          $ref: '#/responses/unauthorized'
+        '404':
+          $ref: '#/responses/not_found'
+      tags:
+        - did-auth
+
+  /api/didauthresponse/{didauthresponseId}:
+    parameters:
+      - $ref: '#/parameters/walletHeader'
+      - in: path
+        name: didauthresponseId
+        description: did auth response _id
+        type: string
+        required: true
+    get:
+      summary: 'Retrieve a did auth response by _id'
+      description: 'Retrieve a did auth response by _id'
+      responses:
+        '200':
+          description: 'Success'
+          schema:
+            $ref: '#/definitions/message_db'
+        '401':
+          $ref: '#/responses/unauthorized'
+        '404':
+          $ref: '#/responses/not_found'
+      tags:
+        - did-auth
+    delete:
+      summary: 'Delete a did auth response by _id'
+      description: 'Delete a did auth response by _id'
+      responses:
+        '204':
+          $ref: '#/responses/no_content'
+        '401':
+          $ref: '#/responses/unauthorized'
+        '404':
+          $ref: '#/responses/not_found'
+      tags:
+        - did-auth

@@ -27,6 +27,8 @@ const credential = require('./credential');
 const proofRequestTemplate = require('./proof-request-template');
 const proofRequest = require('./proof-request');
 const proof = require('./proof');
+const didauthrequest = require('./did-auth-request');
+const didauthresponse = require('./did-auth-response');
 
 router.use('/docs', docs);
 
@@ -88,6 +90,10 @@ router
     .delete(message.delete);
 
 router.use('/nym', nym);
+
+router.use('/didauthrequest', didauthrequest);
+
+router.use('/didauthresponse', didauthresponse);
 
 router.use(walletProvider.after);
 
