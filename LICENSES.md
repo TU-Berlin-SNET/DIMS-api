@@ -25,6 +25,8 @@
 -   passport-http
 -   pino
 -   pino-debug
+-   react
+-   react-native
 -   superagent
 -   supertest
 -   swagger-ui-express
@@ -38,3 +40,4 @@
 | Apache-2.0   | Commercial use, Modification, Distribution, Patent use, Private use | Trademark use, Liability, Warranty | License and copyright notice, State changes |
 | BSD-2-Clause | Commercial use, Modification, Distribution, Private use             | Liability, Warranty                | License and copyright notice                |
 | MIT          | Commercial use, Modification, Distribution, Private use             | Liability, Warranty                | License and copyright notice                |
+
